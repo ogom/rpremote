@@ -4,15 +4,17 @@ require "rbconfig"
 require "fileutils"
 require "rubygems/version"
 require_relative "mrbgems"
+require_relative "picoruby_source_patch"
 
 module Rpremote
   class Builder
     class Error < Rpremote::Error; end
 
-    def initialize(root: Dir.pwd, runner: nil, mrbgems_class: Mrbgems)
+    def initialize(root: Dir.pwd, runner: nil, mrbgems_class: Mrbgems, source_patcher: nil)
       @root = File.expand_path(root)
       @runner = runner || method(:run_command)
       @mrbgems_class = mrbgems_class
+      @source_patcher = source_patcher || method(:patch_source)
     end
 
     def build(output: $stdout, error: $stderr, **options)
@@ -23,6 +25,7 @@ module Rpremote
       Language.validate!(target.language)
 
       source_dir = source_for(target)
+      source_patcher.call(source_dir, target.language_version)
       environment = {
         "RPREMOTE_LANGUAGE" => target.language,
         "RPREMOTE_LANGUAGE_VERSION" => target.language_version,
@@ -61,7 +64,11 @@ module Rpremote
 
     private
 
-    attr_reader :root, :runner, :mrbgems_class
+    attr_reader :root, :runner, :mrbgems_class, :source_patcher
+
+    def patch_source(source, version)
+      PicoRubySourcePatch.new(version: version).apply(source)
+    end
 
     def add_mrbgems_environment!(environment, options, source_dir, output)
       definition = mrbgems_definition(options[:mrbgems])

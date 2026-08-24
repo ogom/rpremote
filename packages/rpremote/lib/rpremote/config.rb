@@ -29,6 +29,7 @@ module Rpremote
       "monitor" => %i[port baud timeout],
       "repl" => %i[port baud timeout],
       "fs" => %i[port baud timeout],
+      "config" => OPTION_TYPES.keys,
       "ports" => [],
       "mrbgems" => []
     }.freeze

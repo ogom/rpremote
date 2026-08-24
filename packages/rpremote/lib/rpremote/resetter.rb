@@ -2,7 +2,7 @@
 
 module Rpremote
   class Resetter
-    DEFAULT_TIMEOUT = 10.0
+    DEFAULT_TIMEOUT = 20.0
     RETRY_INTERVAL = 0.1
     PROBE_TIMEOUT = 1.0
 

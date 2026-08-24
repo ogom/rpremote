@@ -5,7 +5,7 @@ require "fileutils"
 module Rpremote
   class Flasher
     DEFAULT_VOLUMES_ROOT = "/Volumes"
-    DEFAULT_TIMEOUT = 10.0
+    DEFAULT_TIMEOUT = 20.0
     INFO_FILE = "INFO_UF2.TXT"
     UF2_BLOCK_SIZE = 512
     UF2_MAGIC_START0 = 0x0A324655

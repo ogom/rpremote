@@ -31,6 +31,9 @@ RSpec.describe Rpremote::Config do
       expect(described_class.load("build", filename: path, cwd: cwd)).to include(
         mrbgems: "Mrbgems", firmware: "firmware/custom.uf2"
       )
+      expect(described_class.load("config", filename: path, cwd: cwd)).to include(
+        port: "/dev/cu.usbmodem101", mount: "/Volumes/RP2350", mrbgems: "Mrbgems"
+      )
     end
   end
 

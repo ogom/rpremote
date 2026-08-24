@@ -1,31 +1,28 @@
 # オプションと設定ファイル
 
-`rpremote` はコマンドラインオプションとプロジェクト設定ファイルで動作を指定します。
-コマンドラインオプションが設定ファイルより優先されます。
+`rpremote`はコマンドラインオプションとプロジェクト設定ファイルで動作を指定します。コマンドラインオプションが設定ファイルより優先されます。
 
 ## 設定ファイル
 
-既定の設定ファイルはプロジェクト直下の `config/setting.json` です。初回は次の
-コマンドで空の設定ファイルを作成できます。既存の内容は上書きしません。
+既定の設定ファイルはプロジェクト直下の`config/setting.json`です。初回は次のコマンドで空の設定ファイルを作成できます。既存の内容は上書きしません。
 
 ```sh
 rpremote setup
 ```
 
-別の設定ファイルを使う場合は、すべてのコマンドで `--config FILE` を指定できます。
+別の設定ファイルを使う場合は、すべてのコマンドで`--config FILE`を指定できます。
 
 ```sh
 rpremote build --config config/pico2.json
 ```
 
-設定ファイルはJSONオブジェクトです。キーはスネークケース、対応するCLIオプションは
-ハイフン区切りです。
+設定ファイルはJSONオブジェクトです。キーはスネークケース、対応するCLIオプションはハイフン区切りです。
 
 ```json
 {
   "port": "/dev/cu.usbmodem101",
   "baud": 115200,
-  "timeout": 10,
+  "timeout": 20,
   "language": "picoruby",
   "cache": "firmware",
   "language_version": "4.0.3",
@@ -36,8 +33,38 @@ rpremote build --config config/pico2.json
 }
 ```
 
-設定ファイル内のすべてのキーは、実行するコマンドで使われないものも含めて検証されます。
-未知のキー、空文字列、型が違う値、0以下の `baud` または `timeout` はエラーになります。
+設定ファイル内のすべてのキーは、実行するコマンドで使われないものも含めて検証されます。未知のキー、空文字列、型が違う値、0以下の`baud`または`timeout`はエラーになります。
+
+## 優先順位
+
+| 優先順位 | 設定元 | 動作 |
+| --- | --- | --- |
+| 1 | コマンドラインオプション | 選択したコマンドの設定ファイル値を上書きします。 |
+| 2 | `--config FILE`、または省略時は`config/setting.json` | プロジェクトの既定値を設定します。 |
+| 3 | 組み込みの既定値 | コマンドラインと設定ファイルのどちらにも値がない場合に使います。 |
+
+## 実効設定を表示する
+
+`rpremote config show`は、ボードへ接続したりプロジェクトの状態を変更したりせずに、設定ファイル、既定値、コマンドラインオプションを解決します。選択された言語、言語バージョン、ボード、キャッシュ、ファームウェアパス、mrbgem設定、マウント先、ポート、ボーレート、タイムアウトを表示します。
+
+```sh
+rpremote config show --config config/pico2.json --board pico2_w
+```
+
+たとえば、`--no-mrbgems`はMrbgemsの自動検出を無効にします。`cache`内の`{version}`は選択した言語バージョンへ展開され、既定のファームウェアパスは解決後のキャッシュ、言語、言語バージョン、ボードから展開されます。
+
+```text
+language=picoruby
+language_version=4.0.3
+board=pico2_w
+cache=firmware
+firmware=firmware/picoruby-4.0.3-pico2_w.uf2
+mrbgems=false
+mount=auto
+port=auto
+baud=115200
+timeout=20.0
+```
 
 ## 設定キー
 
@@ -47,23 +74,22 @@ rpremote build --config config/pico2.json
 | `language_version` | `--language-version` | `4.0.3`                                               | `setup`、`build`、`flash`で使うPicoRuby/R2P2版                             |
 | `cache`            | `--cache`            | `firmware`                                            | PicoRubyソースとカスタムUF2の保存先。`{version}`を言語版へ展開              |
 | `board`            | `--board`            | `pico2`                                             | `build`と`flash`の対象ボード（`pico2`、`pico2_w`）                          |
-| `firmware`         | `--firmware`       | `{cache}/{language}-{language_version}-{board}.uf2` | buildの出力先とflashするUF2                                                 |
+| `firmware`         | `--firmware`       | `{cache}/{language}-{language_version}-{board}.uf2` | `build`の出力先と`flash`するUF2です                                         |
 | `mrbgems`          | `--mrbgems`          | 自動検出                                              | `build`で使うMrbgems定義ファイル。`false`で無効化                           |
 | `mount`            | `--mount`            | 自動検出                                              | `flash`時のRP2350 BOOTSELボリューム                                        |
 | `port`             | `--port`             | CDC 0を自動選択                                       | R2P2シリアルポート                                                         |
 | `baud`             | `--baud`             | `115200`                                              | シリアル通信速度                                                           |
 | `timeout`          | `--timeout`          | コマンドごと                                          | 接続・通信のタイムアウト秒数                                               |
 
-`language_version` はCLI自身の `rpremote --version` と区別するため、`--version` ではなく
-`--language-version` を使います。
+`language_version`はCLI自身の`rpremote --version`と区別するため、`--version`ではなく`--language-version`を使います。
 
 ## 共通オプション
 
 | オプション        | 用途                                                  |
 | ----------------- | ----------------------------------------------------- |
-| `--config FILE`   | 既定の `config/setting.json` 以外の設定ファイルを使う |
-| `-h`、`--help`    | コマンド一覧とオプションを表示する                    |
-| `-V`、`--version` | rpremote自身のバージョンを表示する                    |
+| `--config FILE`   | 既定の`config/setting.json`以外の設定ファイルを使います。 |
+| `-h`、`--help`    | コマンド一覧とオプションを表示します。                |
+| `-V`、`--version` | rpremote自身のバージョンを表示します。                |
 
 ## コマンドごとのオプション
 
@@ -71,20 +97,19 @@ rpremote build --config config/pico2.json
 | -------------------------------- | ----------------------------------------------------------------------------------------------------- |
 | `setup`                          | `--language`、`--language-version`、`--cache`、`--force`                                              |
 | `build`                          | `--language`、`--language-version`、`--board`、`--cache`、`--firmware`、`--mrbgems`、`--no-mrbgems` |
-| `build clean`                    | なし。プロジェクトの `build/` だけを削除                                                              |
+| `build clean`                    | なし。プロジェクトの`build/`だけを削除します。                                                        |
 | `dfu app FILE`                   | `--type ruby\|rite`、`--port`、`--baud`、`--timeout`                                                  |
 | `dfu compile FILE`               | `--output`、`--language`、`--language-version`、`--cache`                                              |
 | `dfu status`                     | `--port`、`--baud`、`--timeout`                                                                         |
 | `mrbgems check/list/lock/update` | `--file`、`--lockfile`                                                                                |
 | `flash`                          | `--language`、`--language-version`、`--board`、`--cache`、`--firmware`、`--mount`、`--port`、`--timeout` |
+| `config show`                    | `--language`、`--language-version`、`--board`、`--cache`、`--firmware`、`--mrbgems`、`--no-mrbgems`、`--mount`、`--port`、`--baud`、`--timeout` |
 | `ports`                          | なし                                                                                                  |
 | `run`、`exec`                    | `--port`、`--baud`、`--timeout`、`--language`                                                         |
 | `monitor`、`repl`、`reset`       | `--port`、`--baud`、`--timeout`                                                                       |
 | `fs cp/cat/ls/rm/mkdir`          | `--port`、`--baud`、`--timeout`                                                                       |
 
-すべてのコマンドの既定タイムアウトは10秒です。
-`flash` は `build` 済みのカスタムUF2を使用します。`--firmware`を省略した場合は
-`{cache}/{language}-{language-version}-{board}.uf2` を書き込みます。
+すべてのコマンドの既定タイムアウトは20秒です。`flash`は`build`済みのカスタムUF2を使用します。`--firmware`を省略した場合は`{cache}/{language}-{language-version}-{board}.uf2`を書き込みます。
 
 ## よく使う設定例
 
@@ -106,13 +131,12 @@ Pico 2のポートとビルド先を固定する例です。
 rpremote setup
 rpremote build
 rpremote flash --mount /Volumes/RP2350
-rpremote run examples/education/01_blink/main.rb
+rpremote run examples/picoruby/education/01_blink/main.rb
 ```
 
 PicoRubyのバージョンだけ一度変更する場合は、設定を変えずにCLIで上書きします。
 
 ```sh
 rpremote setup --language-version 3.4.2
-rpremote build --language-version 3.4.2 \
-  --firmware firmware/r2p2-picoruby-3.4.2-pico2.uf2
+rpremote build --language-version 3.4.2 --firmware firmware/r2p2-picoruby-3.4.2-pico2.uf2
 ```

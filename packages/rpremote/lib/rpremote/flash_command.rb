@@ -9,12 +9,15 @@ module Rpremote
       raise ArgumentError, "flash does not accept arguments; use --firmware FILE" unless args.empty?
 
       target = Target.new(**options.slice(:language, :language_version, :board, :cache_dir, :firmware))
+      firmware_path = target.firmware_path(root: Dir.pwd)
+      mount = options[:mount] || "an automatically detected RP2350 BOOTSEL volume"
+      output.puts("flashing #{firmware_path} to #{mount}; this replaces persistent board firmware")
       result = flasher.new(timeout: options[:timeout]).flash(
-        target.firmware_path(root: Dir.pwd),
+        firmware_path,
         mount: options[:mount],
         port: options[:port]
       )
-      output.puts("flashed firmware #{File.basename(target.firmware_path)}: #{result.port}")
+      output.puts("flashed firmware #{File.basename(firmware_path)}: #{result.port}")
     end
 
     def self.parse_options(args, defaults)

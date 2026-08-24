@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "stringio"
+
 class ShellScriptedIO
   attr_reader :written
 
@@ -52,6 +54,39 @@ RSpec.describe Rpremote::Shell do
     io = ShellScriptedIO.new(shell_response(command, "\x00\xff\n".b))
 
     expect(described_class.new(io).execute(command)).to eq("\x00\xff\n".b)
+  end
+
+  it "relays complete output lines before the prompt returns" do
+    command = "./stream.rb"
+    command_boundary = described_class::ECHO_START + command + described_class::ERASE_LINE + "\n".b
+    io = ShellScriptedIO.new(command_boundary, "first\n", "second\n", described_class::PROMPT_START + described_class::PROMPT_END)
+    output = StringIO.new
+
+    result = described_class.new(io).execute(command, output: output)
+
+    expect(result).to eq("first\nsecond\n")
+    expect(output.string).to eq("first\nsecond\n")
+  end
+
+  it "raises a command error when R2P2 reports a Ruby exception" do
+    command = "./broken.rb"
+    exception_output = "undefined local variable or method 'missing' (NameError)\n"
+    response = shell_response(command, exception_output + described_class::RUBY_EXCEPTION_STATUS)
+    io = ShellScriptedIO.new(response)
+    output = StringIO.new
+
+    expect { described_class.new(io).execute(command, output: output) }
+      .to raise_error(described_class::CommandError, "Ruby exception reported by R2P2")
+    expect(output.string).to eq(exception_output)
+    expect(output.string).not_to include(described_class::RUBY_EXCEPTION_STATUS)
+  end
+
+  it "does not infer an exception from ordinary program text" do
+    command = "./message.rb"
+    message = "undefined local variable or method 'missing' (NameError)\n"
+    io = ShellScriptedIO.new(shell_response(command, message))
+
+    expect(described_class.new(io).execute(command)).to eq(message)
   end
 
   it "answers terminal cursor queries while waiting for the Shell" do

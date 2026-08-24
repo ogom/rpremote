@@ -1,0 +1,59 @@
+diff --git a/mrbgems/picoruby-shell/mrblib/job.rb b/mrbgems/picoruby-shell/mrblib/job.rb
+index 9351ee0..91e7e74 100644
+--- a/mrbgems/picoruby-shell/mrblib/job.rb
++++ b/mrbgems/picoruby-shell/mrblib/job.rb
+@@ -1,5 +1,7 @@
+ class Shell
+   class Job
++    RUBY_EXCEPTION_STATUS = "\x1eR2P2:RUBY_EXCEPTION\x1f"
++
+     def initialize(*params)
+       if params.empty?
+         raise ArgumentError, "Job requires at least one parameter"
+@@ -24,12 +26,11 @@ class Shell
+       @sandbox.resume
+       @sandbox.wait(timeout: nil)
+       if error = @sandbox.error
+-        puts "#{error.message} (#{error.class})"
++        return report_ruby_exception(error)
+       end
+       return true
+     rescue Exception => e
+-      puts "#{e.message} (#{e.class})"
+-      return false
++      return report_ruby_exception(e)
+     end
+ 
+     def state
+@@ -46,22 +47,28 @@ class Shell
+       trap
+       @sandbox.load_file(@exefile)
+       if error = @sandbox.error
+-        puts "\n#{error.message} (#{error.class})"
++        return report_ruby_exception(error, true)
+       end
+       return true
+     rescue Exception => e
+-      puts "#{e.message} (#{e.class})"
+       # backtrace uses a lot of memory
+       #if e.respond_to?(:backtrace)
+       #  e.backtrace.each do |line|
+       #    puts "  #{line}"
+       #  end
+       #end
+-      return false
++      return report_ruby_exception(e)
+     end
+ 
+     private
+ 
++    def report_ruby_exception(error, leading_newline = false)
++      print "\n" if leading_newline
++      puts "#{error.message} (#{error.class})"
++      print RUBY_EXCEPTION_STATUS
++      false
++    end
++
+     def trap
+       Signal.trap(:TSTP) do
+         @sandbox.suspend
