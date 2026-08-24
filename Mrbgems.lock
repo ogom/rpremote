@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "vm": "mrubyc",
+  "gems": [
+    {
+      "type": "github",
+      "source": "ksbmyk/picoruby-ws2812-plus",
+      "branch": "main",
+      "commit": "16699f8eb163df3fad86cfe826590bf890d0bb58"
+    },
+    {
+      "type": "path",
+      "source": "examples/mrbgems/my_gems",
+      "sha256": "5c94e4937799f03b528391f39dc95353d4a8c78d48396585b98a0c194c494ab1"
+    }
+  ]
+}

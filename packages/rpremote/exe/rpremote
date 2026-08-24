@@ -1,0 +1,7 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require "rpremote"
+require "rpremote/cli"
+
+exit(Rpremote::CLI.start)

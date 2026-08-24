@@ -1,0 +1,4 @@
+interface:
+  display_name: "rpremote Raspberry Pi Pico Development"
+  short_description: "Build and operate PicoRuby R2P2 projects with rpremote"
+  default_prompt: "Use $rp-remote-dev to develop, build, flash, and troubleshoot a Raspberry Pi Pico PicoRuby project with rpremote."

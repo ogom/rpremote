@@ -1,0 +1,6 @@
+# frozen_string_literal: true
+
+vm :mrubyc
+
+gem github: "ksbmyk/picoruby-ws2812-plus", branch: "main"
+gem path: "examples/mrbgems/my_gems"

@@ -1,0 +1,404 @@
+module Rpremote
+  VERSION: String
+
+  class Error < StandardError
+  end
+
+  module Language
+    SUPPORTED: Array[String]
+
+    def self.validate!: (String language) -> String
+  end
+
+  class Target
+    DEFAULT_LANGUAGE: String
+    DEFAULT_LANGUAGE_VERSION: String
+    DEFAULT_BOARD: String
+    DEFAULT_CACHE_DIR: String
+    IDENTIFIER_PATTERN: Regexp
+
+    attr_reader language: String
+    attr_reader language_version: String
+    attr_reader board: String
+    attr_reader cache_dir: String
+
+    def initialize: (
+      ?language: String,
+      ?language_version: String,
+      ?board: String,
+      ?cache_dir: String,
+      ?firmware: String?
+    ) -> void
+    def source_dir: (?root: String) -> String
+    def firmware_path: (?root: String?) -> String
+  end
+
+  module Checksum
+    def self.crc16: (String data, ?Integer initial) -> Integer
+    def self.crc32: (String data, ?Integer initial) -> Integer
+  end
+
+  module RemotePath
+    PREFIX: String
+
+    def self.remote?: (String path) -> bool
+    def self.unwrap: (String path) -> String
+    def self.validate: (String path) -> String
+  end
+
+  class Config
+    DEFAULT_PATH: String
+    OPTION_TYPES: Hash[Symbol, untyped]
+    COMMAND_OPTIONS: Hash[String, Array[Symbol]]
+
+    class Result < Data
+      attr_reader path: String
+      attr_reader created: bool
+    end
+
+    class Error < Rpremote::Error
+    end
+
+    def self.load: (
+      String command,
+      ?filename: String,
+      ?required: bool,
+      ?cwd: String
+    ) -> Hash[Symbol, untyped]
+    def self.extract_option!: (Array[String] args) -> [String, bool]
+    def self.load_command: (String? command, filename: String, required: bool) -> Hash[Symbol, untyped]
+    def self.setup: (?filename: String, ?cwd: String) -> Result
+  end
+
+  class PicoModem
+    CHUNK_SIZE: Integer
+    DEFAULT_TIMEOUT: Float
+    DFU_START: Integer
+    DFU_ACK: Integer
+    DFU_MAGIC: String
+    DFU_VERSION: Integer
+    DFU_TYPES: Array[String]
+
+    class Error < Rpremote::Error
+    end
+
+    class TimeoutError < Error
+    end
+
+    class ProtocolError < Error
+    end
+
+    class ChecksumError < ProtocolError
+    end
+
+    class DeviceError < Error
+    end
+
+    attr_reader io: untyped
+    attr_reader timeout: Float
+
+    def initialize: (untyped io, ?timeout: Float) -> void
+    def upload: (String path, String data) -> Integer
+    def download: (String path) -> String
+    def dfu: (String data, type: String) -> Integer
+    def send_frame: (Integer command, ?String payload) -> Integer
+    def receive_frame: () -> [Integer, String]
+  end
+
+  class Device
+    class NotFoundError < Rpremote::Error
+    end
+
+    class MultipleDevicesError < Rpremote::Error
+    end
+
+    def self.ports: () -> Array[String]
+    def self.main_port: (?String? explicit_port, ?available_ports: Array[String]) -> String
+  end
+
+  class Serial
+    BAUD_RATE: Integer
+
+    class ConfigurationError < Rpremote::Error
+    end
+
+    def self.open: [T] (String path, ?baud: Integer) { (Serial) -> T } -> T
+                 | (String path, ?baud: Integer) -> Serial
+
+    attr_reader path: String
+    attr_reader baud: Integer
+    attr_reader io: File
+
+    def initialize: (String path, ?baud: Integer) -> void
+    def read_nonblock: (Integer length) -> String
+    def write: (String data) -> Integer
+    def flush: () -> untyped
+    def close: () -> untyped
+    def closed?: () -> bool
+    def to_io: () -> File
+  end
+
+  class LanguageSource
+    class Error < Rpremote::Error
+    end
+
+    class DownloadError < Error
+    end
+
+    class ExtractError < Error
+    end
+
+    attr_reader language: String
+    attr_reader version: String
+    attr_reader cache_dir: String
+
+    def initialize: (
+      ?language: String,
+      ?version: String,
+      ?cache_dir: String,
+      ?fetcher: untyped,
+      ?extractor: untyped,
+      ?preparer: untyped
+    ) -> void
+    def setup: (?force: bool) -> String
+    def archive_url: () -> String
+    def archive_path: () -> String
+    def source_dir: () -> String
+  end
+
+  class Builder
+    class Error < Rpremote::Error
+    end
+
+    def initialize: (?root: String, ?runner: untyped, ?mrbgems_class: untyped) -> void
+    def build: (
+      ?language: String,
+      ?language_version: String,
+      ?board: String,
+      ?cache_dir: String,
+      ?firmware: String?,
+      ?mrbgems: String | false | nil,
+      ?output: IO,
+      ?error: IO
+    ) -> void
+    def clean: (?output: IO) -> void
+  end
+
+  class Mrbgems
+    DEFAULT_PATH: String
+    DEFAULT_LOCK_PATH: String
+    LOCK_VERSION: Integer
+
+    class Error < Rpremote::Error
+    end
+
+    class DefinitionError < Error
+    end
+
+    class LockError < Error
+    end
+
+    class Dependency < Data
+      attr_reader type: Symbol
+      attr_reader source: String
+      attr_reader branch: String?
+      attr_reader commit: String?
+      attr_reader path: String?
+    end
+
+    class Overlay < Data
+      attr_reader path: String
+      attr_reader fingerprint: String
+    end
+
+    attr_reader path: String
+    attr_reader lock_path: String
+
+    def initialize: (
+      ?path: String,
+      ?lock_path: String?,
+      ?cwd: String,
+      ?resolver: untyped
+    ) -> void
+    def exist?: () -> bool
+    def dependencies: () -> Array[Dependency]
+    def vm: () -> Symbol?
+    def check: () -> Array[Dependency]
+    def lock: (?update: bool) -> Hash[String, untyped]
+    def read_lock: (?required: bool) -> Hash[String, untyped]?
+    def generate_overlay: (
+      base_config: String,
+      target: String,
+      directory: String,
+      ?update: bool
+    ) -> Overlay
+  end
+
+  class Shell
+    DEFAULT_TIMEOUT: Float
+    PROMPT_START: String
+    PROMPT_END: String
+    CURSOR_POSITION_QUERY: String
+    CURSOR_POSITION_RESPONSE: String
+
+    class Error < Rpremote::Error
+    end
+
+    class TimeoutError < Error
+    end
+
+    class ProtocolError < Error
+    end
+
+    class CommandError < Error
+    end
+
+    attr_reader io: untyped
+    attr_reader timeout: Float
+
+    def self.quote_argument: (String argument) -> String
+    def initialize: (untyped io, ?timeout: Float) -> void
+    def synchronize!: () -> nil
+    def send_command: (String command) -> nil
+    def execute: (String command) -> String
+  end
+
+  class Terminal
+    EXIT_BYTE: Integer
+    BUFFER_SIZE: Integer
+
+    attr_reader serial_io: untyped
+    attr_reader input: IO
+    attr_reader output: IO
+
+    def initialize: (
+      untyped serial_io,
+      ?input: IO,
+      ?output: IO,
+      ?selector: untyped
+    ) -> void
+    def run: (?exit_sequence: String?) -> nil
+  end
+
+  class Runner
+    REMOTE_DIRECTORY: String
+
+    attr_reader io: untyped
+    attr_reader timeout: Float
+
+    def initialize: (
+      untyped io,
+      ?timeout: Float,
+      ?modem_class: untyped,
+      ?shell_class: untyped,
+      ?path_factory: untyped
+    ) -> void
+    def run: (String data) -> String
+  end
+
+  class Resetter
+    DEFAULT_TIMEOUT: Float
+    RETRY_INTERVAL: Float
+    PROBE_TIMEOUT: Float
+
+    class TimeoutError < Rpremote::Error
+    end
+
+    def initialize: (
+      ?serial: untyped,
+      ?timeout: Numeric,
+      ?shell_class: untyped,
+      ?sleeper: untyped,
+      ?clock: untyped,
+      ?port_probe: untyped
+    ) -> void
+    def reset: (String port_path, ?baud: Integer) -> String
+  end
+
+  class Flasher
+    DEFAULT_VOLUMES_ROOT: String
+    DEFAULT_TIMEOUT: Float
+    INFO_FILE: String
+
+    class Result < Data
+      attr_reader mount: String
+      attr_reader destination: String
+      attr_reader port: String
+    end
+
+    class Error < Rpremote::Error
+    end
+
+    class MountNotFoundError < Error
+    end
+
+    class InvalidTargetError < Error
+    end
+
+    class TimeoutError < Error
+    end
+
+    attr_reader volumes_root: String
+    attr_reader timeout: Float
+
+    def initialize: (
+      ?volumes_root: String,
+      ?timeout: Numeric,
+      ?mount_probe: untyped,
+      ?port_probe: untyped,
+      ?sleeper: untyped
+    ) -> void
+    def flash: (String uf2_path, ?mount: String?, ?port: String?) -> Result
+    def find_mount: (?String? explicit_mount) -> String
+  end
+
+  class DfuCommand
+    DEFAULT_TIMEOUT: Float
+    TYPES: Hash[String, String]
+
+    def self.run: (
+      Array[String] args,
+      defaults: Hash[Symbol, untyped],
+      ?output: IO,
+      ?serial: untyped,
+      ?device: untyped,
+      ?services: Hash[Symbol, untyped]
+    ) -> void
+  end
+
+  class DfuCompiler
+    class Error < Rpremote::Error
+    end
+
+    def self.compile: (String source, target: Target, ?destination: String?, ?output: IO, ?runner: untyped) -> String
+  end
+
+  class SetupCommand
+    def self.run: (
+      Array[String] args,
+      defaults: Hash[Symbol, untyped],
+      config: untyped,
+      config_filename: String,
+      ?output: IO
+    ) -> void
+  end
+
+  class BuildCommand
+    def self.run: (
+      Array[String] args,
+      defaults: Hash[Symbol, untyped],
+      ?output: IO,
+      ?error: IO,
+      ?builder: Builder
+    ) -> void
+  end
+
+  class FlashCommand
+    def self.run: (
+      Array[String] args,
+      defaults: Hash[Symbol, untyped],
+      ?output: IO,
+      ?flasher: untyped
+    ) -> void
+  end
+end
