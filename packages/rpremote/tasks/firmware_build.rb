@@ -32,9 +32,7 @@ output_dir = File.join(REPOSITORY_ROOT, "build", build_name)
 mruby_build_dir = File.join(picoruby_root, "build", config_name)
 cmake_source_dir = File.join(r2p2_gem_dir, "cmake")
 
-unless File.file?(File.join(picoruby_root, "Rakefile"))
-  abort "PicoRuby source not found: #{picoruby_root}\nSet PICORUBY_DIR to a PicoRuby checkout."
-end
+abort "PicoRuby source not found: #{picoruby_root}\nSet PICORUBY_DIR to a PicoRuby checkout." unless File.file?(File.join(picoruby_root, "Rakefile"))
 abort "Build config not found: #{base_config_path}" unless File.file?(base_config_path)
 abort "Generated build config not found: #{config_path}" unless File.file?(config_path)
 build_config = File.read(base_config_path)
@@ -60,11 +58,7 @@ build_env = {
   "PICO_EXTRAS_PATH" => pico_extras_path
 }
 
-# PicoRuby's build directory is keyed by the target name, not by MRUBY_CONFIG.
-# A generated overlay therefore shares the base target's objects. In particular,
-# mrblib.c includes picogem_init.c, but Make does not track that generated include
-# as a dependency. Reusing the directory can leave a removed or added local
-# mrbgem out of libmruby.a. Custom mrbgems must start from a fresh target build.
+# PicoRuby keys build output by target, so an overlay can reuse stale objects; fresh builds keep changed local mrbgems in libmruby.a.
 if fingerprint && File.directory?(mruby_build_dir)
   puts "Removing stale PicoRuby build output: #{mruby_build_dir}"
   FileUtils.rm_rf(mruby_build_dir)

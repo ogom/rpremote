@@ -10,8 +10,8 @@
     },
     {
       "type": "path",
-      "source": "examples/mrbgems/my_gems",
-      "sha256": "5c94e4937799f03b528391f39dc95353d4a8c78d48396585b98a0c194c494ab1"
+      "source": "examples/picoruby/mrbgems/my_gems",
+      "sha256": "2c36316a3afa37752d9b73154586296efa7d3a03205e5bc6f0479c8966b7c5f9"
     }
   ]
 }

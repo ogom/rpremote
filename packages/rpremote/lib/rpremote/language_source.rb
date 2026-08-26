@@ -4,6 +4,7 @@ require "fileutils"
 require "net/http"
 require "timeout"
 require "uri"
+require_relative "picoruby_source_patch"
 
 module Rpremote
   class LanguageSource
@@ -26,6 +27,7 @@ module Rpremote
       @fetcher = fetcher || method(:download)
       @extractor = extractor || method(:extract)
       @preparer = preparer || method(:prepare_repository)
+      @patcher = PicoRubySourcePatch.new(version: version).method(:apply)
     end
 
     def setup(force: false)
@@ -38,6 +40,7 @@ module Rpremote
       raise ExtractError, "PicoRuby source was not extracted: #{source_dir}" unless File.directory?(source_dir)
 
       preparer.call(source_dir)
+      patcher.call(source_dir)
       source_dir
     end
 
@@ -55,7 +58,7 @@ module Rpremote
 
     private
 
-    attr_reader :fetcher, :extractor, :preparer
+    attr_reader :fetcher, :extractor, :preparer, :patcher
 
     def fetch_archive
       temporary = "#{archive_path}.part"

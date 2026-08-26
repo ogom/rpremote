@@ -166,11 +166,24 @@ module Rpremote
     def source_dir: () -> String
   end
 
+  class PicoRubySourcePatch
+    JOB_PATH: String
+    PATCH_ALIASES: Hash[String, String]
+
+    class Error < Rpremote::Error
+    end
+
+    attr_reader version: String
+
+    def initialize: (version: String) -> void
+    def apply: (String source) -> void
+  end
+
   class Builder
     class Error < Rpremote::Error
     end
 
-    def initialize: (?root: String, ?runner: untyped, ?mrbgems_class: untyped) -> void
+    def initialize: (?root: String, ?runner: untyped, ?mrbgems_class: untyped, ?source_patcher: untyped) -> void
     def build: (
       ?language: String,
       ?language_version: String,
@@ -240,6 +253,7 @@ module Rpremote
     PROMPT_END: String
     CURSOR_POSITION_QUERY: String
     CURSOR_POSITION_RESPONSE: String
+    RUBY_EXCEPTION_STATUS: String
 
     class Error < Rpremote::Error
     end
@@ -260,7 +274,7 @@ module Rpremote
     def initialize: (untyped io, ?timeout: Float) -> void
     def synchronize!: () -> nil
     def send_command: (String command) -> nil
-    def execute: (String command) -> String
+    def execute: (String command, ?output: IO?) -> String
   end
 
   class Terminal
@@ -293,7 +307,7 @@ module Rpremote
       ?shell_class: untyped,
       ?path_factory: untyped
     ) -> void
-    def run: (String data) -> String
+    def run: (String data, ?output: IO?) -> String
   end
 
   class Resetter

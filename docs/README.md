@@ -1,8 +1,6 @@
 # Documentation
 
-English documentation uses `docs/<topic>.md`; Japanese documentation uses
-`docs/<topic>.ja.md`. When both files exist, they use the same heading order,
-code examples, tables, and command names.
+English documentation uses `docs/<topic>.md`; Japanese documentation uses `docs/<topic>.ja.md`. When both files exist, they use the same heading order, code examples, tables, and command names.
 
 ## Guides
 

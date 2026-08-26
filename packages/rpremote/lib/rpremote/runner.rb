@@ -20,14 +20,14 @@ module Rpremote
       @path_factory = path_factory || method(:temporary_path)
     end
 
-    def run(data)
+    def run(data, output: nil)
       remote_path = @path_factory.call
       shell = @shell_class.new(io, timeout: timeout)
       shell.synchronize!
       @modem_class.new(io, timeout: timeout).upload(remote_path, data)
       shell.synchronize!
       shell_ready = true
-      shell.execute("./#{File.basename(remote_path)}")
+      output ? shell.execute("./#{File.basename(remote_path)}", output: output) : shell.execute("./#{File.basename(remote_path)}")
     ensure
       cleanup(shell, remote_path) if shell_ready && remote_path
     end

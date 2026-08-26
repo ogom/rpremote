@@ -2,6 +2,7 @@
 
 require "optparse"
 require_relative "build_command"
+require_relative "config_show"
 require_relative "dfu_command"
 require_relative "flash_command"
 require_relative "help"
@@ -36,6 +37,8 @@ module Rpremote
       @config_class = config
       @config_filename, config_required = config.extract_option!(args)
       command = args.shift
+      return show_help(command, args) if Help.requested?(command, args)
+
       @config_options = config.load_command(command, filename: config_filename, required: config_required)
       dispatch(command, args)
       0
@@ -46,6 +49,11 @@ module Rpremote
     attr_reader :stdout, :stderr, :serial, :device, :flasher,
                 :config_class, :config_filename, :config_options
 
+    def show_help(command, args)
+      stdout.puts(Help.command_text(command, args))
+      0
+    end
+
     def dispatch(command, args)
       case command
       when nil, "help", "--help", "-h"
@@ -54,6 +62,8 @@ module Rpremote
         stdout.puts(Rpremote::VERSION)
       when "ports"
         ports(args)
+      when "config"
+        config_command(args)
       when "setup", "flash", "build", "dfu", "mrbgems"
         project_command(command, args)
       when "run", "monitor", "repl", "exec", "reset", "fs"
@@ -66,21 +76,13 @@ module Rpremote
     def project_command(command, args)
       case command
       when "setup"
-        SetupCommand.run(
-          args,
-          defaults: config_options,
-          config: config_class,
-          config_filename: config_filename,
-          output: stdout
-        )
+        SetupCommand.run(args, defaults: config_options, config: config_class, config_filename: config_filename, output: stdout)
       when "flash"
         FlashCommand.run(args, defaults: config_options, output: stdout, flasher: flasher)
       when "build"
         BuildCommand.run(args, defaults: config_options, output: stdout, error: stderr)
       when "dfu"
-        DfuCommand.run(
-          args, defaults: config_options, output: stdout, services: { serial: serial, device: device }
-        )
+        DfuCommand.run(args, defaults: config_options, output: stdout, services: { serial: serial, device: device })
       when "mrbgems"
         MrbgemsCommand.run(args, output: stdout)
       end
@@ -108,6 +110,13 @@ module Rpremote
       end
     end
 
+    def config_command(args)
+      subcommand = args.shift
+      raise ArgumentError, "unknown config command: #{subcommand || "(none)"}" unless subcommand == "show"
+
+      ConfigShow.run(args, defaults: config_options, output: stdout)
+    end
+
     def fs(args)
       subcommand = args.shift
       options = parse_connection_options(args)
@@ -129,7 +138,7 @@ module Rpremote
 
       source = args.first
       data = File.binread(source)
-      stdout.write(execute_temporary(data, options))
+      execute_temporary(data, options, output: stdout)
     rescue Errno::ENOENT => e
       raise ArgumentError, e.message
     end
@@ -138,14 +147,15 @@ module Rpremote
       options = parse_connection_options(args)
       raise ArgumentError, "usage: rpremote exec CODE [options]" unless args.length == 1
 
-      stdout.write(execute_temporary(args.first, options))
+      execute_temporary(args.first, options, output: stdout)
     end
 
-    def execute_temporary(data, options)
+    def execute_temporary(data, options, output: nil)
       Language.validate!(options[:language])
       port_path = device.main_port(options[:port])
       serial.open(port_path, baud: options[:baud]) do |port|
-        Runner.new(port, timeout: options[:timeout]).run(data)
+        runner = Runner.new(port, timeout: options[:timeout])
+        output ? runner.run(data, output: output) : runner.run(data)
       end
     end
 
@@ -201,9 +211,7 @@ module Rpremote
       source, destination = args
       source_remote = RemotePath.remote?(source)
       destination_remote = RemotePath.remote?(destination)
-      if source_remote == destination_remote
-        raise ArgumentError, "exactly one cp path must be remote (prefix remote paths with :)"
-      end
+      raise ArgumentError, "exactly one cp path must be remote (prefix remote paths with :)" if source_remote == destination_remote
 
       if source_remote
         data = with_modem(options) { |modem| modem.download(RemotePath.unwrap(source)) }
@@ -230,6 +238,7 @@ module Rpremote
       raise ArgumentError, usage unless args.length == 1
 
       path = RemotePath.validate(args.first)
+      stdout.puts("deleting remote path permanently: #{path}") if command == "rm"
       output = with_shell(options) do |shell|
         shell.execute("#{command} #{Shell.quote_argument(path)}")
       end

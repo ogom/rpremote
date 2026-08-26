@@ -26,6 +26,9 @@ Metrics/ParameterLists:
 Metrics/PerceivedComplexity:
   Max: 15
 
+Layout/LineLength:
+  Max: 150
+
 Style/Documentation:
   Enabled: false
 

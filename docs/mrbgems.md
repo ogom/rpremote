@@ -1,12 +1,9 @@
 # Mrbgems and Mrbgems.lock
 
-`rpremote` can add mrbgems that are not part of the standard PicoRuby build
-configuration to custom firmware. Define dependencies in the project-root
-`Mrbgems` file and record their resolved versions in `Mrbgems.lock`.
+`rpremote` can add mrbgems that are not part of the standard PicoRuby build configuration to custom firmware. Define dependencies in the project-root `Mrbgems` file and record their resolved versions in `Mrbgems.lock`.
 
-This workflow does not edit extracted PicoRuby sources or official
-`build_config` files. `rpremote build` generates a temporary build configuration
-that adds the gems.
+This workflow does not edit extracted PicoRuby sources or official `build_config` files. `rpremote build` generates a temporary build configuration that adds the gems.
+The managed `PicoRubySourcePatch` for R2P2 Ruby exception statuses is the only source-patch exception; see [Custom firmware](firmware.md).
 
 ## First steps
 
@@ -21,42 +18,32 @@ rpremote mrbgems lock
 Then build the custom firmware.
 
 ```sh
-rpremote build \
-  --language picoruby \
-  --language-version 4.0.3 \
-  --board pico2 \
-  --firmware firmware/r2p2-picoruby-4.0.3-pico2.uf2
+rpremote build --language picoruby --language-version 4.0.3 --board pico2 --firmware firmware/r2p2-picoruby-4.0.3-pico2.uf2
 ```
 
-`Mrbgems` in the project root is auto-detected. Use `--mrbgems FILE` for a
-different definition or `--no-mrbgems` to build without extra gems.
+`Mrbgems` in the project root is auto-detected. Use `--mrbgems FILE` for a different definition or `--no-mrbgems` to build without extra gems.
 
 ## Mrbgems format
 
-`Mrbgems` is Ruby source. Select the target VM first, then add public or local
-gems.
+`Mrbgems` is Ruby source. Select the target VM first, then add public or local gems.
 
 ```ruby
 # frozen_string_literal: true
-
 vm :mrubyc
-
 gem github: "ksbmyk/picoruby-ws2812-plus", branch: "main"
 gem path: "../mrbgems/my-device"
 ```
 
 ### VM selection
 
-Specify `vm` once as either `:mrubyc` or `:mruby`. rpremote selects the
-official build configuration appropriate for the selected PicoRuby version.
+Specify `vm` once as either `:mrubyc` or `:mruby`. rpremote selects the official build configuration appropriate for the selected PicoRuby version.
 
 | PicoRuby | `vm :mrubyc` | `vm :mruby` |
 | --- | --- | --- |
 | 4.x | `femtoruby` | `picoruby` |
 | 3.x | `picoruby` | `microruby` |
 
-For example, `picoruby-ws2812-plus` is an mruby/c C extension, so it uses
-`vm :mrubyc`.
+For example, `picoruby-ws2812-plus` is an mruby/c C extension, so it uses `vm :mrubyc`.
 
 ### GitHub gems
 
@@ -72,64 +59,53 @@ An explicit commit is also supported.
 gem github: "owner/repository", commit: "a commit SHA of at least 40 characters"
 ```
 
-A gem specified by branch is resolved to a GitHub commit SHA by the first
-`lock` command.
+A gem specified by branch is resolved to a GitHub commit SHA by the first `lock` command.
 
 ### Local gems
 
-Specify a local gem as a path relative to `Mrbgems`. The target requires
-`mrbgem.rake`.
+Specify a local gem as a path relative to `Mrbgems`. The target requires `mrbgem.rake`.
 
 ```ruby
 gem path: "../mrbgems/my-device"
 ```
 
-The local gem contents are recorded as SHA-256. Files below `.git`, `build`,
-and `tmp` are excluded from the hash.
+The local gem contents are recorded as SHA-256. Files below `.git`, `build`, and `tmp` are excluded from the hash.
 
 ## Mrbgems.lock
 
-`Mrbgems.lock` is JSON. GitHub gems record the resolved commit; local gems
-record their content SHA-256.
+`Mrbgems.lock` is JSON. GitHub gems record the resolved commit; local gems record their content SHA-256.
 
 ```json
 {
-  "version": 1,
-  "vm": "mrubyc",
-  "gems": [
-    {
-      "type": "github",
-      "source": "ksbmyk/picoruby-ws2812-plus",
-      "branch": "main",
-      "commit": "16699f8eb163df3fad86cfe826590bf890d0bb58"
-    }
-  ]
+"version": 1,
+"vm": "mrubyc",
+"gems": [
+{
+"type": "github",
+"source": "ksbmyk/picoruby-ws2812-plus",
+"branch": "main",
+"commit": "16699f8eb163df3fad86cfe826590bf890d0bb58"
+}
+]
 }
 ```
 
-Commit `Mrbgems` and `Mrbgems.lock` together as the custom-firmware
-configuration. This keeps using the same GitHub gem commit even if a branch
-head later changes.
+Commit `Mrbgems` and `Mrbgems.lock` together as the custom-firmware configuration. This keeps using the same GitHub gem commit even if a branch head later changes.
 
 ## Commands
 
 ```sh
 # Validate the definition and local-gem layout.
 rpremote mrbgems check
-
 # List dependencies from the definition and lock file.
 rpremote mrbgems list
-
 # Create or update the lock; existing GitHub commits are reused.
 rpremote mrbgems lock
-
 # Resolve GitHub branches again and update the lock.
 rpremote mrbgems update
 ```
 
-`build` reuses GitHub commits recorded in `Mrbgems.lock`. Run
-`rpremote mrbgems update` only to move dependencies to their latest versions,
-then review and commit the changed lock file.
+`build` reuses GitHub commits recorded in `Mrbgems.lock`. Run `rpremote mrbgems update` only to move dependencies to their latest versions, then review and commit the changed lock file.
 
 You can also specify the definition and lock-file paths explicitly.
 
@@ -146,12 +122,9 @@ rpremote mrbgems lock --file config/Mrbgems --lockfile config/Mrbgems.lock
 - `build/`: intermediate files such as CMake output.
 - `firmware/*.uf2`: completed UF2 selected by `--firmware`; without it, the file is saved to `{cache}/{language}-{language_version}-{board}.uf2`.
 
-The fingerprint reflects `Mrbgems`, `Mrbgems.lock`, and the original build
-configuration. Builds with different settings or dependencies do not share
-intermediate output.
+The fingerprint reflects `Mrbgems`, `Mrbgems.lock`, and the original build configuration. Builds with different settings or dependencies do not share intermediate output.
 
-Remove only intermediate output with the command below. It does not remove
-`firmware/`, `Mrbgems`, or `Mrbgems.lock`.
+Remove only intermediate output with the command below. It does not remove `firmware/`, `Mrbgems`, or `Mrbgems.lock`.
 
 ```sh
 rpremote build clean

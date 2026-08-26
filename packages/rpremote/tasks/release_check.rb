@@ -34,14 +34,10 @@ module Rpremote
       package = Gem::Package.new(gem_file)
       specification = package.spec
       missing_files = EXPECTED_FILES - package.contents
-      changelog_entry = "## [#{Rpremote::VERSION}]"
+      changelog_entry = /^## #{Regexp.escape(Rpremote::VERSION)} - \d{4}-\d{2}-\d{2}$/
 
-      unless specification.version.to_s == Rpremote::VERSION
-        abort "built gem version does not match #{Rpremote::VERSION}"
-      end
-      unless File.read("CHANGELOG.md").include?(changelog_entry)
-        abort "CHANGELOG.md has no entry for #{Rpremote::VERSION}"
-      end
+      abort "built gem version does not match #{Rpremote::VERSION}" unless specification.version.to_s == Rpremote::VERSION
+      abort "CHANGELOG.md has no entry for #{Rpremote::VERSION}" unless File.read("CHANGELOG.md").match?(changelog_entry)
       abort "built gem is missing: #{missing_files.join(", ")}" unless missing_files.empty?
       abort "built gem does not require MFA" unless specification.metadata["rubygems_mfa_required"] == "true"
     end

@@ -1,25 +1,21 @@
 # rpremote configuration
 
-rpremote reads `config/setting.json` from the project root. Use `--config FILE`
-to select another file. Keys use `snake_case`, and command-line values override
-configuration.
+rpremote reads `config/setting.json` from the project root. Use `--config FILE` to select another file. Keys use `snake_case`, and command-line values override configuration.
 
-All keys are validated even when the selected command ignores them. Unknown
-keys, empty strings, wrong types, and non-positive `baud` or `timeout` values
-are errors.
+All keys are validated even when the selected command ignores them. Unknown keys, empty strings, wrong types, and non-positive `baud` or `timeout` values are errors.
 
 ```json
 {
-  "port": "/dev/cu.usbmodem101",
-  "baud": 115200,
-  "timeout": 10,
-  "language": "picoruby",
-  "cache": "firmware",
-  "language_version": "4.0.3",
-  "board": "pico2",
-  "firmware": "firmware/picoruby-4.0.3-pico2.uf2",
-  "mount": "/Volumes/RP2350",
-  "mrbgems": "Mrbgems"
+"port": "/dev/cu.usbmodem101",
+"baud": 115200,
+"timeout": 20,
+"language": "picoruby",
+"cache": "firmware",
+"language_version": "4.0.3",
+"board": "pico2",
+"firmware": "firmware/picoruby-4.0.3-pico2.uf2",
+"mount": "/Volumes/RP2350",
+"mrbgems": "Mrbgems"
 }
 ```
 
@@ -34,14 +30,10 @@ are errors.
 | `mount` | non-empty string | auto-detect | `flash` | `--mount` |
 | `port` | non-empty string | auto-select CDC 0 | `flash`, runtime, `dfu` | `--port` |
 | `baud` | positive integer | `115200` | runtime, `dfu` | `--baud` |
-| `timeout` | positive number in seconds | `10` | `flash`, runtime, `dfu` | `--timeout` |
+| `timeout` | positive number in seconds | `20` | `flash`, runtime, `dfu` | `--timeout` |
 
-`cache` may contain `{version}`, which expands to `language_version`. Without an
-explicit `firmware`, the target is
-`{cache}/{language}-{language_version}-{board}.uf2`.
+`cache` may contain `{version}`, which expands to `language_version`. Without an explicit `firmware`, the target is `{cache}/{language}-{language_version}-{board}.uf2`.
 
-`mrbgems: false` disables automatic dependency injection for a build. An
-explicit `--mrbgems FILE` overrides the configured path.
+`mrbgems: false` disables automatic dependency injection for a build. An explicit `--mrbgems FILE` overrides the configured path.
 
-Keep machine-specific `port` and `mount` values out of shared configuration
-unless every user has the same hardware layout.
+Keep machine-specific `port` and `mount` values out of shared configuration unless every user has the same hardware layout.

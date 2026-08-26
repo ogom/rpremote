@@ -18,7 +18,7 @@ Gem::Specification.new do |spec|
   spec.metadata["rubygems_mfa_required"] = "true"
 
   spec.files = Dir.chdir(__dir__) do
-    Dir.glob("{exe,lib,sig,tasks}/**/*", File::FNM_DOTMATCH).select { |file| File.file?(file) } +
+    Dir.glob("{exe,lib,patches,sig,tasks}/**/*", File::FNM_DOTMATCH).select { |file| File.file?(file) } +
       %w[CHANGELOG.md LICENSE README.md README.ja.md RELEASING.md THIRD_PARTY_NOTICES.md]
   end
   spec.bindir = "exe"

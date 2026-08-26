@@ -4,13 +4,14 @@ require "io/wait"
 
 module Rpremote
   class Shell
-    DEFAULT_TIMEOUT = 10.0
+    DEFAULT_TIMEOUT = 20.0
     PROMPT_START = "\e[?25l\e[1G$> \e[0K".b
     PROMPT_END = "\e[?25h".b
     ECHO_START = "\e[?25l\e[1G$> ".b
     ERASE_LINE = "\e[0K".b
     CURSOR_POSITION_QUERY = "\e[6n".b
     CURSOR_POSITION_RESPONSE = "\e[1;1R".b
+    RUBY_EXCEPTION_STATUS = "\x1eR2P2:RUBY_EXCEPTION\x1f".b
 
     class Error < Rpremote::Error; end
     class TimeoutError < Error; end
@@ -42,11 +43,18 @@ module Rpremote
       nil
     end
 
-    def execute(command)
+    def execute(command, output: nil)
       command = validate_command(command)
       send_command(command)
-      response = read_until_prompt(after: ECHO_START + command.b + ERASE_LINE)
-      extract_output(response, command)
+      echo = ECHO_START + command.b + ERASE_LINE
+      stream_state = {}
+      response = read_until_prompt(after: echo) { |buffer| stream_output(output, buffer, echo, stream_state) }
+      command_output = extract_output(response, command)
+      ruby_exception = command_output.include?(RUBY_EXCEPTION_STATUS)
+      command_output = remove_ruby_exception_status(command_output)
+      raise CommandError, "Ruby exception reported by R2P2" if ruby_exception
+
+      command_output
     rescue TimeoutError
       interrupt
       raise
@@ -78,6 +86,7 @@ module Rpremote
 
         buffer << read_available(deadline)
         answer_terminal_queries(buffer)
+        yield buffer if block_given?
       end
     end
 
@@ -93,6 +102,30 @@ module Rpremote
       raise ProtocolError, "R2P2 Shell response has no command boundary" unless output_at
 
       response.byteslice((output_at + 1)...prompt_at) || +"".b
+    end
+
+    def stream_output(output, response, echo, state)
+      return unless output
+
+      echo_at = response.rindex(echo)
+      return unless echo_at
+
+      output_at = response.index("\n", echo_at + echo.bytesize)
+      return unless output_at
+
+      output_at += 1
+      prompt_at = response.index(PROMPT_START, output_at)
+      safe_end = prompt_at || (response.rindex("\n", response.bytesize - 1).to_i + 1)
+      position = state.fetch(:position, output_at)
+      return if safe_end <= position
+
+      output.write(remove_ruby_exception_status(response.byteslice(position...safe_end)))
+      output.flush if output.respond_to?(:flush)
+      state[:position] = safe_end
+    end
+
+    def remove_ruby_exception_status(data)
+      data.gsub(RUBY_EXCEPTION_STATUS, "")
     end
 
     def drain_input
@@ -114,9 +147,7 @@ module Rpremote
     def read_available(deadline)
       remaining = deadline - monotonic_time
       raise TimeoutError, "timed out waiting for the R2P2 Shell after #{timeout} seconds" unless remaining.positive?
-      unless selectable_io.wait_readable(remaining)
-        raise TimeoutError, "timed out waiting for the R2P2 Shell after #{timeout} seconds"
-      end
+      raise TimeoutError, "timed out waiting for the R2P2 Shell after #{timeout} seconds" unless selectable_io.wait_readable(remaining)
 
       data = io.read_nonblock(4096)
       raise IOError, "serial connection closed" if data.nil? || data.empty?

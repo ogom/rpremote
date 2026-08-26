@@ -4,7 +4,7 @@ require "optparse"
 
 module Rpremote
   class DfuCommand
-    DEFAULT_TIMEOUT = 10.0
+    DEFAULT_TIMEOUT = 20.0
     TYPES = { ".rb" => "RUBY", ".mrb" => "RITE" }.freeze
 
     def self.run(args, defaults:, output: $stdout, services: {})
@@ -30,6 +30,8 @@ module Rpremote
       type = options[:type] || type_for(source)
       port_path = services[:device].main_port(options[:port])
       verify_rite_version!(data, port_path, options, services) if type == "RITE"
+      output.puts("staging DFU #{type.downcase} app (#{data.bytesize} bytes): #{source} -> inactive slot on #{port_path}; " \
+                  "this changes the staged boot application")
       services[:serial].open(port_path, baud: options[:baud]) do |port|
         services[:modem].new(port, timeout: options[:timeout]).dfu(data, type: type)
       end
@@ -122,9 +124,7 @@ module Rpremote
 
     def self.verify_rite_version!(data, port_path, options, services)
       bytecode_version = data.byteslice(0, 8)
-      unless bytecode_version&.match?(/\ARITE\d{4}\z/)
-        raise ArgumentError, "DFU RITE app must start with a RITE bytecode header"
-      end
+      raise ArgumentError, "DFU RITE app must start with a RITE bytecode header" unless bytecode_version&.match?(/\ARITE\d{4}\z/)
 
       picoruby_version = services[:serial].open(port_path, baud: options[:baud]) do |port|
         services[:runner].new(port, timeout: options[:timeout]).run("p PICORUBY_VERSION")[/\d+\.\d+\.\d+/]

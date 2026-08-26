@@ -59,6 +59,23 @@ RSpec.describe Rpremote::Builder do
     end
   end
 
+  it "applies the bundled PicoRuby source patch before building" do
+    events = []
+    source_patcher = ->(source, version) { events << [:patch, source, version] }
+    runner = lambda do |*|
+      events << [:build]
+      true
+    end
+
+    Dir.mktmpdir do |root|
+      source = File.join(root, "firmware", "picoruby-4.0.3")
+      FileUtils.mkdir_p(source)
+      described_class.new(root: root, runner: runner, source_patcher: source_patcher).build(mrbgems: false)
+
+      expect(events).to eq([[:patch, source, "4.0.3"], [:build]])
+    end
+  end
+
   it "explains when the prepared PicoRuby source is missing" do
     expect { described_class.new(root: "/tmp/rpremote-missing").build }
       .to raise_error(Rpremote::Builder::Error, /Run `rpremote setup/)

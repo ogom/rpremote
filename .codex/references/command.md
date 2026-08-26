@@ -1,19 +1,14 @@
 # rpremote commands
 
-Run project commands from the project root. For the authoritative installed
-syntax, run `rpremote --help`.
+Run project commands from the project root. For the authoritative installed syntax, run `rpremote --help`.
 
 ## Set up PicoRuby source
 
 ```sh
-rpremote setup [--language picoruby] [--language-version VERSION] \
-  [--cache DIR] [--force]
+rpremote setup [--language picoruby] [--language-version VERSION] [--cache DIR] [--force]
 ```
 
-`setup` creates `config/setting.json` without replacing an existing file and
-downloads the selected PicoRuby source to
-`{cache}/picoruby-{language_version}/`. Use `--force` only to replace the
-prepared source deliberately.
+`setup` creates `config/setting.json` without replacing an existing file and downloads the selected PicoRuby source to `{cache}/picoruby-{language_version}/`. Use `--force` only to replace the prepared source deliberately.
 
 ## Manage mrbgems
 
@@ -24,16 +19,12 @@ rpremote mrbgems lock [--file FILE] [--lockfile FILE]
 rpremote mrbgems update [--file FILE] [--lockfile FILE]
 ```
 
-`check` validates the definition and local paths. `lock` creates or refreshes
-`Mrbgems.lock` while reusing recorded GitHub commits. `update` intentionally
-resolves branch dependencies again.
+`check` validates the definition and local paths. `lock` creates or refreshes `Mrbgems.lock` while reusing recorded GitHub commits. `update` intentionally resolves branch dependencies again.
 
 ## Build
 
 ```sh
-rpremote build [--language picoruby] [--language-version VERSION] \
-  [--board pico2|pico2_w] [--firmware FILE] [--cache DIR] \
-  [--mrbgems FILE|--no-mrbgems]
+rpremote build [--language picoruby] [--language-version VERSION] [--board pico2|pico2_w] [--firmware FILE] [--cache DIR] [--mrbgems FILE|--no-mrbgems]
 rpremote build clean
 ```
 
@@ -41,30 +32,22 @@ rpremote build clean
 rpremote setup --language-version 4.0.3
 rpremote mrbgems check
 rpremote mrbgems lock
-rpremote build --language-version 4.0.3 --board pico2 \
-  --firmware firmware/r2p2-picoruby-4.0.3-pico2.uf2
+rpremote build --language-version 4.0.3 --board pico2 --firmware firmware/r2p2-picoruby-4.0.3-pico2.uf2
 ```
 
-The project-root `Mrbgems` is auto-detected. `--firmware` names the completed
-UF2. `build --output` is not supported. `build clean` removes only generated
-`build/` intermediates.
+The project-root `Mrbgems` is auto-detected. `--firmware` names the completed UF2. `build --output` is not supported. `build clean` removes only generated `build/` intermediates.
 
 ## Flash
 
 ```sh
-rpremote flash [--firmware FILE] [--language picoruby] \
-  [--language-version VERSION] [--board pico2|pico2_w] [--cache DIR] \
-  [--mount DIR] [--port PORT] [--timeout SEC]
+rpremote flash [--firmware FILE] [--language picoruby] [--language-version VERSION] [--board pico2|pico2_w] [--cache DIR] [--mount DIR] [--port PORT] [--timeout SEC]
 ```
 
 ```sh
-rpremote flash --firmware firmware/r2p2-picoruby-4.0.3-pico2.uf2 \
-  --mount /Volumes/RP2350
+rpremote flash --firmware firmware/r2p2-picoruby-4.0.3-pico2.uf2 --mount /Volumes/RP2350
 ```
 
-Hold BOOTSEL while connecting the Pico and select its RP2350 volume. A
-positional UF2 argument is not supported. After copying the UF2, rpremote waits
-for the R2P2 serial port to return.
+Hold BOOTSEL while connecting the Pico and select its RP2350 volume. A positional UF2 argument is not supported. After copying the UF2, rpremote waits for the R2P2 serial port to return.
 
 ## Run and inspect
 
@@ -77,8 +60,7 @@ rpremote monitor [--port PORT] [--baud RATE] [--timeout SEC]
 rpremote repl [--port PORT] [--baud RATE] [--timeout SEC]
 ```
 
-`run` and `exec` use a temporary `/home/.rpremote-run-*.rb` and remove it after
-execution. `monitor` and `repl` exit with `Ctrl-]`.
+`run` and `exec` use a temporary `/home/.rpremote-run-*.rb` and remove it after execution. `monitor` and `repl` exit with `Ctrl-]`.
 
 ## Filesystem
 
@@ -96,10 +78,8 @@ rpremote fs rm :/home/FILE [--port PORT]
 ## PicoModem DFU
 
 ```sh
-rpremote dfu app FILE [--type ruby|rite] [--port PORT] \
-  [--baud RATE] [--timeout SEC]
-rpremote dfu compile FILE [--output FILE] [--language picoruby] \
-  [--language-version VERSION] [--cache DIR]
+rpremote dfu app FILE [--type ruby|rite] [--port PORT] [--baud RATE] [--timeout SEC]
+rpremote dfu compile FILE [--output FILE] [--language picoruby] [--language-version VERSION] [--cache DIR]
 rpremote dfu status [--port PORT] [--baud RATE] [--timeout SEC]
 ```
 
@@ -110,8 +90,7 @@ rpremote reset
 rpremote dfu status
 ```
 
-Use `dfu compile` to create bytecode matching the target PicoRuby version.
-`dfu app` infers `RUBY` from `.rb` and `RITE` from `.mrb`.
+Use `dfu compile` to create bytecode matching the target PicoRuby version. `dfu app` infers `RUBY` from `.rb` and `RITE` from `.mrb`.
 
 ## Common options
 
@@ -126,7 +105,7 @@ Use `dfu compile` to create bytecode matching the target PicoRuby version.
 | `--mount DIR` | Select the RP2350 BOOTSEL volume. |
 | `--port PORT` | Select an R2P2 CDC 0 serial port. |
 | `--baud RATE` | Serial speed; default: `115200`. |
-| `--timeout SEC` | Timeout in seconds; default: `10`. |
+| `--timeout SEC` | Timeout in seconds; default: `20`. |
 
 ## Validate the CLI
 

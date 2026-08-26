@@ -24,7 +24,7 @@ module Rpremote
     READY = 0x01
 
     CHUNK_SIZE = 480
-    DEFAULT_TIMEOUT = 10.0
+    DEFAULT_TIMEOUT = 20.0
     MAX_FRAME_BODY = 65_535
     DFU_MAGIC = "DFU\0".b
     DFU_VERSION = 1
@@ -87,9 +87,7 @@ module Rpremote
           when DONE_ACK
             status, remote_crc = parse_completion(payload)
             raise DeviceError, format("download failed with status 0x%02x", status) unless status == OK
-            if total && data.bytesize != total
-              raise ProtocolError, "file size mismatch: expected #{total}, received #{data.bytesize}"
-            end
+            raise ProtocolError, "file size mismatch: expected #{total}, received #{data.bytesize}" if total && data.bytesize != total
 
             local_crc = Checksum.crc32(data)
             raise ChecksumError, checksum_mismatch("CRC32", local_crc, remote_crc, 8) unless remote_crc == local_crc
@@ -194,9 +192,7 @@ module Rpremote
     def expect_status(expected_command, expected_status, context)
       command, payload = receive_frame
       raise DeviceError, payload.force_encoding(Encoding::UTF_8) if command == ERROR
-      unless command == expected_command
-        raise ProtocolError, "unexpected response #{hex(command, 2)} while waiting for #{context}"
-      end
+      raise ProtocolError, "unexpected response #{hex(command, 2)} while waiting for #{context}" unless command == expected_command
       raise ProtocolError, "#{context} has no status" if payload.empty?
       return if payload.getbyte(0) == expected_status
 
