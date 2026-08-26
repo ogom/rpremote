@@ -1,7 +1,5 @@
 # 03 speaker
 
-言語: PicoRuby, ボード: Raspberry Pi Pico 2, カスタムmrbgem: 不要
-
 [English](README.md)
 
 スイッチを押すたびに、圧電ブザーを1000 Hz、約3.05%デューティで200 ms鳴らします。`03_speaker.py`の`frequency=1000`、`duty_u16(2000)`、200 msと同じ条件です。

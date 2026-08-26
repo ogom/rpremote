@@ -18,10 +18,11 @@ RSpec.describe Rpremote::CLI do
   it "prints command-specific help without loading configuration or accessing a board" do
     config = class_double(Rpremote::Config, extract_option!: ["missing.json", true], load_command: {})
     commands = [
-      %w[setup --help], %w[build --help], %w[build clean --help], %w[dfu app --help],
-      %w[dfu compile --help], %w[dfu status --help], %w[mrbgems update --help], %w[flash --help],
+      %w[setup --help], %w[build --help], %w[build clean --help], %w[deploy --help], %w[dfu app --help],
+      %w[dfu compile --help], %w[dfu status --help], %w[dfu remove --help],
+      %w[mrbgems update --help], %w[flash --help],
       %w[config show --help], %w[ports --help], %w[run --help], %w[exec --help], %w[monitor --help],
-      %w[repl --help], %w[reset --help], %w[fs cp --help], %w[fs cat --help], %w[fs ls --help],
+      %w[repl --help], %w[reset --help], %w[fs cp --help], %w[fs push --help], %w[fs cat --help], %w[fs ls --help],
       %w[fs rm --help], %w[fs mkdir --help]
     ]
 
@@ -35,6 +36,14 @@ RSpec.describe Rpremote::CLI do
     end
 
     expect(config).not_to have_received(:load_command)
+  end
+
+  it "explains the complete deploy workflow" do
+    status = described_class.start(["deploy", "--help"], stdout: stdout, stderr: stderr)
+
+    expect(status).to eq(0)
+    expect(stdout.string).to include("Builds the selected custom UF2")
+    expect(stdout.string).to include("If PATH/lib/NAME exists, it copies it to :/lib/NAME")
   end
 
   it "uses the shared command syntax in root and command help" do
@@ -120,6 +129,9 @@ RSpec.describe Rpremote::CLI do
     source_instance = instance_double(Rpremote::LanguageSource, setup: "/project/firmware/picoruby-4.0.3")
     language_source = class_double(Rpremote::LanguageSource, new: source_instance)
     stub_const("Rpremote::LanguageSource", language_source)
+    nuke_instance = instance_double(Rpremote::NukeFirmware, setup: "/project/firmware/nuke_universal.uf2")
+    nuke_firmware = class_double(Rpremote::NukeFirmware, new: nuke_instance)
+    stub_const("Rpremote::NukeFirmware", nuke_firmware)
     config_result = Rpremote::Config::Result.new(path: "/project/config/setting.json", created: true)
     config = class_double(
       Rpremote::Config,
@@ -138,6 +150,7 @@ RSpec.describe Rpremote::CLI do
       language: "picoruby", version: "4.0.3", cache_dir: "firmware"
     )
     expect(source_instance).to have_received(:setup).with(force: true)
+    expect(nuke_instance).to have_received(:setup).with(force: true)
     expect(stdout.string).to include("created config")
     expect(stdout.string).to include("installed picoruby 4.0.3")
   end
@@ -146,6 +159,9 @@ RSpec.describe Rpremote::CLI do
     source_instance = instance_double(Rpremote::LanguageSource, setup: "/project/firmware/picoruby-3.4.2")
     language_source = class_double(Rpremote::LanguageSource, new: source_instance)
     stub_const("Rpremote::LanguageSource", language_source)
+    nuke_instance = instance_double(Rpremote::NukeFirmware, setup: "/project/firmware/nuke_universal.uf2")
+    nuke_firmware = class_double(Rpremote::NukeFirmware, new: nuke_instance)
+    stub_const("Rpremote::NukeFirmware", nuke_firmware)
     config_result = Rpremote::Config::Result.new(path: "/project/config/setting.json", created: false)
     config = class_double(
       Rpremote::Config,
@@ -166,6 +182,7 @@ RSpec.describe Rpremote::CLI do
       language: "picoruby", version: "3.4.2", cache_dir: "firmware"
     )
     expect(stdout.string).to include("installed picoruby 3.4.2")
+    expect(nuke_instance).to have_received(:setup).with(force: false)
   end
 
   it "builds custom firmware from the rpremote repository" do
@@ -183,6 +200,25 @@ RSpec.describe Rpremote::CLI do
       defaults: {},
       output: stdout,
       error: stderr
+    )
+  end
+
+  it "deploys a project" do
+    allow(Rpremote::DeployCommand).to receive(:run)
+
+    status = described_class.start(
+      ["deploy", "path/to/project"],
+      stdout: stdout,
+      stderr: stderr
+    )
+
+    expect(status).to eq(0)
+    expect(Rpremote::DeployCommand).to have_received(:run).with(
+      ["path/to/project"],
+      defaults: {},
+      output: stdout,
+      error: stderr,
+      services: { flasher: Rpremote::Flasher, serial: Rpremote::Serial, device: Rpremote::Device }
     )
   end
 
@@ -209,7 +245,7 @@ RSpec.describe Rpremote::CLI do
     dependencies = [
       Rpremote::Mrbgems::Dependency.new(
         type: :github, source: "ksbmyk/picoruby-ws2812-plus",
-        branch: "main", commit: nil, path: nil
+        branch: "main", commit: nil, path: nil, require_name: nil
       )
     ]
     manager = instance_double(
@@ -310,6 +346,22 @@ RSpec.describe Rpremote::CLI do
     expect(stderr.string).to include("flash does not accept arguments; use --firmware FILE")
   end
 
+  it "rejects the removed initialize command" do
+    status = described_class.start(["initialize"], stdout: stdout, stderr: stderr)
+
+    expect(status).to eq(1)
+    expect(stderr.string).to include("unknown command: initialize")
+  end
+
+  it "rejects the removed flash --nuke option" do
+    status = described_class.start(
+      %w[flash --nuke], stdout: stdout, stderr: stderr
+    )
+
+    expect(status).to eq(1)
+    expect(stderr.string).to include("invalid option: --nuke")
+  end
+
   it "stages a Ruby application with PicoModem DFU" do
     source = File.expand_path("../fixtures/run.rb", __dir__)
     port = Object.new
@@ -355,7 +407,8 @@ RSpec.describe Rpremote::CLI do
     serial = class_double(Rpremote::Serial)
     allow(serial).to receive(:open).and_yield(port)
     runner_instance = instance_double(Rpremote::Runner)
-    allow(runner_instance).to receive(:run) do |_data, output:|
+    allow(runner_instance).to receive(:run) do |_data, output:, diagnostics:|
+      expect(diagnostics).to equal(stderr)
       output.write("three\n")
       "three\n"
     end
@@ -374,8 +427,97 @@ RSpec.describe Rpremote::CLI do
     expect(device).to have_received(:main_port).with("/dev/cu.usbmodem101")
     expect(serial).to have_received(:open).with("/dev/cu.usbmodem101", baud: 115_200)
     expect(runner).to have_received(:new).with(port, timeout: 2.0)
-    expect(runner_instance).to have_received(:run).with("# frozen_string_literal: true\n\nputs 1 + 2\n", output: stdout)
+    expect(runner_instance).to have_received(:run).with(
+      "# frozen_string_literal: true\n\nputs 1 + 2\n", output: stdout, diagnostics: stderr
+    )
     expect(stdout.string).to eq("three\n")
+  end
+
+  it "resets R2P2 after a run timeout when requested" do
+    source = File.expand_path("../fixtures/run.rb", __dir__)
+    port = Object.new
+    device = class_double(Rpremote::Device, main_port: "/dev/cu.usbmodem101")
+    serial = class_double(Rpremote::Serial)
+    allow(serial).to receive(:open).and_yield(port)
+    timeout_error = Rpremote::Shell::TimeoutError.new("timed out waiting for the R2P2 Shell after 2.0 seconds")
+    runner_instance = instance_double(Rpremote::Runner)
+    allow(runner_instance).to receive(:run).and_raise(timeout_error)
+    runner = class_double(Rpremote::Runner, new: runner_instance)
+    resetter_instance = instance_double(Rpremote::Resetter, reset: "/dev/cu.usbmodem101")
+    resetter = class_double(Rpremote::Resetter, new: resetter_instance)
+    stub_const("Rpremote::Runner", runner)
+    stub_const("Rpremote::Resetter", resetter)
+
+    status = described_class.start(
+      ["run", source, "--port", "/dev/cu.usbmodem101", "--timeout", "2", "--reset-on-timeout"],
+      stdout: stdout,
+      stderr: stderr,
+      device: device,
+      serial: serial
+    )
+
+    expect(status).to eq(1)
+    expect(resetter).to have_received(:new).with(serial: serial, timeout: 2.0)
+    expect(resetter_instance).to have_received(:reset).with("/dev/cu.usbmodem101", baud: 115_200)
+    expect(stderr.string).to include("run timed out; resetting R2P2")
+    expect(stderr.string).to include("reset R2P2 after run timeout")
+    expect(stderr.string).to include(timeout_error.message)
+  end
+
+  it "runs main.rb when the run source is a directory" do
+    Dir.mktmpdir("rpremote-cli-run") do |directory|
+      File.write(File.join(directory, "main.rb"), "puts :directory\n")
+      port = Object.new
+      device = class_double(Rpremote::Device, main_port: "/dev/cu.usbmodem101")
+      serial = class_double(Rpremote::Serial)
+      allow(serial).to receive(:open).and_yield(port)
+      runner_instance = instance_double(Rpremote::Runner, run: "")
+      runner = class_double(Rpremote::Runner, new: runner_instance)
+      stub_const("Rpremote::Runner", runner)
+
+      status = described_class.start(
+        ["run", directory, "--port", "/dev/cu.usbmodem101"],
+        stdout: stdout, stderr: stderr, device: device, serial: serial
+      )
+
+      expect(status).to eq(0)
+      expect(runner_instance).to have_received(:run).with("puts :directory\n", output: stdout, diagnostics: stderr)
+    end
+  end
+
+  it "automatically requires mrbgems recorded in Mrbgems.lock" do
+    Dir.mktmpdir("rpremote-cli-require") do |directory|
+      source = File.join(directory, "main.rb")
+      File.write(source, "WS2812PP.new(pin: 14, num: 10).one(1)\n")
+      lock = JSON.generate(
+        "version" => 1,
+        "gems" => [{ "type" => "path", "source" => "ws2812_pp", "sha256" => "a" * 64,
+                     "require_name" => "ws2812_pp" }]
+      )
+      File.write(File.join(directory, "Mrbgems.lock"), lock)
+      port = Object.new
+      device = class_double(Rpremote::Device, main_port: "/dev/cu.usbmodem101")
+      serial = class_double(Rpremote::Serial)
+      allow(serial).to receive(:open).and_yield(port)
+      runner_instance = instance_double(Rpremote::Runner, run: "")
+      runner = class_double(Rpremote::Runner, new: runner_instance)
+      stub_const("Rpremote::Runner", runner)
+
+      Dir.chdir(directory) do
+        status = described_class.start(
+          ["run", source, "--port", "/dev/cu.usbmodem101"],
+          stdout: stdout, stderr: stderr, device: device, serial: serial
+        )
+
+        expect(status).to eq(0)
+      end
+
+      expect(runner_instance).to have_received(:run).with(
+        "require \"ws2812_pp\"\nWS2812PP.new(pin: 14, num: 10).one(1)\n",
+        output: stdout,
+        diagnostics: stderr
+      )
+    end
   end
 
   it "returns a nonzero status when a Ruby file raises on R2P2" do
@@ -385,7 +527,8 @@ RSpec.describe Rpremote::CLI do
     serial = class_double(Rpremote::Serial)
     allow(serial).to receive(:open).and_yield(port)
     runner_instance = instance_double(Rpremote::Runner)
-    allow(runner_instance).to receive(:run) do |_data, output:|
+    allow(runner_instance).to receive(:run) do |_data, output:, diagnostics:|
+      expect(diagnostics).to equal(stderr)
       output.write("missing (NameError)\n")
       raise Rpremote::Shell::CommandError, "Ruby exception reported by R2P2"
     end
@@ -456,7 +599,8 @@ RSpec.describe Rpremote::CLI do
     serial = class_double(Rpremote::Serial)
     allow(serial).to receive(:open).and_yield(port)
     runner_instance = instance_double(Rpremote::Runner)
-    allow(runner_instance).to receive(:run) do |_data, output:|
+    allow(runner_instance).to receive(:run) do |_data, output:, diagnostics:|
+      expect(diagnostics).to equal(stderr)
       output.write("three\n")
       "three\n"
     end
@@ -472,7 +616,7 @@ RSpec.describe Rpremote::CLI do
     )
 
     expect(status).to eq(0)
-    expect(runner_instance).to have_received(:run).with("puts 1 + 2", output: stdout)
+    expect(runner_instance).to have_received(:run).with("puts 1 + 2", output: stdout, diagnostics: stderr)
     expect(stdout.string).to eq("three\n")
   end
 
@@ -482,7 +626,8 @@ RSpec.describe Rpremote::CLI do
     serial = class_double(Rpremote::Serial)
     allow(serial).to receive(:open).and_yield(port)
     runner_instance = instance_double(Rpremote::Runner)
-    allow(runner_instance).to receive(:run) do |_data, output:|
+    allow(runner_instance).to receive(:run) do |_data, output:, diagnostics:|
+      expect(diagnostics).to equal(stderr)
       output.write("missing (NameError)\n")
       raise Rpremote::Shell::CommandError, "Ruby exception reported by R2P2"
     end
@@ -533,6 +678,60 @@ RSpec.describe Rpremote::CLI do
       expected_output = command == "rm" ? "deleting remote path permanently: /home/a b\n" : result
       expect(stdout.string).to eq(expected_output)
     end
+  end
+
+  it "recursively uploads a local directory and creates missing remote directories" do
+    Dir.mktmpdir("rpremote-fs-cp") do |source|
+      FileUtils.mkdir_p(File.join(source, "processing"))
+      File.binwrite(File.join(source, "imu_adapter.rb"), "adapter")
+      File.binwrite(File.join(source, "processing", "config.rb"), "config")
+
+      port = Object.new
+      device = class_double(Rpremote::Device, main_port: "/dev/cu.usbmodem101")
+      serial = class_double(Rpremote::Serial)
+      allow(serial).to receive(:open).and_yield(port)
+      shell = instance_double(Rpremote::Shell, synchronize!: nil)
+      allow(shell).to receive(:execute) do |command|
+        command == "ls '/lib/processing'" ? "ls: missing\n" : ""
+      end
+      allow(Rpremote::Shell).to receive(:new).and_return(shell)
+      modem = instance_double(Rpremote::PicoModem)
+      allow(modem).to receive(:upload) { |_path, data| data.bytesize }
+      allow(Rpremote::PicoModem).to receive(:new).and_return(modem)
+
+      status = described_class.start(
+        ["fs", "cp", "--recursive", source, ":/lib"],
+        stdout: stdout,
+        stderr: stderr,
+        device: device,
+        serial: serial
+      )
+
+      expect(status).to eq(0)
+      expect(shell).to have_received(:execute).with("ls '/lib'")
+      expect(shell).to have_received(:execute).with("mkdir '/lib/processing'")
+      expect(modem).to have_received(:upload).with("/lib/imu_adapter.rb", "adapter")
+      expect(modem).to have_received(:upload).with("/lib/processing/config.rb", "config")
+      expect(stdout.string).to include("uploaded 2 files: #{source} -> :/lib")
+    end
+  end
+
+  it "uses fs push as an alias for recursive fs cp" do
+    recursive_copy = instance_double(Rpremote::RecursiveCopy, call: nil)
+    allow(Rpremote::RecursiveCopy).to receive(:new).and_return(recursive_copy)
+
+    status = described_class.start(
+      ["fs", "push", "local/lib", ":/lib", "--port", "/dev/cu.usbmodem101"],
+      stdout: stdout,
+      stderr: stderr
+    )
+
+    expect(status).to eq(0)
+    expect(recursive_copy).to have_received(:call).with(
+      "local/lib",
+      ":/lib",
+      hash_including(port: "/dev/cu.usbmodem101")
+    )
   end
 
   it "returns a failure status for an R2P2 filesystem error" do

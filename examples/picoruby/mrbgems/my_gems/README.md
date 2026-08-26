@@ -1,7 +1,5 @@
 # my_gems local mrbgem
 
-Language: PicoRuby, Board: Raspberry Pi Pico 2, Custom mrbgem: this directory provides `picoruby-my_gems`
-
 [日本語](README.ja.md)
 
 This pure-Ruby local mrbgem wraps an output GPIO in `MyGems`. The project-root `Mrbgems` loads it with a path relative to that file:

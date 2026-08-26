@@ -1,7 +1,5 @@
 # 10 Wi-Fi
 
-言語: PicoRuby, ボード: Raspberry Pi Pico 2 W, カスタムmrbgem: 不要
-
 [English](README.md)
 
 Pico 2 Wを無線LANへ接続し、接続後にオンボードLEDを3回点滅します。

@@ -6,9 +6,18 @@ Command-line tools for preparing, building, flashing, and controlling custom Pic
 
 The main goal of rpremote is to make public mrbgems such as [`picoruby-ws2812-plus`](https://github.com/ksbmyk/picoruby-ws2812-plus) and project-local mrbgems easy to embed in reproducible Raspberry Pi Pico firmware. The repository contains the `rpremote` RubyGem under `packages/rpremote` and hardware examples under `examples`.
 
+## Requirements
+
+- macOS and Ruby 4.0 or later
+- Git, GNU Make, CMake, and the Arm GNU Toolchain
+- A Raspberry Pi Pico board supported by the selected R2P2 build configuration
+- A PicoRuby version providing the R2P2 build configuration
+
+rpremote uses macOS `stty` and Ruby's standard IO API, so it does not require a third-party serial-port gem. The R2P2 CDC 0 port must not be open in another terminal while a command is running. To use the examples, clone this repository and run commands from its root.
+
 ## Quick start
 
-Install the published gem, clone this repository, and download and prepare the default PicoRuby source:
+Install the published gem, clone this repository, and download and prepare the default PicoRuby source and official Raspberry Pi `nuke_universal.uf2` reset firmware:
 
 ```sh
 gem install rpremote
@@ -32,6 +41,12 @@ rpremote flash --mount /Volumes/RP2350
 rpremote run examples/picoruby/education/01_blink/main.rb
 ```
 
+For a project that keeps reusable Ruby code in `lib/NAME`, `deploy` builds and flashes the firmware, copies that directory to R2P2's `/lib/NAME`, and runs its `main.rb`. If the directory is absent, the copy step is skipped:
+
+```sh
+rpremote deploy examples/picoruby/projects/oximeter --timeout 70
+```
+
 Use `rpremote ports` to find the R2P2 serial ports. When more than one board is connected, select CDC 0 with `--port`.
 
 ## Run code and use the console
@@ -50,11 +65,12 @@ rpremote reset
 
 ## Work with remote files
 
-Prefix an R2P2 path with `:`. `fs cp` accepts exactly one remote path; `fs rm` permanently deletes the selected remote path.
+Prefix an R2P2 path with `:`. `fs cp` accepts exactly one remote path. Use `fs push LOCAL_DIR :/REMOTE_DIR`, an alias of `fs cp --recursive`, to create missing remote directories and upload a local directory tree; remote-only files are not deleted. `fs rm` permanently deletes the selected remote path.
 
 ```sh
 rpremote fs ls :/
 rpremote fs cp local.txt :/local.txt
+rpremote fs push local/lib :/lib
 rpremote fs cat :/local.txt
 rpremote fs rm :/local.txt
 ```
@@ -76,14 +92,12 @@ rpremote dfu app examples/picoruby/education/07_dfu/main.rb
 rpremote reset
 ```
 
-## Requirements
+Remove both persistent DFU application slots and stop the running boot application before using `run` alone:
 
-- macOS and Ruby 4.0 or later
-- Git, GNU Make, CMake, and the Arm GNU Toolchain
-- A Raspberry Pi Pico board supported by the selected R2P2 build configuration
-- A PicoRuby version providing the R2P2 build configuration
-
-rpremote uses macOS `stty` and Ruby's standard IO API, so it does not require a third-party serial-port gem. The R2P2 CDC 0 port must not be open in another terminal while a command is running. To use the examples, clone this repository and run commands from its root.
+```sh
+rpremote dfu remove
+rpremote reset
+```
 
 ## Add mrbgems
 
@@ -117,31 +131,7 @@ rpremote flash --language picoruby --language-version 3.4.2 --board pico2 --moun
 
 PicoRuby is implemented today. `language` and `board` keep the command-line interface ready for future MicroPython and additional Pico board support.
 
-## Commands
-
-| Command | Description |
-| --- | --- |
-| `rpremote setup` | Create project configuration and prepare language sources. |
-| `rpremote build` | Build a custom UF2, including project mrbgems. |
-| `rpremote build clean` | Remove generated intermediate build files. |
-| `rpremote dfu app FILE` | Stage a Ruby or version-checked bytecode application through PicoModem DFU. |
-| `rpremote dfu compile FILE` | Compile `.rb` to matching PicoRuby bytecode for DFU. |
-| `rpremote dfu status` | Show the active and candidate DFU slots. |
-| `rpremote mrbgems …` | Check, list, lock, or update mrbgem dependencies. |
-| `rpremote flash` | Flash a built UF2 through an RP2350 BOOTSEL volume. |
-| `rpremote config show` | Show the effective configuration after file and command-line options are resolved. |
-| `rpremote ports` | List detected R2P2 serial ports. |
-| `rpremote run FILE` | Upload and run a Ruby file, relay output lines in real time, then remove it; exit nonzero on a Ruby exception. |
-| `rpremote exec CODE` | Run short Ruby code and exit nonzero on a Ruby exception. |
-| `rpremote monitor` | Open a serial monitor. |
-| `rpremote repl` | Open PicoIRB. |
-| `rpremote reset` | Reboot R2P2 and wait for reconnection. |
-| `rpremote fs …` | Copy, print, list, remove, or create remote files. |
-
-Run `rpremote --help` for the complete command list and `rpremote <command> --help` for command-specific syntax, defaults, and effects.
-
-Ruby-exception exit statuses for `run` and `exec` require R2P2 firmware with Ruby exception status support.
-UF2 files built with `rpremote build` from this repository's PicoRuby sources include that support.
+See the [command reference](docs/command.md) for the complete command list, grouped filesystem commands, and their effects.
 
 ## Examples
 
@@ -154,6 +144,7 @@ UF2 files built with `rpremote build` from this repository's PicoRuby sources in
 ## Documentation
 
 - [Configuration and options](docs/config.md) / [日本語](docs/config.ja.md)
+- [Command reference](docs/command.md) / [日本語](docs/command.ja.md)
 - [Custom firmware for the WS2812 example](docs/firmware.md) / [日本語](docs/firmware.ja.md)
 - [Mrbgems and Mrbgems.lock](docs/mrbgems.md) / [日本語](docs/mrbgems.ja.md)
 - [PicoModem DFU application updates](docs/dfu.md) / [日本語](docs/dfu.ja.md)

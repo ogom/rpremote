@@ -166,6 +166,15 @@ module Rpremote
     def source_dir: () -> String
   end
 
+  class NukeFirmware
+    URL: String
+    FILENAME: String
+    MAX_REDIRECTS: Integer
+
+    def initialize: (?directory: String, ?fetcher: untyped) -> void
+    def setup: (?force: bool) -> String
+  end
+
   class PicoRubySourcePatch
     JOB_PATH: String
     PATCH_ALIASES: Hash[String, String]
@@ -310,6 +319,11 @@ module Rpremote
     def run: (String data, ?output: IO?) -> String
   end
 
+  class RecursiveCopy
+    def initialize: (output: IO, ?serial: untyped, ?device: untyped) -> void
+    def call: (String source, String destination, Hash[Symbol, untyped] options) -> void
+  end
+
   class Resetter
     DEFAULT_TIMEOUT: Float
     RETRY_INTERVAL: Float
@@ -337,7 +351,7 @@ module Rpremote
     class Result < Data
       attr_reader mount: String
       attr_reader destination: String
-      attr_reader port: String
+      attr_reader port: String?
     end
 
     class Error < Rpremote::Error
@@ -362,8 +376,10 @@ module Rpremote
       ?port_probe: untyped,
       ?sleeper: untyped
     ) -> void
-    def flash: (String uf2_path, ?mount: String?, ?port: String?) -> Result
+    def flash: (String uf2_path, ?mount: String?, ?port: String?, ?wait_for_port: bool) -> Result
     def find_mount: (?String? explicit_mount) -> String
+    def find_mounted: (?String? explicit_mount) -> String?
+    def wait_for_mount: (?mount: String?) -> String
   end
 
   class DfuCommand
@@ -414,5 +430,37 @@ module Rpremote
       ?output: IO,
       ?flasher: untyped
     ) -> void
+  end
+
+  class DeployCommand
+    def self.run: (
+      Array[String] args,
+      defaults: Hash[Symbol, untyped],
+      ?output: IO,
+      ?error: IO,
+      ?services: Hash[Symbol, untyped]
+    ) -> void
+  end
+
+  class BootselCommand
+    RESET_FLASH_FIRMWARE: String
+
+    class Error < Rpremote::Error
+    end
+
+    def self.run: (
+      Array[String] args,
+      defaults: Hash[Symbol, untyped],
+      ?output: IO,
+      ?services: Hash[Symbol, untyped]
+    ) -> void
+    def self.enter: (
+      mount: String?,
+      port: String?,
+      baud: Integer,
+      timeout: Numeric,
+      output: IO,
+      ?services: Hash[Symbol, untyped]
+    ) -> String
   end
 end

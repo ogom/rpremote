@@ -68,6 +68,27 @@ RSpec.describe Rpremote::Shell do
     expect(output.string).to eq("first\nsecond\n")
   end
 
+  it "treats the execution timeout as an idle timeout when requested" do
+    command = "./progress.rb"
+    command_boundary = described_class::ECHO_START + command + described_class::ERASE_LINE + "\n".b
+    io = ShellScriptedIO.new(
+      command_boundary,
+      "first\n",
+      "second\n",
+      described_class::PROMPT_START + described_class::PROMPT_END
+    )
+    now = 0.0
+    allow(io).to receive(:wait_readable) do |_remaining|
+      now += 0.0008
+      true
+    end
+
+    result = described_class.new(io, timeout: 0.001, clock: -> { now })
+                            .execute(command, idle_timeout: true)
+
+    expect(result).to eq("first\nsecond\n")
+  end
+
   it "raises a command error when R2P2 reports a Ruby exception" do
     command = "./broken.rb"
     exception_output = "undefined local variable or method 'missing' (NameError)\n"

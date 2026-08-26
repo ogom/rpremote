@@ -53,8 +53,23 @@ RSpec.describe Rpremote::Terminal do
 
     described_class.new(serial, input: input, output: output, selector: selector).run
 
-    expect(output.string).to eq("device output\n")
+    expect(output.string).to eq("device output\r\n")
     expect(serial.written).to eq("puts 1\rmore")
+  end
+
+  it "normalizes bare LF while preserving CRLF across serial read chunks" do
+    serial = TerminalScriptedIO.new("first\nsecond\r", "\nthird\n")
+    input = TerminalScriptedIO.new("\x1d".b)
+    output = StringIO.new
+    schedule = [[serial], [serial], [input]]
+    selector = lambda do |_readers|
+      ready = schedule.shift
+      ready && [ready, [], []]
+    end
+
+    described_class.new(serial, input: input, output: output, selector: selector).run
+
+    expect(output.string).to eq("first\r\nsecond\r\nthird\r\n")
   end
 
   it "restores a TTY raw mode and sends the REPL exit sequence" do

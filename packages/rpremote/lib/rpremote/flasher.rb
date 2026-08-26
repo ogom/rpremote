@@ -36,30 +36,57 @@ module Rpremote
       raise ArgumentError, "timeout must be positive" unless @timeout.positive?
     end
 
-    def flash(uf2_path, mount: nil, port: nil)
+    def flash(uf2_path, mount: nil, port: nil, wait_for_port: true)
       validate_firmware!(uf2_path)
       target = find_mount(mount)
       destination = File.join(target, File.basename(uf2_path))
       copy_firmware(uf2_path, destination)
       wait_until("BOOTSEL drive to disappear") { !mount_probe.call(target) }
+      return Result.new(mount: target, destination: destination, port: nil) unless wait_for_port
+
       detected_port = wait_until("R2P2 serial port to appear") { detect_port(port) }
       Result.new(mount: target, destination: destination, port: detected_port)
     end
 
     def find_mount(explicit_mount = nil)
-      return validate_mount!(File.expand_path(explicit_mount)) if explicit_mount
+      mounted = find_mounted(explicit_mount)
+      return mounted if mounted
 
-      matches = Dir.glob(File.join(volumes_root, "*")).select do |path|
-        Dir.exist?(path) && valid_target?(path)
+      raise MountNotFoundError,
+            "Pico 2 BOOTSEL drive not found; reconnect it while holding BOOTSEL or use --mount DIR"
+    end
+
+    def find_mounted(explicit_mount = nil)
+      if explicit_mount
+        path = File.expand_path(explicit_mount)
+        return unless Dir.exist?(path)
+
+        return validate_mount!(path)
       end
-      case matches.length
-      when 0
-        raise MountNotFoundError,
-              "Pico 2 BOOTSEL drive not found; reconnect it while holding BOOTSEL or use --mount DIR"
-      when 1
+
+      matches = bootsel_mounts
+      return if matches.empty?
+      return matches.first if matches.one?
+
+      raise MountNotFoundError, "multiple Pico 2 BOOTSEL drives found; use --mount DIR"
+    end
+
+    def wait_for_mount(mount: nil)
+      if mount
+        path = File.expand_path(mount)
+        return wait_until("Pico 2 BOOTSEL drive to appear") do
+          next unless Dir.exist?(path)
+          next unless valid_target?(path)
+
+          path
+        end
+      end
+
+      wait_until("Pico 2 BOOTSEL drive to appear") do
+        matches = bootsel_mounts
+        raise MountNotFoundError, "multiple Pico 2 BOOTSEL drives found; use --mount DIR" if matches.length > 1
+
         matches.first
-      else
-        raise MountNotFoundError, "multiple Pico 2 BOOTSEL drives found; use --mount DIR"
       end
     end
 
@@ -90,8 +117,19 @@ module Rpremote
       false
     end
 
+    def bootsel_mounts
+      Dir.glob(File.join(volumes_root, "*")).select do |path|
+        Dir.exist?(path) && valid_target?(path)
+      end
+    end
+
     def copy_firmware(source, destination)
       FileUtils.copy_file(source, destination)
+    rescue Errno::ENXIO
+      # RP2350 may reboot and detach its BOOTSEL volume before macOS finishes
+      # closing the destination. The disappearance and serial reconnect checks
+      # in #flash determine whether the transfer actually completed.
+      nil
     rescue SystemCallError => e
       raise Error, "failed to copy UF2 firmware: #{e.message}"
     end

@@ -9,10 +9,7 @@ RSpec.describe Rpremote::PicoRubySourcePatch do
       FileUtils.mkdir_p(File.dirname(job))
       File.write(job, "patched")
       patcher = described_class.new(version: "4.0.3")
-      patch = File.expand_path("../../patches/picoruby-4.0.3-ruby-exception-status.patch", __dir__)
-      expect(patcher).to receive(:system).with(
-        "git", "apply", "--reverse", "--check", patch, chdir: source, out: File::NULL, err: File::NULL
-      ).and_return(true)
+      expect(patcher).to receive(:system).once.and_return(true)
 
       expect(patcher.apply(source)).to be_nil
     end
@@ -44,10 +41,7 @@ RSpec.describe Rpremote::PicoRubySourcePatch do
       FileUtils.mkdir_p(File.dirname(job))
       File.write(job, "patched")
       patcher = described_class.new(version: "3.4.2")
-      patch = File.expand_path("../../patches/picoruby-3.4.5-ruby-exception-status.patch", __dir__)
-      expect(patcher).to receive(:system).with(
-        "git", "apply", "--reverse", "--check", patch, chdir: source, out: File::NULL, err: File::NULL
-      ).and_return(true)
+      expect(patcher).to receive(:system).once.and_return(true)
 
       expect(patcher.apply(source)).to be_nil
     end

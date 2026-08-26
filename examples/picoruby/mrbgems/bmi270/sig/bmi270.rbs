@@ -1,0 +1,17 @@
+class BMI270
+  type accel_range = :g2 | :g4 | :g8 | :g16
+  type gyro_range = :dps125 | :dps250 | :dps500 | :dps1000 | :dps2000
+  type odr = :hz25 | :hz50 | :hz100 | :hz200 | :hz400 | :hz800 | :hz1600
+  def initialize: (i2c: I2C, ?configuration: String?, ?address: Integer, ?accel_range: accel_range, ?gyro_range: gyro_range, ?odr: odr) -> void
+  def connected?: () -> bool
+  def who_am_i: () -> Integer
+  def read_raw: () -> Hash[Symbol, untyped]
+  def read: () -> Hash[Symbol, untyped]
+  def motion6: () -> Array[Float]
+  def motion6_raw: () -> Array[Integer]
+  def acceleration: () -> Array[Float]
+  def gyroscope: () -> Array[Float]
+  def temperature: () -> Float
+  private def _decode_frame: (String) -> Array[Integer]
+  private def _default_configuration_chunk: (Integer, Integer) -> String
+end

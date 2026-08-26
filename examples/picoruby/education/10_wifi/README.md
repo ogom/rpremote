@@ -1,7 +1,5 @@
 # 10 Wi-Fi
 
-Language: PicoRuby, Board: Raspberry Pi Pico 2 W, Custom mrbgem: none
-
 [日本語](README.ja.md)
 
 Connects Pico 2 W to Wi-Fi, then blinks the onboard LED three times.

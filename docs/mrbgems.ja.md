@@ -21,6 +21,17 @@ rpremote mrbgems lock
 rpremote build --language picoruby --language-version 4.0.3 --board pico2 --firmware firmware/r2p2-picoruby-4.0.3-pico2.uf2
 ```
 
+mrbgemを変更した後は、カスタムファームウェアを再ビルド・書き込みしてからサンプルを実行します。
+
+```sh
+rpremote build
+rpremote bootsel
+rpremote flash
+rpremote run examples/picoruby/education/06_mpu6050/main.rb
+```
+
+`deploy PATH`は、このファームウェアのビルド、BOOTSEL移行、書き込みを自動で行います。ボードの再接続後に`PATH/lib/NAME`を`:/lib/NAME`へコピーし、`PATH/main.rb`を一時実行します。
+
 プロジェクト直下の`Mrbgems`は自動検出されます。別の定義ファイルを使う場合は`--mrbgems FILE`、追加gemを使わずにビルドする場合は`--no-mrbgems`を指定します。
 
 ## Mrbgems の書式
@@ -71,9 +82,19 @@ gem path: "../mrbgems/my-device"
 
 ローカルgemの内容はSHA-256で記録されます。`.git`、`build`、`tmp`配下のファイルはハッシュ計算から除外されます。
 
+## requireの自動追加
+
+ローカルgemの`mrbgem.rake`に`spec.require_name`がある場合、`lock`はその値を`require_name`として記録します。`rpremote run`、`exec`、`deploy`は記録済みの名前ごとに`require "名前"`を実行コードの先頭へ追加するため、アプリケーション側で同じ`require`を繰り返す必要はありません。
+
+GitHub gemはlock作成時に`mrbgem.rake`を読めないため、名前を明示します。
+
+```ruby
+gem github: "owner/repository", branch: "main", require: "device_driver"
+```
+
 ## Mrbgems.lock
 
-`Mrbgems.lock`はJSON形式です。GitHub gemは解決済みコミット、ローカルgemは内容のSHA-256を記録します。
+`Mrbgems.lock`はJSON形式です。GitHub gemは解決済みコミット、ローカルgemは内容のSHA-256と、取得できる場合は`require_name`を記録します。
 
 ```json
 {
@@ -116,7 +137,7 @@ rpremote mrbgems lock --file config/Mrbgems --lockfile config/Mrbgems.lock
 
 ## ビルド時に生成されるファイル
 
-`rpremote build`は、次のような生成物をプロジェクト内に作ります。
+`rpremote build`と`rpremote deploy`のビルド段階は、次のような生成物をプロジェクト内に作ります。
 
 - `build/mrbgems/<fingerprint>/build_config.rb`: 元の公式設定と依存gemを組み合わせた一時設定
 - `build/`: CMakeなどの中間生成物

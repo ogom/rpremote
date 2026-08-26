@@ -1,0 +1,16 @@
+class WS2812SPI
+  FREQUENCY: Integer
+  MODE: Integer
+
+  attr_reader count: Integer
+
+  def initialize: (spi: SPI, count: Integer) -> void
+  def set_rgb: (Integer index, Integer red, Integer green, Integer blue) -> WS2812SPI
+  def set_hex: (Integer index, Integer rgb) -> WS2812SPI
+  def get_rgb: (Integer index) -> Array[Integer]
+  def fill: (Integer red, Integer green, Integer blue) -> WS2812SPI
+  def show: () -> WS2812SPI
+  def clear: () -> WS2812SPI
+
+  private def _encode: (Array[Integer] pixels) -> String
+end

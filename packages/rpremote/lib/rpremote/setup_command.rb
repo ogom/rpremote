@@ -1,10 +1,11 @@
 # frozen_string_literal: true
 
 require "optparse"
+require_relative "nuke_firmware"
 
 module Rpremote
   class SetupCommand
-    def self.run(args, defaults:, config:, config_filename:, output: $stdout)
+    def self.run(args, defaults:, config:, config_filename:, output: $stdout, nuke_firmware: NukeFirmware)
       options = {
         force: false,
         cache_dir: defaults.fetch(:cache, Target::DEFAULT_CACHE_DIR),
@@ -29,6 +30,8 @@ module Rpremote
         cache_dir: target.cache_dir
       ).setup(force: options[:force])
       output.puts("installed #{target.language} #{target.language_version}: #{path}")
+      nuke_path = nuke_firmware.new.setup(force: options[:force])
+      output.puts("installed Raspberry Pi nuke firmware: #{nuke_path}")
     end
   end
 end

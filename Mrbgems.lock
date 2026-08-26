@@ -11,7 +11,8 @@
     {
       "type": "path",
       "source": "examples/picoruby/mrbgems/my_gems",
-      "sha256": "2c36316a3afa37752d9b73154586296efa7d3a03205e5bc6f0479c8966b7c5f9"
+      "sha256": "fab8651736af0b8dcd08c04cc594c3d4f87afb268b14b314f5d11d7e9d64c3a1",
+      "require_name": "my_gems"
     }
   ]
 }

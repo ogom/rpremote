@@ -1,7 +1,5 @@
 # 02 switch
 
-Language: PicoRuby, Board: Raspberry Pi Pico 2, Custom mrbgem: none
-
 [日本語](README.ja.md)
 
 Reads a push button and lights the onboard LED only while the button is pressed.

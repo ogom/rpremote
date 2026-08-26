@@ -45,4 +45,26 @@ RSpec.describe Rpremote::DfuCommand do
     expect(runner_instance).to have_received(:run).with(include("require \"dfu\""))
     expect(output.string).to include("active_slot=a", "slot_b=confirmed mrb")
   end
+
+  it "removes both DFU slots and instructs the user to reset" do
+    port = Object.new
+    serial = class_double(Rpremote::Serial)
+    device = class_double(Rpremote::Device, main_port: "/dev/cu.usbmodem101")
+    runner_instance = instance_double(Rpremote::Runner, run: "")
+    runner = class_double(Rpremote::Runner, new: runner_instance)
+    output = StringIO.new
+    allow(serial).to receive(:open).and_yield(port)
+
+    described_class.run(
+      ["remove"],
+      defaults: {},
+      output: output,
+      services: { serial: serial, device: device, runner: runner }
+    )
+
+    expect(runner_instance).to have_received(:run).with(
+      include("$imu_processing_stream.close", "$mpu6050_processing_stream.close", "DFU::Meta::DEFAULT", "File.unlink")
+    )
+    expect(output.string).to include("permanently clears both A/B slots", "rpremote reset")
+  end
 end

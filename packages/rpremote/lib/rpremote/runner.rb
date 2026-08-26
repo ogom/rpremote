@@ -3,6 +3,8 @@
 module Rpremote
   class Runner
     REMOTE_DIRECTORY = "/home"
+    RUN_REMOTE_PATH = "#{REMOTE_DIRECTORY}/.rpremote-run.rb".freeze
+    DEPLOY_REMOTE_PATH = "#{REMOTE_DIRECTORY}/.rpremote-deploy.rb".freeze
 
     attr_reader :io, :timeout
 
@@ -20,16 +22,33 @@ module Rpremote
       @path_factory = path_factory || method(:temporary_path)
     end
 
-    def run(data, output: nil)
-      remote_path = @path_factory.call
+    def run(data, output: nil, cleanup: true, remote_path: nil, diagnostics: nil)
+      remote_path ||= @path_factory.call
       shell = @shell_class.new(io, timeout: timeout)
+      trace(diagnostics, "SYNC_BEFORE_UPLOAD_START")
       shell.synchronize!
+      trace(diagnostics, "SYNC_BEFORE_UPLOAD_DONE")
+      trace(diagnostics, "UPLOAD_START", "bytes=#{data.bytesize},path=#{remote_path}")
       @modem_class.new(io, timeout: timeout).upload(remote_path, data)
+      trace(diagnostics, "UPLOAD_DONE")
+      trace(diagnostics, "SYNC_BEFORE_RUN_START")
       shell.synchronize!
+      trace(diagnostics, "SYNC_BEFORE_RUN_DONE")
       shell_ready = true
-      output ? shell.execute("./#{File.basename(remote_path)}", output: output) : shell.execute("./#{File.basename(remote_path)}")
+      command = "./#{File.basename(remote_path)}"
+      trace(diagnostics, "EXECUTE_START", "command=#{command}")
+      result = output ? shell.execute(command, output: output, idle_timeout: true) : shell.execute(command, idle_timeout: true)
+      trace(diagnostics, "EXECUTE_DONE", "bytes=#{result.to_s.bytesize}")
+      result
+    rescue StandardError => e
+      trace(diagnostics, "ERROR", "class=#{e.class},message=#{e.message.to_s.gsub("\n", " ")}")
+      raise
     ensure
-      cleanup(shell, remote_path) if shell_ready && remote_path
+      if cleanup && shell_ready && remote_path
+        trace(diagnostics, "CLEANUP_START", "path=#{remote_path}")
+        cleanup(shell, remote_path)
+        trace(diagnostics, "CLEANUP_DONE")
+      end
     end
 
     private
@@ -40,9 +59,17 @@ module Rpremote
       nil
     end
 
+    def trace(diagnostics, event, details = nil)
+      return unless diagnostics
+
+      line = "rpremote: run event=#{event}"
+      line += ",#{details}" if details
+      diagnostics.puts(line)
+      diagnostics.flush if diagnostics.respond_to?(:flush)
+    end
+
     def temporary_path
-      stamp = (Process.clock_gettime(Process::CLOCK_MONOTONIC) * 1_000_000).to_i
-      "#{REMOTE_DIRECTORY}/.rpremote-run-#{Process.pid}-#{stamp}.rb"
+      RUN_REMOTE_PATH
     end
   end
 end

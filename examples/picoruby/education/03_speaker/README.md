@@ -1,7 +1,5 @@
 # 03 speaker
 
-Language: PicoRuby, Board: Raspberry Pi Pico 2, Custom mrbgem: none
-
 [日本語](README.ja.md)
 
 Each button press drives a piezo buzzer at 1000 Hz, about 3.05% duty cycle, for 200 ms. These settings match `03_speaker.py`: `frequency=1000`, `duty_u16(2000)`, and 200 ms.

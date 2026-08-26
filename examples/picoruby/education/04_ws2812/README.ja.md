@@ -1,7 +1,5 @@
 # 04 ws2812
 
-言語: PicoRuby, ボード: Raspberry Pi Pico 2, カスタムmrbgem: `picoruby-ws2812-plus`
-
 [English](README.md)
 
 ボタンを押すたびに、GP14に接続したWS2812Bを7色で順番に点灯します。
