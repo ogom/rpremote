@@ -1,7 +1,5 @@
 # my_gems ローカルmrbgem
 
-言語: PicoRuby, ボード: Raspberry Pi Pico 2, カスタムmrbgem: このディレクトリが`picoruby-my_gems`を提供します
-
 [English](README.md)
 
 出力GPIOを`MyGems`で扱う、Pure Rubyのローカルmrbgemです。プロジェクト直下の`Mrbgems`から、ファイルを基準とした相対パスで読み込みます。

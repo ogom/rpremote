@@ -37,11 +37,90 @@ RSpec.describe Rpremote::Flasher do
     end
   end
 
+  it "accepts macOS ENXIO when RP2350 detaches after receiving the UF2" do
+    Dir.mktmpdir do |root|
+      mount = create_bootsel(root)
+      uf2 = File.join(root, "r2p2.uf2")
+      create_uf2(uf2)
+      flasher = described_class.new(
+        volumes_root: root,
+        mount_probe: ->(_path) { false },
+        port_probe: -> { "/dev/cu.usbmodem101" }
+      )
+      allow(FileUtils).to receive(:copy_file).and_raise(Errno::ENXIO, "Device not configured")
+
+      result = flasher.flash(uf2, mount: mount)
+
+      expect(result.port).to eq("/dev/cu.usbmodem101")
+      expect(result.mount).to eq(mount)
+    end
+  end
+
+  it "can finish after BOOTSEL detaches without waiting for an R2P2 port" do
+    Dir.mktmpdir do |root|
+      mount = create_bootsel(root)
+      uf2 = File.join(root, "flash_nuke.uf2")
+      create_uf2(uf2)
+      port_probe = double("port probe", call: nil)
+      flasher = described_class.new(
+        volumes_root: root,
+        mount_probe: ->(_path) { false },
+        port_probe: port_probe
+      )
+
+      result = flasher.flash(uf2, wait_for_port: false)
+
+      expect(result.mount).to eq(mount)
+      expect(result.port).to be_nil
+      expect(port_probe).not_to have_received(:call)
+    end
+  end
+
   it "recognizes Pico 2 from INFO_UF2.TXT on a nonstandard mount name" do
     Dir.mktmpdir do |root|
       mount = create_bootsel(root, name: "CUSTOM", info: "Model: Raspberry Pi Pico 2\n")
 
       expect(described_class.new(volumes_root: root).find_mount).to eq(mount)
+    end
+  end
+
+  it "returns nil when a configured BOOTSEL volume is not mounted" do
+    Dir.mktmpdir do |root|
+      missing = File.join(root, "RP2350")
+
+      expect(described_class.new(volumes_root: root).find_mounted(missing)).to be_nil
+    end
+  end
+
+  it "waits for a BOOTSEL drive to appear" do
+    Dir.mktmpdir do |root|
+      created = false
+      flasher = described_class.new(
+        volumes_root: root,
+        sleeper: lambda { |_seconds|
+          create_bootsel(root) unless created
+          created = true
+        }
+      )
+
+      expect(flasher.wait_for_mount).to eq(File.join(root, "RP2350"))
+    end
+  end
+
+  it "waits until an explicit BOOTSEL mount has its identification file" do
+    Dir.mktmpdir do |root|
+      mount = File.join(root, "RP2350")
+      Dir.mkdir(mount)
+      ready = false
+      flasher = described_class.new(
+        volumes_root: root,
+        sleeper: lambda { |_seconds|
+          File.write(File.join(mount, described_class::INFO_FILE), "Board-ID: RP2350\n") unless ready
+          ready = true
+        }
+      )
+
+      expect(flasher.wait_for_mount(mount: mount)).to eq(mount)
     end
   end
 

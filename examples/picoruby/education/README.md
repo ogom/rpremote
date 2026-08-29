@@ -1,13 +1,11 @@
 # PicoRuby electronic-craft education
 
-Language: PicoRuby, Boards: Pico 2 (Pico 2 W for 10), Custom mrbgems: `picoruby-ws2812-plus` (04 and 06), local `picoruby-my_gems` (08-09)
-
 [日本語](README.ja.md)
 
 This series introduces electronic craft step by step with Raspberry Pi Pico 2 and PicoRuby, from basic GPIO to sensor-based projects.
 
-`04_ws2812` and `06_mpu6050` require custom R2P2 firmware that embeds `picoruby-ws2812-plus`.
-Because the gem is a C extension embedded at build time, it cannot be added to the official R2P2 4.0.3 firmware after flashing.
+`04_ws2812` and `06_mpu6050` require custom R2P2 firmware that embeds `picoruby-ws2812-plus`; `06_mpu6050` also embeds the local `picoruby-mpu6050` gem.
+Because these gems contain C extensions embedded at build time, they cannot be added to the official R2P2 4.0.3 firmware after flashing.
 
 `08_my_gems` verifies the pure-Ruby local mrbgem, and `09_my_gems_dfu` updates only an application that uses it through DFU.
 The extra mrbgems are embedded in the same custom firmware.
@@ -55,7 +53,7 @@ For a program changed to an infinite loop, observe it with `rpremote monitor` an
 | 02 | switch | Reads a GP15 push button and controls the onboard LED. |
 | 03 | speaker | Uses a GP15 button to drive a piezo buzzer on GP18. |
 | 04 | ws2812 | Changes a WS2812B on GP14 through seven colors with a button. |
-| 06 | mpu6050 | Changes color and buzzer sound according to MPU6050 orientation and movement. |
+| 06 | mpu6050 | Reads six motion axes together and changes color and sound according to orientation and movement. |
 | 07 | dfu | Updates an app from v1 to v2 and tests rollback after a failed startup. |
 | 08 | my_gems | Loads a local mrbgem and blinks Pico 2's onboard LED. |
 | 09 | my_gems_dfu | Updates an application that uses a local mrbgem through DFU. |

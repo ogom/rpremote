@@ -31,6 +31,13 @@ RSpec.describe Rpremote::Config do
       expect(described_class.load("build", filename: path, cwd: cwd)).to include(
         mrbgems: "Mrbgems", firmware: "firmware/custom.uf2"
       )
+      expect(described_class.load("deploy", filename: path, cwd: cwd)).to include(
+        mount: "/Volumes/RP2350", port: "/dev/cu.usbmodem101", mrbgems: "Mrbgems",
+        firmware: "firmware/custom.uf2", baud: 9600, timeout: 12.5
+      )
+      expect(described_class.load("bootsel", filename: path, cwd: cwd)).to eq(
+        mount: "/Volumes/RP2350", port: "/dev/cu.usbmodem101", baud: 9600, timeout: 12.5
+      )
       expect(described_class.load("config", filename: path, cwd: cwd)).to include(
         port: "/dev/cu.usbmodem101", mount: "/Volumes/RP2350", mrbgems: "Mrbgems"
       )

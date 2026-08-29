@@ -2,11 +2,9 @@
 
 require "ws2812-plus"
 require "i2c"
+require "mpu6050"
 require "pwm"
 
-MPU6050_ADDRESS = 0x68
-POWER_MANAGEMENT = 0x6B
-ACCELERATION_START = 0x3B
 SDA_PIN = 16
 SCL_PIN = 17
 LED_PIN = 14
@@ -14,21 +12,6 @@ SPEAKER_PIN = 18
 SAMPLES = 40
 SAMPLE_INTERVAL_MS = 150
 MOVEMENT_THRESHOLD = 0.5
-
-def signed16(high, low)
-  value = (high << 8) | low
-  value >= 0x8000 ? value - 0x1_0000 : value
-end
-
-def read_acceleration(i2c)
-  i2c.write(MPU6050_ADDRESS, ACCELERATION_START, nostop: true)
-  data = i2c.read(MPU6050_ADDRESS, 6).bytes
-  [
-    signed16(data[0], data[1]) / 16_384.0,
-    signed16(data[2], data[3]) / 16_384.0,
-    signed16(data[4], data[5]) / 16_384.0
-  ]
-end
 
 def orientation(acceleration)
   ax, ay, az = acceleration
@@ -62,17 +45,18 @@ def play(speaker, frequency, duration_ms)
 end
 
 i2c = I2C.new(unit: :RP2040_I2C0, sda_pin: SDA_PIN, scl_pin: SCL_PIN, frequency: 400_000)
-i2c.write(MPU6050_ADDRESS, POWER_MANAGEMENT, 0)
-sleep_ms(100)
+sensor = MPU6050.new(i2c: i2c)
 
 led = WS2812.new(pin: LED_PIN, num: 1)
 led.brightness = 3
 speaker = PWM.new(SPEAKER_PIN)
 speaker.duty(0)
-previous = read_acceleration(i2c)
+previous = sensor.read[:acceleration]
 
 SAMPLES.times do |index|
-  current = read_acceleration(i2c)
+  sample = sensor.read
+  current = sample[:acceleration]
+  gyroscope = sample[:gyroscope]
   changes = [
     (current[0] - previous[0]).abs,
     (current[1] - previous[1]).abs,
@@ -89,7 +73,8 @@ SAMPLES.times do |index|
   led.set_rgb(0, color[0], color[1], color[2])
   led.show
   play(speaker, frequency, duration_ms) if event
-  puts "#{index + 1}: ax=#{current[0]}, ay=#{current[1]}, az=#{current[2]}, #{mode}"
+  puts "#{index + 1}: ax=#{current[0]}, ay=#{current[1]}, az=#{current[2]}, " \
+       "gx=#{gyroscope[0]}, gy=#{gyroscope[1]}, gz=#{gyroscope[2]}, #{mode}"
 
   previous = current
   sleep_ms(SAMPLE_INTERVAL_MS)

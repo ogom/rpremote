@@ -68,6 +68,17 @@ rpremote dfu status
 
 最後の2コマンドを繰り返します。テスト用スロットを試している間は`boot_count`が増え、試行回数を超えると、`active_slot`が直前の`confirmed`スロットへ戻り、`boot_count`は`0`になります。`rpremote reset`はアプリケーションのシリアル出力を中継しないため、出力を見る場合は別の端末で`rpremote monitor`を先に起動してください。
 
+## 起動アプリを削除する
+
+起動アプリが不要になった場合は、A/B両スロットのRubyソースまたはバイトコードを削除します。その後、R2P2をリセットして、RAM上ですでに動作しているアプリを停止します。
+
+```sh
+rpremote dfu remove
+rpremote reset
+```
+
+削除は元に戻せず、ロールバック可能なDFUスロットも残りません。`/home/app.rb`、`/home/app.mrb`、その他のファイル、組み込みmrbgem、R2P2ファームウェアは削除しません。ログを出す起動アプリを`rpremote run`の前に削除すると、2つのアプリのログが同時に出力されるのを防げます。
+
 ## 失電復旧を確認する
 
 少なくとも一方のスロットが`confirmed`であることを、先に`rpremote dfu status`で確認します。次の例では`app_v1.rb`を転送した後、**`rpremote reset`を実行せずに**USB給電を抜きます。`slot_b=ready`で`try_slot=b`となった時点から、明示的に再起動するまで起動候補は保持されるため、`staged ...`の表示直後である必要はありません。

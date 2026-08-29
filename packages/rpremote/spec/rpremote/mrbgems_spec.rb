@@ -9,7 +9,11 @@ RSpec.describe Rpremote::Mrbgems do
   def create_local_gem(root, name = "my-led")
     directory = File.join(root, name)
     FileUtils.mkdir_p(File.join(directory, "mrblib"))
-    File.write(File.join(directory, "mrbgem.rake"), "MRuby::Gem::Specification.new('my-led') {}\n")
+    File.write(File.join(directory, "mrbgem.rake"), <<~RUBY)
+      MRuby::Gem::Specification.new('my-led') do |spec|
+        spec.require_name = "my_led"
+      end
+    RUBY
     File.write(File.join(directory, "mrblib", "my_led.rb"), "class MyLed; end\n")
     directory
   end
@@ -56,7 +60,33 @@ RSpec.describe Rpremote::Mrbgems do
 
       expect(result.fetch("gems").first.fetch("commit")).to eq(commit)
       expect(result.fetch("gems").last.fetch("sha256")).to match(/\A[0-9a-f]{64}\z/)
+      expect(result.fetch("gems").last.fetch("require_name")).to eq("my_led")
       expect(JSON.parse(File.read(File.join(root, "Mrbgems.lock")))).to eq(result)
+    end
+  end
+
+  it "records local require names and prepends them to executed source" do
+    Dir.mktmpdir do |root|
+      create_local_gem(root)
+      File.write(File.join(root, "Mrbgems"), "gem path: \"my-led\"\n")
+      manager = described_class.new(cwd: root)
+
+      manager.lock
+
+      expect(manager.require_names).to eq(["my_led"])
+      expect(manager.prepend_requires("puts :ready\n")).to eq("require \"my_led\"\nputs :ready\n")
+    end
+  end
+
+  it "records an explicitly configured GitHub require name" do
+    Dir.mktmpdir do |root|
+      File.write(File.join(root, "Mrbgems"), <<~RUBY)
+        gem github: "ksbmyk/picoruby-ws2812-plus", commit: "#{commit}", require: "ws2812-plus"
+      RUBY
+
+      result = described_class.new(cwd: root).lock
+
+      expect(result.fetch("gems").first.fetch("require_name")).to eq("ws2812-plus")
     end
   end
 

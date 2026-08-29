@@ -70,16 +70,16 @@ timeout=20.0
 
 | キー               | 対応するオプション   | 既定値                                                | 用途                                                                       |
 | ------------------ | -------------------- | ----------------------------------------------------- | -------------------------------------------------------------------------- |
-| `language`         | `--language`         | `picoruby`                                            | `setup`、`build`、`flash`、実行系コマンドの言語指定（現在は`picoruby`のみ） |
-| `language_version` | `--language-version` | `4.0.3`                                               | `setup`、`build`、`flash`で使うPicoRuby/R2P2版                             |
+| `language`         | `--language`         | `picoruby`                                            | `setup`、`build`、`deploy`、`flash`、実行系コマンドの言語指定（現在は`picoruby`のみ） |
+| `language_version` | `--language-version` | `4.0.3`                                               | `setup`、`build`、`deploy`、`flash`で使うPicoRuby/R2P2版                    |
 | `cache`            | `--cache`            | `firmware`                                            | PicoRubyソースとカスタムUF2の保存先。`{version}`を言語版へ展開              |
-| `board`            | `--board`            | `pico2`                                             | `build`と`flash`の対象ボード（`pico2`、`pico2_w`）                          |
-| `firmware`         | `--firmware`       | `{cache}/{language}-{language_version}-{board}.uf2` | `build`の出力先と`flash`するUF2です                                         |
-| `mrbgems`          | `--mrbgems`          | 自動検出                                              | `build`で使うMrbgems定義ファイル。`false`で無効化                           |
-| `mount`            | `--mount`            | 自動検出                                              | `flash`時のRP2350 BOOTSELボリューム                                        |
+| `board`            | `--board`            | `pico2`                                             | `build`、`deploy`、`flash`の対象ボード（`pico2`、`pico2_w`）                 |
+| `firmware`         | `--firmware`       | `{cache}/{language}-{language_version}-{board}.uf2` | `build`の出力先と`deploy`、`flash`で書き込むUF2です                           |
+| `mrbgems`          | `--mrbgems`          | 自動検出                                              | `build`、`deploy`で使うMrbgems定義ファイル。`false`で無効化                   |
+| `mount`            | `--mount`            | 自動検出                                              | `bootsel`、`deploy`、`flash`時のRP2350 BOOTSELボリューム                      |
 | `port`             | `--port`             | CDC 0を自動選択                                       | R2P2シリアルポート                                                         |
 | `baud`             | `--baud`             | `115200`                                              | シリアル通信速度                                                           |
-| `timeout`          | `--timeout`          | コマンドごと                                          | 接続・通信のタイムアウト秒数                                               |
+| `timeout`          | `--timeout`          | コマンドごと                                          | 接続・通信のタイムアウト秒数。`run`と`exec`では無出力が続けられる最大秒数 |
 
 `language_version`はCLI自身の`rpremote --version`と区別するため、`--version`ではなく`--language-version`を使います。
 
@@ -98,6 +98,8 @@ timeout=20.0
 | `setup`                          | `--language`、`--language-version`、`--cache`、`--force`                                              |
 | `build`                          | `--language`、`--language-version`、`--board`、`--cache`、`--firmware`、`--mrbgems`、`--no-mrbgems` |
 | `build clean`                    | なし。プロジェクトの`build/`だけを削除します。                                                        |
+| `deploy PATH`                    | `--language`、`--language-version`、`--board`、`--cache`、`--firmware`、`--mrbgems`、`--no-mrbgems`、`--mount`、`--port`、`--baud`、`--timeout` |
+| `bootsel`                        | `--mount`、`--port`、`--baud`、`--timeout` |
 | `dfu app FILE`                   | `--type ruby\|rite`、`--port`、`--baud`、`--timeout`                                                  |
 | `dfu compile FILE`               | `--output`、`--language`、`--language-version`、`--cache`                                              |
 | `dfu status`                     | `--port`、`--baud`、`--timeout`                                                                         |
@@ -107,9 +109,9 @@ timeout=20.0
 | `ports`                          | なし                                                                                                  |
 | `run`、`exec`                    | `--port`、`--baud`、`--timeout`、`--language`                                                         |
 | `monitor`、`repl`、`reset`       | `--port`、`--baud`、`--timeout`                                                                       |
-| `fs cp/cat/ls/rm/mkdir`          | `--port`、`--baud`、`--timeout`                                                                       |
+| `fs cp/push/cat/ls/rm/mkdir`     | `--port`、`--baud`、`--timeout`。`fs cp`は`--recursive`にも対応します。                                |
 
-すべてのコマンドの既定タイムアウトは20秒です。`flash`は`build`済みのカスタムUF2を使用します。`--firmware`を省略した場合は`{cache}/{language}-{language-version}-{board}.uf2`を書き込みます。
+すべてのコマンドの既定タイムアウトは20秒です。`run`と`exec`では実行中のプログラムから出力を受信するとタイムアウトを更新します。`flash`は`build`済みのカスタムUF2を使用し、`deploy`は書き込み前にそのUF2をビルドします。`--firmware`を省略した場合は、どちらも`{cache}/{language}-{language-version}-{board}.uf2`を使用します。
 
 ## よく使う設定例
 

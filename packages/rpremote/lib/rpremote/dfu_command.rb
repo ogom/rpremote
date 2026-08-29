@@ -8,16 +8,21 @@ module Rpremote
     TYPES = { ".rb" => "RUBY", ".mrb" => "RITE" }.freeze
 
     def self.run(args, defaults:, output: $stdout, services: {})
-      default_services = { serial: Serial, device: Device, modem: PicoModem, runner: Runner, compiler: DfuCompiler }
+      default_services = {
+        serial: Serial, device: Device, modem: PicoModem, runner: Runner,
+        compiler: DfuCompiler
+      }
       services = default_services.merge(services)
       subcommand = args.shift
       case subcommand
       when "app" then stage(args, defaults, output, services)
       when "compile" then compile(args, defaults, output, services[:compiler])
       when "status" then status(args, defaults, output, services)
+      when "remove" then remove(args, defaults, output, services)
       else
         raise ArgumentError,
-              "usage: rpremote dfu app FILE [options], dfu compile FILE [options], or dfu status [options]"
+              "usage: rpremote dfu app FILE [options], dfu compile FILE [options], " \
+              "dfu status [options], or dfu remove [options]"
       end
     end
 
@@ -52,7 +57,7 @@ module Rpremote
     private_class_method :compile
 
     def self.status(args, defaults, output, services)
-      options = parse_app_options(args, defaults)
+      options = parse_connection_options(args, defaults)
       raise ArgumentError, "usage: rpremote dfu status [options]" unless args.empty?
 
       port_path = services[:device].main_port(options[:port])
@@ -70,6 +75,45 @@ module Rpremote
       output.write(result)
     end
     private_class_method :status
+
+    def self.remove(args, defaults, output, services)
+      options = parse_connection_options(args, defaults)
+      raise ArgumentError, "usage: rpremote dfu remove [options]" unless args.empty?
+
+      port_path = services[:device].main_port(options[:port])
+      code = <<~'RUBY'
+        require "dfu"
+        # A confirmed DFU launcher may have returned after leaving a Sandbox
+        # worker alive. Stop known Processing workers before waiting for the
+        # Shell prompt; deleting their source files does not stop RAM tasks.
+        begin
+          $imu_processing_stream.close if $imu_processing_stream
+          $imu_processing_stream = nil
+        rescue Exception
+          $imu_processing_stream = nil
+        end
+        begin
+          $mpu6050_processing_stream.close if $mpu6050_processing_stream
+          $mpu6050_processing_stream = nil
+        rescue Exception
+          $mpu6050_processing_stream = nil
+        end
+        DFU::Meta.recover
+        DFU::Meta.save(DFU::Meta.deep_copy(DFU::Meta::DEFAULT))
+        %w[a b].each do |slot|
+          %w[rb mrb].each do |ext|
+            path = "#{ENV['HOME']}/app_#{slot}.#{ext}"
+            File.unlink(path) if File.exist?(path)
+          end
+        end
+      RUBY
+      output.puts("removing all DFU boot applications from #{port_path}; this permanently clears both A/B slots")
+      services[:serial].open(port_path, baud: options[:baud]) do |port|
+        services[:runner].new(port, timeout: options[:timeout]).run(code)
+      end
+      output.puts("removed all DFU boot applications; run `rpremote reset` to stop the running application")
+    end
+    private_class_method :remove
 
     def self.parse_app_options(args, defaults)
       options = {
@@ -90,6 +134,24 @@ module Rpremote
       options
     end
     private_class_method :parse_app_options
+
+    def self.parse_connection_options(args, defaults)
+      options = {
+        port: defaults[:port],
+        baud: defaults.fetch(:baud, Serial::BAUD_RATE),
+        timeout: defaults.fetch(:timeout, DEFAULT_TIMEOUT)
+      }
+      OptionParser.new do |parser|
+        parser.on("--port PORT") { |value| options[:port] = value }
+        parser.on("--baud RATE", Integer) { |value| options[:baud] = value }
+        parser.on("--timeout SECONDS", Float) { |value| options[:timeout] = value }
+      end.parse!(args)
+      raise ArgumentError, "--baud must be positive" unless options[:baud].positive?
+      raise ArgumentError, "--timeout must be positive" unless options[:timeout].positive?
+
+      options
+    end
+    private_class_method :parse_connection_options
 
     def self.parse_compile_options(args, defaults)
       options = {

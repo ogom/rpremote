@@ -3,4 +3,9 @@
 vm :mrubyc
 
 gem github: "ksbmyk/picoruby-ws2812-plus", branch: "main"
+# gem path: "examples/picoruby/mrbgems/mpu6050"
+# gem path: "examples/picoruby/mrbgems/bmi270"
+# gem path: "examples/picoruby/mrbgems/max30102"
+# gem path: "examples/picoruby/mrbgems/hcsr04_temp"
+# gem path: "examples/picoruby/mrbgems/ws2812_spi"
 gem path: "examples/picoruby/mrbgems/my_gems"

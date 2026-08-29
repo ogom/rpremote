@@ -1,7 +1,5 @@
 # 07 PicoModem DFU
 
-Language: PicoRuby, Board: Raspberry Pi Pico 2, Custom mrbgem: none
-
 [日本語](README.ja.md)
 
 This example updates an application on a deployed Pico 2 without pressing the BOOTSEL button. It deploys an onboard-LED "classroom beacon," updates stable v1 to v2, and then demonstrates automatic rollback from an application that fails its startup self-check.
@@ -26,14 +24,19 @@ Run only the remove commands for files that exist. No wiring is required.
 
 ## DFU samples
 
-`app_v1.rb` is a stable application that calls `DFU.confirm` after GPIO initialization succeeds. `app_broken.rb` simulates a failed startup self-check and checks rollback without calling `DFU.confirm`. See the [DFU guide](../../../docs/dfu.md) for the basic DFU workflow.
+`app_v1.rb` is a stable application that calls `DFU.confirm` after GPIO initialization succeeds. `app_broken.rb` simulates a failed startup self-check and checks rollback without calling `DFU.confirm`. See the [DFU guide](../../../../docs/dfu.md) for the basic DFU workflow.
 
 ## 1. Deploy stable v1
 
-Version 1 slowly blinks the onboard LED three times. Stage the application in the inactive DFU slot and restart R2P2.
+Version 1 slowly blinks the onboard LED three times. First, stage the application in the inactive DFU slot.
 
 ```sh
 rpremote dfu app examples/picoruby/education/07_dfu/app_v1.rb
+```
+
+Then restart R2P2 and check its status.
+
+```sh
 rpremote reset
 rpremote dfu status
 ```
@@ -42,10 +45,15 @@ Startup succeeds when the LED blinks three times and the status includes `confir
 
 ## 2. Update to v2
 
-Version 2 adds a visible double-blink pattern repeated three times. It updates only the application, without pressing BOOTSEL or reflashing the UF2.
+Version 2 adds a visible double-blink pattern repeated three times. First, update only the application, without pressing BOOTSEL or reflashing the UF2.
 
 ```sh
 rpremote dfu app examples/picoruby/education/07_dfu/app_v2.rb
+```
+
+Then restart R2P2 and check its status.
+
+```sh
 rpremote reset
 rpremote dfu status
 ```
@@ -56,8 +64,15 @@ The update succeeds when the LED double-blinks and the destination slot becomes 
 
 `app_broken.rb` simulates detecting that a required device failed its startup self-check. It leaves the output safe and exits without calling `DFU.confirm`. It can become the boot candidate but cannot replace the confirmed application, and the R2P2 Shell remains available for diagnosis.
 
+First, stage the failing application.
+
 ```sh
 rpremote dfu app examples/picoruby/education/07_dfu/app_broken.rb
+```
+
+Then restart R2P2 and check its status.
+
+```sh
 rpremote reset
 rpremote dfu status
 ```
@@ -71,4 +86,4 @@ If a real faulty application stops responding and prevents access to the R2P2 Sh
 - Call `DFU.confirm` only after required GPIO, sensors, and configuration have initialized and passed their startup checks.
 - Confirm when the application is safe to operate, not merely when execution has entered the main file.
 - A failed DFU transfer preserves the currently confirmed slot.
-- When distributing `.mrb`, compile it with the PicoRuby version installed on the device. See the [PicoModem DFU guide](../../../docs/dfu.md) for details.
+- When distributing `.mrb`, compile it with the PicoRuby version installed on the device. See the [PicoModem DFU guide](../../../../docs/dfu.md) for details.

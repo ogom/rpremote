@@ -68,6 +68,17 @@ rpremote dfu status
 
 Repeat the last two commands. `boot_count` increases while the test slot is retried. After the retry limit, `active_slot` returns to the preceding `confirmed` slot and `boot_count` returns to `0`. `rpremote reset` does not relay application serial output; start `rpremote monitor` in another terminal first to see output.
 
+## Remove boot applications
+
+Remove the Ruby source or bytecode from both A/B slots when the boot application is no longer needed. Then reset R2P2 to stop the application already running from RAM.
+
+```sh
+rpremote dfu remove
+rpremote reset
+```
+
+This operation is permanent and leaves no DFU slot available for rollback. It does not remove `/home/app.rb`, `/home/app.mrb`, unrelated files, embedded mrbgems, or R2P2 firmware. Removing a noisy boot application before `rpremote run` prevents both applications from writing logs concurrently.
+
 ## Check recovery after power loss
 
 First use `rpremote dfu status` to confirm that at least one slot is `confirmed`. In this example, disconnect USB power after staging `app_v1.rb`, **without running `rpremote reset`**. Once `slot_b=ready` and `try_slot=b` are shown, the boot candidate remains until an explicit restart, so it need not be immediately after the `staged ...` message.

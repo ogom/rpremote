@@ -1,7 +1,5 @@
 # 09 ローカルmrbgemとPicoModem DFU
 
-言語: PicoRuby, ボード: Raspberry Pi Pico 2, カスタムmrbgem: `examples/picoruby/mrbgems/my_gems`のローカル`picoruby-my_gems`
-
 [English](README.md)
 
 ローカルmrbgemを組み込んだR2P2ファームウェアを一度書き込み、そのmrbgemを利用するアプリだけをPicoModem DFUで更新する例です。

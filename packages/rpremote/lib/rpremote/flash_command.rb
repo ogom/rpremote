@@ -33,7 +33,10 @@ module Rpremote
       }
       OptionParser.new do |parser|
         parser.on("--cache DIR") { |value| options[:cache_dir] = value }
-        parser.on("--firmware FILE") { |value| options[:firmware] = value }
+        parser.on("--firmware FILE") do |value|
+          options[:firmware] = value
+          options[:firmware_explicit] = true
+        end
         parser.on("--language LANGUAGE") { |value| options[:language] = value }
         parser.on("--language-version VERSION") { |value| options[:language_version] = value }
         parser.on("--board BOARD") { |value| options[:board] = value }

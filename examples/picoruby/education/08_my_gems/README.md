@@ -1,7 +1,5 @@
 # 08 local mrbgem
 
-Language: PicoRuby, Board: Raspberry Pi Pico 2, Custom mrbgem: local `picoruby-my_gems` from `examples/picoruby/mrbgems/my_gems`
-
 [日本語](README.ja.md)
 
 Loads the project-local `my_gems` mrbgem and uses `MyGems` to blink the Pico 2 onboard LED five times.

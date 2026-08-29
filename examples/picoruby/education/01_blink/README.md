@@ -1,7 +1,5 @@
 # 01 blink
 
-Language: PicoRuby, Board: Raspberry Pi Pico 2, Custom mrbgem: none
-
 [日本語](README.ja.md)
 
 Blinks the Pico 2 onboard LED (GP25) five times and writes status to serial output.

@@ -1,0 +1,42 @@
+class HCSR04Temp
+  DEFAULT_TIMEOUT_US: Integer
+  DEFAULT_MEASUREMENT_INTERVAL_US: Integer
+  INITIAL_SETTLE_US: Integer
+  TRIGGER_SETTLE_US: Integer
+  TRIGGER_PULSE_US: Integer
+  BASE_SOUND_SPEED_MPS: Float
+  SOUND_SPEED_TEMPERATURE_COEFFICIENT: Float
+
+  attr_reader timeout_us: Integer
+  attr_reader measurement_interval_us: Integer
+  attr_reader temperature_c: Float
+
+  def initialize: (
+    trigger: GPIO,
+    echo: GPIO,
+    ?timeout_us: Integer,
+    ?measurement_interval_us: Integer,
+    ?temperature_c: Integer | Float,
+    ?timing: Timing
+  ) -> void
+  def pulse_width_us: () -> Integer
+  def distance_cm: () -> Float
+  def distance_mm: () -> Float
+  def read: () -> { pulse_width_us: Integer, distance_cm: Float, distance_mm: Float }
+
+  private def wait_for_initial_settle: () -> void
+  private def wait_for_measurement_interval: () -> void
+  private def send_trigger_pulse: () -> Integer
+  private def wait_for_echo: (Integer level, String state) -> Integer
+  private def pulse_width_us_with_timing: () -> Integer
+  private def _pulse_width_us: () -> Integer
+  private def _calculate_distance_cm: (Integer pulse_width_us) -> Float
+
+  class TimeoutError < StandardError
+  end
+
+  class Timing
+    def now_us: () -> Integer
+    def delay_us: (Integer microseconds) -> void
+  end
+end

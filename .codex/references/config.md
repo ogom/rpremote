@@ -6,31 +6,31 @@ All keys are validated even when the selected command ignores them. Unknown keys
 
 ```json
 {
-"port": "/dev/cu.usbmodem101",
-"baud": 115200,
-"timeout": 20,
-"language": "picoruby",
-"cache": "firmware",
-"language_version": "4.0.3",
-"board": "pico2",
-"firmware": "firmware/picoruby-4.0.3-pico2.uf2",
-"mount": "/Volumes/RP2350",
-"mrbgems": "Mrbgems"
+  "port": "/dev/cu.usbmodem101",
+  "baud": 115200,
+  "timeout": 20,
+  "language": "picoruby",
+  "cache": "firmware",
+  "language_version": "4.0.3",
+  "board": "pico2",
+  "firmware": "firmware/picoruby-4.0.3-pico2.uf2",
+  "mount": "/Volumes/RP2350",
+  "mrbgems": "Mrbgems"
 }
 ```
 
 | Key | Type | Default | Commands | CLI option |
 | --- | --- | --- | --- | --- |
-| `language` | non-empty string | `picoruby` | `setup`, `build`, `flash`, `run`, `exec` | `--language` |
-| `language_version` | non-empty string | `4.0.3` | `setup`, `build`, `flash`, `dfu compile` | `--language-version` |
-| `cache` | non-empty string | `firmware` | `setup`, `build`, `flash`, `dfu compile` | `--cache` |
-| `board` | non-empty string | `pico2` | `build`, `flash` | `--board` |
-| `firmware` | non-empty string | `{cache}/{language}-{language_version}-{board}.uf2` | `build`, `flash` | `--firmware` |
-| `mrbgems` | non-empty string or `false` | automatic `Mrbgems` discovery | `build` | `--mrbgems`, `--no-mrbgems` |
-| `mount` | non-empty string | auto-detect | `flash` | `--mount` |
-| `port` | non-empty string | auto-select CDC 0 | `flash`, runtime, `dfu` | `--port` |
+| `language` | non-empty string | `picoruby` | `setup`, `build`, `flash`, `deploy`, `run`, `exec` | `--language` |
+| `language_version` | non-empty string | `4.0.3` | `setup`, `build`, `flash`, `deploy`, `dfu compile` | `--language-version` |
+| `cache` | non-empty string | `firmware` | `setup`, `build`, `flash`, `deploy`, `dfu compile` | `--cache` |
+| `board` | non-empty string | `pico2` | `build`, `flash`, `deploy` | `--board` |
+| `firmware` | non-empty string | `{cache}/{language}-{language_version}-{board}.uf2` | `build`, `flash`, `deploy` | `--firmware` |
+| `mrbgems` | non-empty string or `false` | automatic `Mrbgems` discovery | `build`, `deploy` | `--mrbgems`, `--no-mrbgems` |
+| `mount` | non-empty string | auto-detect | `bootsel`, `flash`, `deploy` | `--mount` |
+| `port` | non-empty string | auto-select CDC 0 | `bootsel`, `flash`, `deploy`, runtime, `dfu` | `--port` |
 | `baud` | positive integer | `115200` | runtime, `dfu` | `--baud` |
-| `timeout` | positive number in seconds | `20` | `flash`, runtime, `dfu` | `--timeout` |
+| `timeout` | positive number in seconds | `20` | `bootsel`, `flash`, `deploy`, runtime, `dfu` | `--timeout` |
 
 `cache` may contain `{version}`, which expands to `language_version`. Without an explicit `firmware`, the target is `{cache}/{language}-{language_version}-{board}.uf2`.
 

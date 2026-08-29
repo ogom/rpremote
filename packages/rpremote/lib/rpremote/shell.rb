@@ -29,11 +29,12 @@ module Rpremote
 
     attr_reader :io, :timeout
 
-    def initialize(io, timeout: DEFAULT_TIMEOUT)
+    def initialize(io, timeout: DEFAULT_TIMEOUT, clock: nil)
       raise ArgumentError, "timeout must be positive" unless timeout.positive?
 
       @io = io
       @timeout = timeout
+      @clock = clock || -> { Process.clock_gettime(Process::CLOCK_MONOTONIC) }
     end
 
     def synchronize!
@@ -43,12 +44,14 @@ module Rpremote
       nil
     end
 
-    def execute(command, output: nil)
+    def execute(command, output: nil, idle_timeout: false)
       command = validate_command(command)
       send_command(command)
       echo = ECHO_START + command.b + ERASE_LINE
       stream_state = {}
-      response = read_until_prompt(after: echo) { |buffer| stream_output(output, buffer, echo, stream_state) }
+      response = read_until_prompt(after: echo, idle_timeout: idle_timeout) do |buffer|
+        stream_output(output, buffer, echo, stream_state)
+      end
       command_output = extract_output(response, command)
       ruby_exception = command_output.include?(RUBY_EXCEPTION_STATUS)
       command_output = remove_ruby_exception_status(command_output)
@@ -76,7 +79,7 @@ module Rpremote
       command
     end
 
-    def read_until_prompt(wait: timeout, after: nil)
+    def read_until_prompt(wait: timeout, after: nil, idle_timeout: false)
       deadline = monotonic_time + wait
       buffer = +"".b
       loop do
@@ -85,6 +88,7 @@ module Rpremote
         return buffer if prompt_at && buffer.index(PROMPT_END, prompt_at + PROMPT_START.bytesize)
 
         buffer << read_available(deadline)
+        deadline = monotonic_time + wait if idle_timeout
         answer_terminal_queries(buffer)
         yield buffer if block_given?
       end
@@ -186,7 +190,7 @@ module Rpremote
     end
 
     def monotonic_time
-      Process.clock_gettime(Process::CLOCK_MONOTONIC)
+      @clock.call
     end
   end
 end

@@ -1,7 +1,5 @@
 # 08 ローカルmrbgem
 
-言語: PicoRuby, ボード: Raspberry Pi Pico 2, カスタムmrbgem: `examples/picoruby/mrbgems/my_gems`のローカル`picoruby-my_gems`
-
 [English](README.md)
 
 プロジェクト内の`my_gems` mrbgemを読み込み、`MyGems`でPico 2のオンボードLEDを5回点滅させます。

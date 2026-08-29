@@ -49,7 +49,7 @@ module Rpremote
         data = serial_io.read_nonblock(BUFFER_SIZE)
         return false if data.nil? || data.empty?
 
-        output.write(data)
+        output.write(normalize_line_endings(data))
         output.flush if output.respond_to?(:flush)
         true
       else
@@ -73,6 +73,18 @@ module Rpremote
       serial_io.write(data)
       serial_io.flush if serial_io.respond_to?(:flush)
       true
+    end
+
+    # input.raw disables the terminal's usual LF-to-CRLF output conversion.
+    # Preserve device CRLF while making a bare LF start at the left margin.
+    def normalize_line_endings(data)
+      normalized = +"".b
+      data.each_byte do |byte|
+        normalized << "\r" if byte == 0x0A && !@previous_output_was_cr
+        normalized << byte
+        @previous_output_was_cr = byte == 0x0D
+      end
+      normalized
     end
 
     def selectable_serial

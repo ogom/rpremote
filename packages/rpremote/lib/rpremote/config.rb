@@ -21,6 +21,8 @@ module Rpremote
     COMMAND_OPTIONS = {
       "setup" => %i[cache language language_version],
       "build" => %i[cache language language_version board firmware mrbgems],
+      "bootsel" => %i[mount port baud timeout],
+      "deploy" => %i[cache language language_version board firmware mrbgems mount port baud timeout],
       "dfu" => %i[cache language language_version port baud timeout],
       "flash" => %i[cache language language_version board firmware mount port timeout],
       "run" => %i[port baud timeout language],

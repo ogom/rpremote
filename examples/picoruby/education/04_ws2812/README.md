@@ -1,7 +1,5 @@
 # 04 ws2812
 
-Language: PicoRuby, Board: Raspberry Pi Pico 2, Custom mrbgem: `picoruby-ws2812-plus`
-
 [日本語](README.ja.md)
 
 Each button press selects one of seven colors for a WS2812B connected to GP14.

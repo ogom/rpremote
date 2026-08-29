@@ -1,7 +1,5 @@
 # 02 switch
 
-言語: PicoRuby, ボード: Raspberry Pi Pico 2, カスタムmrbgem: 不要
-
 [English](README.md)
 
 タクトスイッチを読み、押している間だけオンボードLEDを点灯します。

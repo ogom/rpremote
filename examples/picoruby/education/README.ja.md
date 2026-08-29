@@ -1,13 +1,11 @@
-# PicoRuby electronic-craft education
-
-言語: PicoRuby, ボード: Raspberry Pi Pico 2（10_wifiはPico 2 W）, カスタムmrbgem: 04と06は`picoruby-ws2812-plus`、08〜09はローカル`picoruby-my_gems`
+# PicoRuby電子工作教材
 
 [English](README.md)
 
 Raspberry Pi Pico 2 / Pico 2 WとPicoRubyで、基本的な電子工作を順に学ぶ教材です。
 
-`04_ws2812`と`06_mpu6050`は、[`picoruby-ws2812-plus`](https://github.com/ksbmyk/picoruby-ws2812-plus)を組み込んだカスタムR2P2ファームウェアが必要です。
-このgemはビルド時に埋め込むC拡張のため、公式配布のR2P2 4.0.3へ後から追加することはできません。
+`04_ws2812`と`06_mpu6050`は[`picoruby-ws2812-plus`](https://github.com/ksbmyk/picoruby-ws2812-plus)を組み込んだカスタムR2P2ファームウェアが必要です。`06_mpu6050`では、ローカルの`picoruby-mpu6050`も組み込みます。
+これらのgemにはビルド時に埋め込むC拡張があるため、公式配布のR2P2 4.0.3へ後から追加することはできません。
 
 `08_my_gems`ではPure Rubyのローカルmrbgemを確認し、`09_my_gems_dfu`ではそのmrbgemを利用するアプリだけをDFUで更新します。追加するmrbgemは同じカスタムファームウェアへ組み込みます。
 
@@ -51,7 +49,7 @@ rpremote run examples/picoruby/education/01_blink/main.rb --timeout 15
 | 02 | switch | GP15のタクトスイッチを読み、オンボードLEDを制御します。 |
 | 03 | speaker | GP15のスイッチでGP18の圧電ブザーを鳴らします。 |
 | 04 | ws2812 | GP14のWS2812Bを、ボタンを押すたびに7色で点灯します。 |
-| 06 | mpu6050 | MPU6050の姿勢と動きに応じて、色とブザー音を変えます。 |
+| 06 | mpu6050 | 6軸を同時に読み、姿勢と動きに応じて色とブザー音を変えます。 |
 | 07 | dfu | アプリをv1からv2へ更新し、起動失敗時のロールバックを試します。 |
 | 08 | my_gems | ローカルmrbgemを読み込み、Pico 2のオンボードLEDを点滅します。 |
 | 09 | my_gems_dfu | ローカルmrbgemを使うアプリをDFUで更新します。 |
@@ -82,7 +80,7 @@ rpremote run examples/picoruby/education/02_switch/main.rb --timeout 15
 - GP18（物理24番） -> BTLアンプの入力
 - BTLアンプの`OUT+` -> 圧電ブザーの`+`
 - BTLアンプの`OUT-` -> 圧電ブザーの`-`
-- `OUT+`と`OUT-`はどちらもGNDへ接続しない
+- `OUT+`と`OUT-`はどちらもGNDへ接続しないでください。
 
 ```sh
 rpremote run examples/picoruby/education/03_speaker/main.rb --timeout 15

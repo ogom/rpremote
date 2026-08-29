@@ -2,13 +2,17 @@
 
 require "optparse"
 require_relative "build_command"
+require_relative "bootsel_command"
 require_relative "config_show"
 require_relative "dfu_command"
+require_relative "deploy_command"
 require_relative "flash_command"
 require_relative "help"
 require_relative "mrbgems_command"
+require_relative "recursive_copy"
 require_relative "setup_command"
 
+# rubocop:disable Metrics/ClassLength
 module Rpremote
   class CLI
     def self.start(argv = ARGV, config: Config, **options)
@@ -64,7 +68,7 @@ module Rpremote
         ports(args)
       when "config"
         config_command(args)
-      when "setup", "flash", "build", "dfu", "mrbgems"
+      when "setup", "flash", "build", "bootsel", "deploy", "dfu", "mrbgems"
         project_command(command, args)
       when "run", "monitor", "repl", "exec", "reset", "fs"
         remote_command(command, args)
@@ -81,6 +85,21 @@ module Rpremote
         FlashCommand.run(args, defaults: config_options, output: stdout, flasher: flasher)
       when "build"
         BuildCommand.run(args, defaults: config_options, output: stdout, error: stderr)
+      when "bootsel"
+        BootselCommand.run(
+          args,
+          defaults: config_options,
+          output: stdout,
+          services: { flasher: flasher, serial: serial, device: device }
+        )
+      when "deploy"
+        DeployCommand.run(
+          args,
+          defaults: config_options,
+          output: stdout,
+          error: stderr,
+          services: { flasher: flasher, serial: serial, device: device }
+        )
       when "dfu"
         DfuCommand.run(args, defaults: config_options, output: stdout, services: { serial: serial, device: device })
       when "mrbgems"
@@ -119,10 +138,13 @@ module Rpremote
 
     def fs(args)
       subcommand = args.shift
+      recursive = subcommand == "cp" && (args.delete("--recursive") || args.delete("-r"))
       options = parse_connection_options(args)
       case subcommand
       when "cp"
-        copy(args, options)
+        copy(args, options, recursive: recursive)
+      when "push"
+        copy(args, options, recursive: true, command: "push")
       when "cat"
         cat(args, options)
       when "ls", "rm", "mkdir"
@@ -133,12 +155,14 @@ module Rpremote
     end
 
     def run_file(args)
+      reset_on_timeout = !args.delete("--reset-on-timeout").nil?
       options = parse_connection_options(args)
       raise ArgumentError, "usage: rpremote run FILE [options]" unless args.length == 1
 
       source = args.first
-      data = File.binread(source)
-      execute_temporary(data, options, output: stdout)
+      source = File.join(source, "main.rb") if File.directory?(source)
+      data = prepend_mrbgem_requires(File.binread(source))
+      execute_temporary(data, options, output: stdout, reset_on_timeout: reset_on_timeout)
     rescue Errno::ENOENT => e
       raise ArgumentError, e.message
     end
@@ -147,16 +171,32 @@ module Rpremote
       options = parse_connection_options(args)
       raise ArgumentError, "usage: rpremote exec CODE [options]" unless args.length == 1
 
-      execute_temporary(args.first, options, output: stdout)
+      execute_temporary(prepend_mrbgem_requires(args.first), options, output: stdout)
     end
 
-    def execute_temporary(data, options, output: nil)
+    def execute_temporary(data, options, output: nil, reset_on_timeout: false)
       Language.validate!(options[:language])
       port_path = device.main_port(options[:port])
       serial.open(port_path, baud: options[:baud]) do |port|
         runner = Runner.new(port, timeout: options[:timeout])
-        output ? runner.run(data, output: output) : runner.run(data)
+        output ? runner.run(data, output: output, diagnostics: stderr) : runner.run(data, diagnostics: stderr)
       end
+    rescue Shell::TimeoutError => e
+      reset_after_run_timeout(port_path, options, e) if reset_on_timeout
+      raise
+    end
+
+    def reset_after_run_timeout(port_path, options, timeout_error)
+      stderr.puts("rpremote: run timed out; resetting R2P2: #{port_path}")
+      Resetter.new(serial: serial, timeout: options[:timeout]).reset(port_path, baud: options[:baud])
+      stderr.puts("rpremote: reset R2P2 after run timeout: #{port_path}")
+    rescue Rpremote::Error, IOError, SystemCallError => e
+      raise Shell::TimeoutError,
+            "#{timeout_error.message}; automatic reset failed: #{e.message}"
+    end
+
+    def prepend_mrbgem_requires(data)
+      Mrbgems.new(cwd: Dir.pwd).prepend_requires(data)
     end
 
     def interactive(args, repl: false)
@@ -205,13 +245,15 @@ module Rpremote
       options
     end
 
-    def copy(args, options)
-      raise ArgumentError, "usage: rpremote fs cp SOURCE DESTINATION [options]" unless args.length == 2
+    def copy(args, options, recursive: false, command: "cp")
+      usage = command == "push" ? "rpremote fs push LOCAL_DIR :/REMOTE_DIR" : "rpremote fs cp SOURCE DESTINATION"
+      raise ArgumentError, "usage: #{usage} [options]" unless args.length == 2
 
       source, destination = args
       source_remote = RemotePath.remote?(source)
       destination_remote = RemotePath.remote?(destination)
       raise ArgumentError, "exactly one cp path must be remote (prefix remote paths with :)" if source_remote == destination_remote
+      return RecursiveCopy.new(output: stdout, serial: serial, device: device).call(source, destination, options) if recursive
 
       if source_remote
         data = with_modem(options) { |modem| modem.download(RemotePath.unwrap(source)) }
@@ -274,3 +316,4 @@ module Rpremote
     end
   end
 end
+# rubocop:enable Metrics/ClassLength

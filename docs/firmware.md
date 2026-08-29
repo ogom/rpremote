@@ -1,6 +1,6 @@
-# Custom firmware for 04_ws2812
+# Custom firmware for PicoRuby examples
 
-`examples/picoruby/education/04_ws2812/main.rb` uses the `picoruby-ws2812-plus` gem, which is not included in the standard R2P2 firmware. Build and flash the custom firmware below only when running this example on a Pico 2.
+`examples/picoruby/education/04_ws2812/main.rb` uses `picoruby-ws2812-plus`, and `06_mpu6050/main.rb` uses that gem together with the local `picoruby-mpu6050`. These C extensions are not included in the standard R2P2 firmware. Build and flash the custom firmware below when running either example on a Pico 2.
 
 See [Mrbgems and Mrbgems.lock](mrbgems.md) for the `Mrbgems` and `Mrbgems.lock` formats and update procedure.
 
@@ -12,7 +12,7 @@ From the repository root, fetch PicoRuby 4.0.3.
 rpremote setup --language picoruby --language-version 4.0.3 --cache firmware
 ```
 
-The source is extracted to `firmware/picoruby-4.0.3/`. The official source does not include `picoruby-ws2812-plus`; the project `Mrbgems` declares it instead.
+The source is extracted to `firmware/picoruby-4.0.3/`. The official source does not include these example gems; the project `Mrbgems` declares the public and local dependencies instead.
 
 ### PicoRubySourcePatch
 
@@ -32,9 +32,10 @@ Recreate that version's cache with `rpremote setup --force --language-version VE
 ```ruby
 vm :mrubyc
 gem github: "ksbmyk/picoruby-ws2812-plus", branch: "main"
+gem path: "examples/picoruby/mrbgems/mpu6050"
 ```
 
-`picoruby-ws2812-plus` is an mruby/c C extension, so it also requires `vm :mrubyc`. rpremote maps that VM to the official `femtoruby` build configuration for PicoRuby 4 and to `picoruby` for PicoRuby 3.
+Both gems contain mruby/c C extensions, so they require `vm :mrubyc`. rpremote maps that VM to the official `femtoruby` build configuration for PicoRuby 4 and to `picoruby` for PicoRuby 3.
 
 Check the definition and its pinned commit with the following commands.
 
@@ -64,7 +65,7 @@ Hold the Pico 2 BOOTSEL button while connecting USB, then specify the mounted vo
 rpremote flash --firmware firmware/r2p2-picoruby-4.0.3-pico2.uf2 --mount /Volumes/RP2350
 ```
 
-## 4. Wire and run WS2812B
+## 4. Wire and run the examples
 
 - Connect WS2812B DIN to GP14 (physical pin 19).
 - Connect WS2812B GND to a Pico 2 GND pin.
@@ -76,3 +77,20 @@ rpremote run examples/picoruby/education/04_ws2812/main.rb --timeout 15
 ```
 
 Each button press selects one of seven colors; the example prints `ws2812: OK` at the end. For a 5 V-only WS2812B module, confirm the supply voltage and whether a level shifter is required.
+
+For `06_mpu6050`, also connect the MPU6050 and buzzer as described in its [example README](../examples/picoruby/education/06_mpu6050/README.md), then run it with the same firmware.
+
+```sh
+rpremote run examples/picoruby/education/06_mpu6050/main.rb --timeout 15
+```
+
+After changing an mrbgem, repeat the build, BOOTSEL, flash, and run steps:
+
+```sh
+rpremote build --firmware firmware/r2p2-picoruby-4.0.3-pico2.uf2
+rpremote bootsel
+rpremote flash --firmware firmware/r2p2-picoruby-4.0.3-pico2.uf2
+rpremote run examples/picoruby/education/06_mpu6050/main.rb --timeout 15
+```
+
+`deploy PATH` performs the build, BOOTSEL transition, and flash above, then copies the project's `PATH/lib/NAME` directory to `:/lib/NAME` and temporarily runs `PATH/main.rb`.

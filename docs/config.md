@@ -70,16 +70,16 @@ timeout=20.0
 
 | Key | Corresponding option | Default | Purpose |
 | --- | --- | --- | --- |
-| `language` | `--language` | `picoruby` | Language for `setup`, `build`, `flash`, and run commands (currently only `picoruby`). |
-| `language_version` | `--language-version` | `4.0.3` | PicoRuby/R2P2 version used by `setup`, `build`, and `flash`. |
+| `language` | `--language` | `picoruby` | Language for `setup`, `build`, `deploy`, `flash`, and run commands (currently only `picoruby`). |
+| `language_version` | `--language-version` | `4.0.3` | PicoRuby/R2P2 version used by `setup`, `build`, `deploy`, and `flash`. |
 | `cache` | `--cache` | `firmware` | Stores PicoRuby sources and custom UF2 files. `{version}` expands to the language version. |
-| `board` | `--board` | `pico2` | Board for `build` and `flash` (`pico2`, `pico2_w`). |
-| `firmware` | `--firmware` | `{cache}/{language}-{language_version}-{board}.uf2` | Build output and UF2 used by `flash`. |
-| `mrbgems` | `--mrbgems` | Auto-detected | Mrbgems definition for `build`; set to `false` to disable it. |
-| `mount` | `--mount` | Auto-detected | RP2350 BOOTSEL volume used by `flash`. |
+| `board` | `--board` | `pico2` | Board for `build`, `deploy`, and `flash` (`pico2`, `pico2_w`). |
+| `firmware` | `--firmware` | `{cache}/{language}-{language_version}-{board}.uf2` | Build output and UF2 used by `deploy` or `flash`. |
+| `mrbgems` | `--mrbgems` | Auto-detected | Mrbgems definition for `build` or `deploy`; set to `false` to disable it. |
+| `mount` | `--mount` | Auto-detected | RP2350 BOOTSEL volume used by `bootsel`, `deploy`, or `flash`. |
 | `port` | `--port` | Automatically selected CDC 0 | R2P2 serial port. |
 | `baud` | `--baud` | `115200` | Serial communication speed. |
-| `timeout` | `--timeout` | Per command | Connection and communication timeout in seconds. |
+| `timeout` | `--timeout` | Per command | Connection and communication timeout in seconds. During `run` and `exec`, this is the maximum interval without output. |
 
 `language_version` uses `--language-version`, rather than `--version`, so it is not confused with `rpremote --version`.
 
@@ -98,6 +98,8 @@ timeout=20.0
 | `setup` | `--language`, `--language-version`, `--cache`, `--force` |
 | `build` | `--language`, `--language-version`, `--board`, `--cache`, `--firmware`, `--mrbgems`, `--no-mrbgems` |
 | `build clean` | None. Removes only the project `build/` directory. |
+| `deploy PATH` | `--language`, `--language-version`, `--board`, `--cache`, `--firmware`, `--mrbgems`, `--no-mrbgems`, `--mount`, `--port`, `--baud`, `--timeout` |
+| `bootsel` | `--mount`, `--port`, `--baud`, `--timeout` |
 | `dfu app FILE` | `--type ruby\|rite`, `--port`, `--baud`, `--timeout` |
 | `dfu compile FILE` | `--output`, `--language`, `--language-version`, `--cache` |
 | `dfu status` | `--port`, `--baud`, `--timeout` |
@@ -107,9 +109,9 @@ timeout=20.0
 | `ports` | None. |
 | `run`, `exec` | `--port`, `--baud`, `--timeout`, `--language` |
 | `monitor`, `repl`, `reset` | `--port`, `--baud`, `--timeout` |
-| `fs cp/cat/ls/rm/mkdir` | `--port`, `--baud`, `--timeout` |
+| `fs cp/push/cat/ls/rm/mkdir` | `--port`, `--baud`, `--timeout`; `fs cp` also accepts `--recursive` |
 
-The default timeout for every command is 20 seconds. `flash` uses a custom UF2 already created by `build`. When `--firmware` is omitted, it flashes `{cache}/{language}-{language-version}-{board}.uf2`.
+The default timeout for every command is 20 seconds. For `run` and `exec`, output from the running program resets this timeout. `flash` uses a custom UF2 already created by `build`; `deploy` builds that UF2 before flashing it. When `--firmware` is omitted, both use `{cache}/{language}-{language-version}-{board}.uf2`.
 
 ## Common configuration examples
 

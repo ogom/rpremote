@@ -1,7 +1,5 @@
 # 09 Local mrbgem with PicoModem DFU
 
-Language: PicoRuby, Board: Raspberry Pi Pico 2, Custom mrbgem: local `picoruby-my_gems` from `examples/picoruby/mrbgems/my_gems`
-
 [日本語](README.ja.md)
 
 This example flashes R2P2 firmware containing a local mrbgem once, then uses PicoModem DFU to update only an application that calls that mrbgem.

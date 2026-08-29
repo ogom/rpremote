@@ -14,7 +14,7 @@ module Rpremote
     COMMIT_PATTERN = /\A[0-9a-f]{40,64}\z/i
     VMS = %i[mruby mrubyc].freeze
 
-    Dependency = Data.define(:type, :source, :branch, :commit, :path)
+    Dependency = Data.define(:type, :source, :branch, :commit, :path, :require_name)
     Overlay = Data.define(:path, :fingerprint)
 
     class Error < Rpremote::Error; end
@@ -68,6 +68,20 @@ module Rpremote
       raise LockError, "invalid mrbgems lock file #{lock_path}: #{e.message}"
     end
 
+    def require_names
+      lock_data = read_lock(required: false)
+      return [] unless lock_data
+
+      lock_data.fetch("gems").filter_map { |gem| gem["require_name"] }.uniq
+    end
+
+    def prepend_requires(source)
+      names = require_names
+      return source if names.empty?
+
+      names.map { |name| "require #{name.inspect}\n" }.join.b + source.b
+    end
+
     def generate_overlay(base_config:, target:, directory:, update: false)
       lock_data = lock(update: update)
       fingerprint = build_fingerprint(base_config, lock_data)
@@ -109,10 +123,12 @@ module Rpremote
           dependency.source, dependency.branch
         )
         { "type" => "github", "source" => dependency.source,
-          "branch" => dependency.branch, "commit" => validate_commit!(commit) }
+          "branch" => dependency.branch, "commit" => validate_commit!(commit),
+          "require_name" => dependency.require_name }.compact
       else
         { "type" => "path", "source" => dependency.source,
-          "sha256" => digest_directory(dependency.path) }
+          "sha256" => digest_directory(dependency.path),
+          "require_name" => dependency.require_name || local_require_name(dependency.path) }.compact
       end
     end
 
@@ -184,12 +200,22 @@ module Rpremote
 
     def valid_github_lock?(entry)
       GITHUB_PATTERN.match?(entry["source"].to_s) && !entry["branch"].to_s.empty? &&
-        COMMIT_PATTERN.match?(entry["commit"].to_s)
+        COMMIT_PATTERN.match?(entry["commit"].to_s) && valid_require_name?(entry["require_name"])
     end
 
     def valid_path_lock?(entry)
       entry["type"] == "path" && !entry["source"].to_s.empty? &&
-        /\A[0-9a-f]{64}\z/.match?(entry["sha256"].to_s)
+        /\A[0-9a-f]{64}\z/.match?(entry["sha256"].to_s) && valid_require_name?(entry["require_name"])
+    end
+
+    def valid_require_name?(name)
+      name.nil? || (name.is_a?(String) && !name.empty? && !name.match?(/[\x00-\x1f\x7f]/))
+    end
+
+    def local_require_name(directory)
+      source = File.read(File.join(directory, "mrbgem.rake"))
+      match = source.match(/^\s*spec\.require_name\s*=\s*["']([^"']+)["']\s*$/)
+      match && match[1]
     end
 
     def build_fingerprint(base_config, lock_data)
@@ -246,14 +272,17 @@ module Rpremote
         @vm_name = value
       end
 
-      def gem(github: nil, path: nil, branch: "main", commit: nil)
+      def gem(github: nil, path: nil, branch: "main", commit: nil, require: nil)
         sources = [github, path].compact
         raise DefinitionError, "gem requires exactly one of github or path" unless sources.length == 1
+        unless require.nil? || (require.is_a?(String) && !require.empty? && !require.match?(/[\x00-\x1f\x7f]/))
+          raise DefinitionError, "invalid mrbgem require name: #{require.inspect}"
+        end
 
         dependency = if github
-                       github_dependency(github, branch, commit)
+                       github_dependency(github, branch, commit, require)
                      else
-                       path_dependency(path, branch, commit)
+                       path_dependency(path, branch, commit, require)
                      end
         key = [dependency.type, dependency.source]
         raise DefinitionError, "duplicate mrbgem: #{dependency.source}" if dependencies.any? do |item|
@@ -267,21 +296,21 @@ module Rpremote
 
       attr_reader :directory
 
-      def github_dependency(source, branch, commit)
+      def github_dependency(source, branch, commit, require_name)
         raise DefinitionError, "invalid GitHub mrbgem: #{source.inspect}" unless GITHUB_PATTERN.match?(source.to_s)
         raise DefinitionError, "GitHub mrbgem branch must not be empty" if branch.to_s.empty?
         raise DefinitionError, "invalid Git commit: #{commit.inspect}" if commit && !COMMIT_PATTERN.match?(commit.to_s)
 
         Dependency.new(type: :github, source: source, branch: branch,
-                       commit: commit&.downcase, path: nil)
+                       commit: commit&.downcase, path: nil, require_name: require_name)
       end
 
-      def path_dependency(source, branch, commit)
+      def path_dependency(source, branch, commit, require_name)
         raise DefinitionError, "local mrbgem path must not be empty" if source.to_s.empty?
         raise DefinitionError, "local mrbgem does not accept branch or commit" if branch != "main" || commit
 
         Dependency.new(type: :path, source: source, branch: nil, commit: nil,
-                       path: File.expand_path(source, directory))
+                       path: File.expand_path(source, directory), require_name: require_name)
       end
     end
   end

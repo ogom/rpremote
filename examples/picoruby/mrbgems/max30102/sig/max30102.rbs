@@ -1,0 +1,43 @@
+class MAX30102
+  type fifo_average = :avg1 | :avg2 | :avg4 | :avg8 | :avg16 | :avg32
+  type sample_rate = :hz50 | :hz100 | :hz200 | :hz400 | :hz800 | :hz1000 | :hz1600 | :hz3200
+  type pulse_width = :us69 | :us118 | :us215 | :us411
+  type adc_range = :n2048 | :n4096 | :n8192 | :n16384
+
+  attr_reader address: Integer
+  attr_reader fifo_average: fifo_average
+  attr_reader sample_rate: sample_rate
+  attr_reader pulse_width: pulse_width
+  attr_reader adc_range: adc_range
+
+  def initialize: (
+    i2c: I2C,
+    ?address: Integer,
+    ?fifo_average: fifo_average,
+    ?sample_rate: sample_rate,
+    ?pulse_width: pulse_width,
+    ?adc_range: adc_range,
+    ?red_led_amplitude: Integer,
+    ?ir_led_amplitude: Integer
+  ) -> void
+  def connected?: () -> bool
+  def part_id: () -> Integer
+  def revision_id: () -> Integer
+  def reset: () -> bool
+  def clear_fifo: () -> MAX30102
+  def available_samples: () -> Integer
+  def sample_available?: () -> bool
+  def read_fifo: () -> Hash[Symbol, Integer]
+  def read: () -> Hash[Symbol, Integer]
+  def temperature: () -> Float
+  def shutdown: () -> MAX30102
+  def wake: () -> MAX30102
+
+  private def _decode_frame: (String frame) -> Array[Integer]
+
+  class DeviceNotFoundError < StandardError
+  end
+
+  class ResetTimeoutError < StandardError
+  end
+end

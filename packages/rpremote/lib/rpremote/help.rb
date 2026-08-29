@@ -9,9 +9,14 @@ module Rpremote
       build: "rpremote build [--language LANGUAGE] [--language-version VERSION] [--board BOARD] " \
              "[--firmware FILE] [--cache DIR] [--mrbgems FILE|--no-mrbgems]",
       build_clean: "rpremote build clean",
+      bootsel: "rpremote bootsel [--reset-flash-memory] [--mount DIR] [--port PORT] [--baud RATE] [--timeout SEC]",
+      deploy: "rpremote deploy PATH [--language LANGUAGE] [--language-version VERSION] [--board BOARD] " \
+              "[--firmware FILE] [--cache DIR] [--mrbgems FILE|--no-mrbgems] [--mount DIR] " \
+              "[--port PORT] [--baud RATE] [--timeout SEC]",
       dfu_app: "rpremote dfu app FILE [--type ruby|rite] [--port PORT] [--baud RATE] [--timeout SEC]",
       dfu_compile: "rpremote dfu compile FILE [--output FILE] [--language LANGUAGE] [--language-version VERSION] [--cache DIR]",
       dfu_status: "rpremote dfu status [--port PORT] [--baud RATE] [--timeout SEC]",
+      dfu_remove: "rpremote dfu remove [--port PORT] [--baud RATE] [--timeout SEC]",
       mrbgems: "rpremote mrbgems SUBCOMMAND [--file FILE] [--lockfile FILE]",
       flash: "rpremote flash [--firmware FILE] [--language LANGUAGE] [--language-version VERSION] " \
              "[--board BOARD] [--cache DIR] [--mount DIR] [--port PORT] [--timeout SEC]",
@@ -19,12 +24,13 @@ module Rpremote
                    "[--cache DIR] [--firmware FILE] [--mrbgems FILE|--no-mrbgems] [--mount DIR] " \
                    "[--port PORT] [--baud RATE] [--timeout SEC]",
       ports: "rpremote ports",
-      run: "rpremote run FILE [--port PORT] [--baud RATE] [--timeout SEC] [--language LANGUAGE]",
+      run: "rpremote run FILE [--port PORT] [--baud RATE] [--timeout SEC] [--reset-on-timeout] [--language LANGUAGE]",
       monitor: "rpremote monitor [--port PORT] [--baud RATE] [--timeout SEC]",
       repl: "rpremote repl [--port PORT] [--baud RATE] [--timeout SEC]",
       exec: "rpremote exec CODE [--port PORT] [--baud RATE] [--timeout SEC] [--language LANGUAGE]",
       reset: "rpremote reset [--port PORT] [--baud RATE] [--timeout SEC]",
-      fs_cp: "rpremote fs cp SOURCE DESTINATION [--port PORT] [--baud RATE] [--timeout SEC]",
+      fs_cp: "rpremote fs cp SOURCE DESTINATION [--recursive] [--port PORT] [--baud RATE] [--timeout SEC]",
+      fs_push: "rpremote fs push LOCAL_DIR :/REMOTE_DIR [--port PORT] [--baud RATE] [--timeout SEC]",
       fs_cat: "rpremote fs cat :/REMOTE/PATH [--port PORT] [--baud RATE] [--timeout SEC]",
       fs_ls: "rpremote fs ls :/REMOTE/PATH [--port PORT] [--baud RATE] [--timeout SEC]",
       fs_rm: "rpremote fs rm :/REMOTE/PATH [--port PORT] [--baud RATE] [--timeout SEC]",
@@ -38,9 +44,12 @@ module Rpremote
         #{COMMAND_USAGE.fetch(:setup)}
         #{COMMAND_USAGE.fetch(:build)}
         #{COMMAND_USAGE.fetch(:build_clean)}
+        #{COMMAND_USAGE.fetch(:bootsel)}
+        #{COMMAND_USAGE.fetch(:deploy)}
         #{COMMAND_USAGE.fetch(:dfu_app)}
         #{COMMAND_USAGE.fetch(:dfu_compile)}
         #{COMMAND_USAGE.fetch(:dfu_status)}
+        #{COMMAND_USAGE.fetch(:dfu_remove)}
         #{COMMAND_USAGE.fetch(:mrbgems).sub("SUBCOMMAND", "check|list|lock|update")}
         #{COMMAND_USAGE.fetch(:flash)}
         #{COMMAND_USAGE.fetch(:config_show)}
@@ -51,6 +60,7 @@ module Rpremote
         #{COMMAND_USAGE.fetch(:exec)}
         #{COMMAND_USAGE.fetch(:reset)}
         #{COMMAND_USAGE.fetch(:fs_cp)}
+        #{COMMAND_USAGE.fetch(:fs_push)}
         #{COMMAND_USAGE.fetch(:fs_cat)}
         #{COMMAND_USAGE.fetch(:fs_ls)}
         #{COMMAND_USAGE.fetch(:fs_rm)}
@@ -66,11 +76,11 @@ module Rpremote
         --language-version VERSION
                           use R2P2/PicoRuby 4.0.3 or 3.4.2 (default: 4.0.3)
         --cache DIR       use another project cache directory
-        --mrbgems FILE    use an explicit Mrbgems definition during build
-        --no-mrbgems      build without the automatically detected Mrbgems
+        --mrbgems FILE    use an explicit Mrbgems definition during build or deploy
+        --no-mrbgems      build or deploy without the automatically detected Mrbgems
         --board BOARD
                           select pico2 or pico2_w (default: pico2)
-        --firmware FILE   build to, or flash from, this UF2 path
+        --firmware FILE   build to, or deploy or flash from, this UF2 path
         --language LANGUAGE
                           select the remote language (default: picoruby)
         --config FILE     use another configuration file
@@ -93,6 +103,8 @@ module Rpremote
       case command
       when "setup" then setup_text
       when "build" then args.first == "clean" ? build_clean_text : build_text
+      when "bootsel" then bootsel_text
+      when "deploy" then deploy_text
       when "dfu" then dfu_text(args.first)
       when "mrbgems" then mrbgems_text(args.first)
       when "flash" then flash_text
@@ -112,7 +124,7 @@ module Rpremote
       <<~HELP
         Usage: #{COMMAND_USAGE.fetch(:setup)}
 
-        Creates config/setting.json when it does not exist, then downloads and prepares PicoRuby source.
+        Creates config/setting.json when it does not exist, then downloads and prepares PicoRuby source and the official Raspberry Pi nuke_universal.uf2 firmware.
         Options: --language LANGUAGE (picoruby), --language-version VERSION (4.0.3), --cache DIR (firmware), --force.
         This changes the project configuration and source cache but does not connect to a board.
       HELP
@@ -136,15 +148,40 @@ module Rpremote
       HELP
     end
 
+    def self.deploy_text
+      <<~HELP
+        Usage: #{COMMAND_USAGE.fetch(:deploy)}
+
+        Builds the selected custom UF2, enters BOOTSEL when needed, flashes the firmware, and waits for the R2P2 Shell to become ready.
+        If PATH/lib/NAME exists, it copies it to :/lib/NAME, where NAME is the final component of PATH. It then runs PATH/main.rb and preserves its Shell job, so hardware output remains active until the next command.
+        The stages run in order and stop at the first failure. Flashing replaces persistent board firmware.
+        deploy requires PicoRuby 4.x firmware (currently 4.0.3).
+        Options combine build, BOOTSEL, flash, library-copy, and run settings. The first install of firmware with automatic BOOTSEL still requires holding BOOTSEL.
+      HELP
+    end
+
+    def self.bootsel_text
+      <<~HELP
+        Usage: #{COMMAND_USAGE.fetch(:bootsel)}
+
+        Asks the running R2P2 firmware to restart as an RP2350 BOOTSEL USB volume, then waits for that volume to appear.
+        By default it does not write firmware. This requires firmware built by a current rpremote; use physical BOOTSEL once to install it first.
+        --reset-flash-memory copies the official Raspberry Pi nuke_universal.uf2 in BOOTSEL mode and erases all external flash memory.
+        After resetting flash memory, wait for BOOTSEL to reappear and run `rpremote flash` to install R2P2 again.
+      HELP
+    end
+
     def self.dfu_text(subcommand)
       return dfu_app_text if subcommand == "app"
       return dfu_compile_text if subcommand == "compile"
       return dfu_status_text if subcommand == "status"
+      return dfu_remove_text if subcommand == "remove"
 
       <<~HELP
         Usage: #{COMMAND_USAGE.fetch(:dfu_app)}
                #{COMMAND_USAGE.fetch(:dfu_compile)}
                #{COMMAND_USAGE.fetch(:dfu_status)}
+               #{COMMAND_USAGE.fetch(:dfu_remove)}
 
         Stages and inspects PicoModem DFU applications. Run `rpremote dfu SUBCOMMAND --help` for details.
       HELP
@@ -175,6 +212,16 @@ module Rpremote
 
         Prints the active and candidate DFU A/B slots. Defaults are the configured or automatically selected CDC 0 port,
         115200 baud, and 20 seconds. This command reads board state without changing it.
+      HELP
+    end
+
+    def self.dfu_remove_text
+      <<~HELP
+        Usage: #{COMMAND_USAGE.fetch(:dfu_remove)}
+
+        Permanently removes the Ruby source and bytecode applications from both DFU A/B slots and resets their metadata.
+        Run `rpremote reset` afterward to stop the application already running in RAM. It does not remove /home/app.rb,
+        /home/app.mrb, other files, embedded mrbgems, or R2P2 firmware.
       HELP
     end
 
@@ -217,8 +264,10 @@ module Rpremote
       <<~HELP
         Usage: #{COMMAND_USAGE.fetch(:run)}
 
-        Uploads FILE to R2P2, relays output, then removes the temporary remote file. Defaults are the automatic CDC 0 port,
-        115200 baud, 20 seconds, and picoruby. It exits nonzero when compatible R2P2 firmware reports a Ruby exception.
+        Uploads FILE to R2P2, or main.rb when FILE is a directory, relays output, then removes the temporary remote file. Defaults are the automatic CDC 0 port,
+        115200 baud, a 20-second idle timeout, and picoruby. Output from the running program resets the idle timeout.
+        It exits nonzero when compatible R2P2 firmware reports a Ruby exception.
+        --reset-on-timeout resets R2P2 after the run times out and the serial connection has closed.
       HELP
     end
 
@@ -227,7 +276,8 @@ module Rpremote
         Usage: #{COMMAND_USAGE.fetch(:exec)}
 
         Runs short Ruby CODE through a temporary remote file, then removes it. Defaults are the automatic CDC 0 port,
-        115200 baud, 20 seconds, and picoruby. It exits nonzero when compatible R2P2 firmware reports a Ruby exception.
+        115200 baud, a 20-second idle timeout, and picoruby. Output from the running program resets the idle timeout.
+        It exits nonzero when compatible R2P2 firmware reports a Ruby exception.
       HELP
     end
 
@@ -256,10 +306,11 @@ module Rpremote
     end
 
     def self.fs_text(subcommand)
-      return fs_subcommand_text(subcommand) if %w[cp cat ls rm mkdir].include?(subcommand)
+      return fs_subcommand_text(subcommand) if %w[cp push cat ls rm mkdir].include?(subcommand)
 
       <<~HELP
         Usage: #{COMMAND_USAGE.fetch(:fs_cp)}
+               #{COMMAND_USAGE.fetch(:fs_push)}
                #{COMMAND_USAGE.fetch(:fs_cat)}
                #{COMMAND_USAGE.fetch(:fs_ls)}
                #{COMMAND_USAGE.fetch(:fs_rm)}
@@ -274,7 +325,9 @@ module Rpremote
       effect = case subcommand
                when "rm" then "Deletes the remote path permanently."
                when "mkdir" then "Creates a remote directory."
-               else "Reads or transfers remote files."
+               when "cp" then "Transfers one file, or recursively uploads a local directory with --recursive."
+               when "push" then "Creates missing remote directories and recursively uploads a local directory."
+               else "Reads remote files."
                end
       <<~HELP
         Usage: #{usage}
