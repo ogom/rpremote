@@ -24,6 +24,8 @@ The [education series](education/README.md) progresses from GPIO basics to a sen
 
 The [oximeter project](projects/oximeter/README.md) combines the local MAX30102 and SPI WS2812 mrbgems to estimate heart rate and SpO2 and display its state on eight NeoPixels.
 
+The [Daisen Kofun illumination project](projects/daisenkofun/README.md) uses 32 patterns embedded in a local mrbgem to control 572 WS2812B LEDs arranged on a Daisen Kofun model. Run `rpremote deploy examples/picoruby/projects/daisenkofun` to build, flash, and execute the project in one command.
+
 ```sh
 rpremote setup
 rpremote mrbgems check

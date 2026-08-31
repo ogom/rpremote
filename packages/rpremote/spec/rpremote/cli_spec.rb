@@ -680,6 +680,60 @@ RSpec.describe Rpremote::CLI do
     end
   end
 
+  it "reports an fs ls connection timeout clearly" do
+    port = Object.new
+    device = class_double(Rpremote::Device, main_port: "/dev/cu.usbmodem101")
+    serial = class_double(Rpremote::Serial)
+    allow(serial).to receive(:open).and_yield(port)
+    timeout = Rpremote::Shell::TimeoutError.new(
+      "timed out waiting for the R2P2 Shell after 1.0 seconds"
+    )
+    shell_instance = instance_double(Rpremote::Shell, synchronize!: nil)
+    allow(shell_instance).to receive(:synchronize!).and_raise(timeout)
+    allow(Rpremote::Shell).to receive(:new).and_return(shell_instance)
+
+    status = described_class.start(
+      ["fs", "ls", ":/", "--port", "/dev/cu.usbmodem101", "--timeout", "1"],
+      stdout: stdout,
+      stderr: stderr,
+      device: device,
+      serial: serial
+    )
+
+    expect(status).to eq(1)
+    expect(stderr.string).to include(
+      "filesystem connection failed: timed out waiting for the R2P2 Shell after 1.0 seconds"
+    )
+  end
+
+  it "checks the R2P2 filesystem before a non-recursive fs cp upload" do
+    source = File.join(Dir.tmpdir, "rpremote-fs-cp-#{Process.pid}.rb")
+    File.binwrite(source, "aurora")
+    port = Object.new
+    device = class_double(Rpremote::Device, main_port: "/dev/cu.usbmodem101")
+    serial = class_double(Rpremote::Serial)
+    allow(serial).to receive(:open).and_yield(port)
+    shell_instance = instance_double(Rpremote::Shell, synchronize!: nil)
+    allow(shell_instance).to receive(:execute).with("ls '/'").and_return("bin\nlib\n")
+    allow(Rpremote::Shell).to receive(:new).and_return(shell_instance)
+    modem = instance_double(Rpremote::PicoModem, upload: 6)
+    allow(Rpremote::PicoModem).to receive(:new).and_return(modem)
+
+    status = described_class.start(
+      ["fs", "cp", source, ":/lib/aurora.rb", "--port", "/dev/cu.usbmodem101"],
+      stdout: stdout,
+      stderr: stderr,
+      device: device,
+      serial: serial
+    )
+
+    expect(status).to eq(0)
+    expect(shell_instance).to have_received(:execute).with("ls '/'").ordered
+    expect(modem).to have_received(:upload).with("/lib/aurora.rb", "aurora").ordered
+  ensure
+    FileUtils.rm_f(source) if source
+  end
+
   it "recursively uploads a local directory and creates missing remote directories" do
     Dir.mktmpdir("rpremote-fs-cp") do |source|
       FileUtils.mkdir_p(File.join(source, "processing"))

@@ -152,6 +152,8 @@ module Rpremote
       else
         raise ArgumentError, "unknown fs command: #{subcommand || "(none)"}"
       end
+    rescue Shell::TimeoutError => e
+      raise Shell::TimeoutError, "filesystem connection failed: #{e.message}"
     end
 
     def run_file(args)
@@ -255,6 +257,7 @@ module Rpremote
       raise ArgumentError, "exactly one cp path must be remote (prefix remote paths with :)" if source_remote == destination_remote
       return RecursiveCopy.new(output: stdout, serial: serial, device: device).call(source, destination, options) if recursive
 
+      ensure_filesystem_connection!(options)
       if source_remote
         data = with_modem(options) { |modem| modem.download(RemotePath.unwrap(source)) }
         File.binwrite(local_destination(destination, source), data)
@@ -291,6 +294,11 @@ module Rpremote
     def ensure_filesystem_success!(command, output)
       failed = command == "ls" ? output.start_with?("ls:") : !output.empty?
       raise Shell::CommandError, output.strip if failed
+    end
+
+    def ensure_filesystem_connection!(options)
+      output = with_shell(options) { |shell| shell.execute("ls '/'") }
+      ensure_filesystem_success!("ls", output)
     end
 
     def with_modem(options)
