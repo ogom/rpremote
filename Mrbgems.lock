@@ -4,15 +4,15 @@
   "gems": [
     {
       "type": "github",
-      "source": "ksbmyk/picoruby-ws2812-plus",
-      "branch": "main",
-      "commit": "16699f8eb163df3fad86cfe826590bf890d0bb58"
+      "source": "ogom/picoruby-ws2812-plus",
+      "branch": "develop",
+      "commit": "34c8624794b253a4b7dd6db98b4e93c3986d358b"
     },
     {
       "type": "path",
-      "source": "examples/picoruby/mrbgems/my_gems",
-      "sha256": "fab8651736af0b8dcd08c04cc594c3d4f87afb268b14b314f5d11d7e9d64c3a1",
-      "require_name": "my_gems"
+      "source": "examples/picoruby/projects/daisenkofun/mrbgems/daisenkofun-illuminations",
+      "sha256": "b491bb6be064e19d1c0ba46ec27906e0331ccded74a1c2890759fc897862e6ff",
+      "require_name": "daisenkofun-illuminations"
     }
   ]
 }

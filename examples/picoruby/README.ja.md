@@ -24,6 +24,8 @@
 
 [パルスオキシメータープロジェクト](projects/oximeter/README.ja.md)では、ローカルのMAX30102とSPI WS2812 mrbgemを組み合わせて心拍数とSpO2を推定し、8個のNeoPixelへ状態を表示します。
 
+[大仙古墳イルミネーションプロジェクト](projects/daisenkofun/README.ja.md)では、ローカルmrbgemへ組み込んだ32パターンを使い、大仙古墳模型に配置した572個のWS2812Bを制御します。ビルド、ファームウェアの書き込み、実行は`rpremote deploy examples/picoruby/projects/daisenkofun`でまとめて行えます。
+
 ```sh
 rpremote setup
 rpremote mrbgems check

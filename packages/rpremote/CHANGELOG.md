@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## 0.4.0 - 2026-08-31
+
+- Add the Daisen Kofun PicoRuby project, with 32 WS2812 illumination patterns, a firmware-embedded local mrbgem, LED layout and setlist definitions, bilingual documentation, and host-side regression tests.
+- Check R2P2 filesystem connectivity before non-recursive `fs cp` transfers, and report Shell synchronization timeouts as filesystem connection failures.
+
 ## 0.3.0 - 2026-08-28
 
 - Add `bootsel` to ask supported R2P2 firmware to enter USB BOOTSEL mode without pressing the button.
