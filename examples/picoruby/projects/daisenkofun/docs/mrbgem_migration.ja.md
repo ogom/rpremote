@@ -11,7 +11,7 @@
 
 一括ロードと遅延ロードでは、どちらも実機上で多数の`.rb`をコンパイルする必要があり、安定しませんでした。事前コンパイルでは実機上のコンパイルを避けられましたが、ファイルを保持する期間に問題があり、連続実行に失敗しました。最終的に、Sandboxを介したファイル読み込みをやめ、イルミネーションをmrbgemとしてファームウェアへ組み込むことで、`Setlist::SHORT`の連続実行に成功しました。
 
-この文書のコマンド、パス、ログ、`wait_ms`は各方式を検証した時点の記録です。現行の構成と設定は、プロジェクトの[`README.ja.md`](../README.ja.md)と[`setlist.rb`](../mrbgems/daisenkofun-illuminations/mrblib/daisenkofun/setlist.rb)を参照してください。
+この文書のコマンド、パス、ログ、`wait_ms`は各方式を検証した時点の記録です。現行の構成と設定は、[動作モードと設定](modes.ja.md)と[`setlist.rb`](../mrbgems/daisenkofun-illuminations/mrblib/daisenkofun/setlist.rb)を参照してください。
 
 ## 1. 一括ロード
 
@@ -212,7 +212,7 @@ $ rpremote run examples/picoruby/projects/daisenkofun/main.rb --timeout 120
 
 `Setlist::SHORT`の全7パターンが設定順に実行されました。
 
-次のログは検証時の`wait_ms=10`で実行した結果です。現行の`Setlist::SHORT`は`SHORT_FRAME_MS`を使用します。
+次のログは検証時の`wait_ms=10`で実行した結果です。この検証時点ではセットリスト名が`Setlist::SHORT`、フレーム間隔が`SHORT_FRAME_MS`でした。現行の名称は`Setlist::HIGHLIGHTS`と`HIGHLIGHTS_FRAME_MS`です。
 
 ```text
 daisenkofun: start
@@ -237,5 +237,11 @@ rpremote: run event=CLEANUP_DONE
 mrbgemの命令列はファームウェア内のプリビルドgemとして保持されます。ファイルシステムから読み込んだ一時的な文字列を命令列として参照しないため、事前コンパイル方式で発生した、GC後に無効な命令ポインタを参照する問題がありません。
 
 また、実行時に各パターンの`.rb`をコンパイルせず、パターンごとのSandboxも生成しません。`Illuminations.const_get`でファームウェアへ組み込まれたクラスを取得して実行するため、一括ロードと遅延ロードで問題になった実機コンパイルの負荷も回避できました。
+
+### mrbgem内部ファイルの読み込み規則
+
+mruby/c向けファームウェアでは、mrbgemの`mrblib`は`spec.require_name`で指定した1つのpicogemとして登録されます。例えばOximeter mrbgemで外部から`require "daisenkofun-oximeter"`することはできますが、内部ファイルのパスである`require "daisenkofun/oximeter/config"`は個別のpicogem名として登録されません。実機のファイルシステムにも同名ファイルがなければ`LoadError`になります。
+
+mrbgem内のRubyファイルはビルド時にまとめてコンパイルされるため、同じmrbgem内のファイル同士では個別パスを`require`しません。別mrbgemへの依存は`mrbgem.rake`の`add_dependency`で宣言し、必要な外部gem名だけを`require`します。CRuby単体テストでは、テストヘルパーが各ファイルを明示的に読み込みます。
 
 以上から、このプロジェクトではイルミネーションをmrbgemとしてファームウェアへ組み込む方法を採用します。

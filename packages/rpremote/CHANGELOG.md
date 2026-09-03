@@ -1,10 +1,13 @@
 # Changelog
 
-All notable changes to this project will be documented in this file.
+Notable changes to the `rpremote` RubyGem will be documented in this file. Repository-level examples, local mrbgems, and support files are documented in the [repository changelog](../../CHANGELOG.md).
+
+## Unreleased
+
+- Add `auto_require: false` to `Mrbgems` entries so a gem can remain embedded in firmware without being prepended to every `run`, `exec`, and `deploy` source.
 
 ## 0.4.0 - 2026-08-31
 
-- Add the Daisen Kofun PicoRuby project, with 32 WS2812 illumination patterns, a firmware-embedded local mrbgem, LED layout and setlist definitions, bilingual documentation, and host-side regression tests.
 - Check R2P2 filesystem connectivity before non-recursive `fs cp` transfers, and report Shell synchronization timeouts as filesystem connection failures.
 
 ## 0.3.0 - 2026-08-28
@@ -20,13 +23,11 @@ All notable changes to this project will be documented in this file.
 - Read mrbgem `require_name` values from `Mrbgems.lock` and automatically prepend the corresponding `require` calls to `run`, `exec`, and `deploy`; allow `Mrbgems` entries to specify `require:` explicitly.
 - Change `flash` to accept an explicit UF2 only through `--firmware FILE`; positional UF2 arguments are no longer supported.
 - Improve RP2350 BOOTSEL flashing on macOS by accepting the expected `ENXIO` volume-detach race after a successful copy.
-- Add PicoRuby mrbgem examples for BMI270, HC-SR04 temperature, MAX30102, MPU6050, and WS2812 SPI, plus oximeter and Processing project examples.
 
 ## 0.2.0 - 2026-08-26
 
 - Make `run` and `exec` exit nonzero when compatible R2P2 firmware reports a Ruby exception, while preserving real-time program output.
 - Increase the default command timeout from 10 to 20 seconds.
-- Add a bilingual education example for practical PicoModem DFU application updates, startup confirmation, and A/B-slot rollback.
 
 ## 0.1.0 - 2026-08-24
 
@@ -36,7 +37,7 @@ All notable changes to this project will be documented in this file.
 - Add PicoModem DFU staging, status, compatible bytecode compilation, and A/B-slot rollback support for Ruby and `.mrb` applications.
 - Add binary-safe file transfer and remote filesystem commands, plus `run`, `exec`, `monitor`, `repl`, and reset with reconnect waiting.
 - Add macOS R2P2 serial-port detection for Raspberry Pi Pico 2 and Pico 2 W.
-- Add bilingual repository, package, configuration, firmware, mrbgem, DFU, and electronic-craft example documentation.
+- Add bilingual package, configuration, firmware, mrbgem, and DFU documentation.
 - Add RBS signatures, automated tests, macOS CI, and release validation with isolated gem installation and CLI smoke testing.
 
 ### Limitations

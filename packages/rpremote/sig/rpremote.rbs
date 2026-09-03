@@ -226,6 +226,8 @@ module Rpremote
       attr_reader branch: String?
       attr_reader commit: String?
       attr_reader path: String?
+      attr_reader require_name: String?
+      attr_reader auto_require: bool
     end
 
     class Overlay < Data

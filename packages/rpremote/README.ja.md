@@ -60,6 +60,8 @@ rpremote build
 
 `Mrbgems.lock`はGitHubのコミットとローカルgemの内容ハッシュを固定します。`build`は既存のlockを再利用し、`rpremote mrbgems update`だけが新しいコミットを解決します。
 
+ファームウェアへ組み込む一方で、すべての`run`、`exec`、`deploy`に先行ロードしないgemには`auto_require: false`を指定できます。アプリケーション側から必要なgemを明示的に`require`してください。
+
 ## 対象を選択する
 
 ```sh

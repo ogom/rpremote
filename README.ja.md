@@ -149,6 +149,7 @@ rpremote flash --language picoruby --language-version 3.4.2 --board pico2 --moun
 - [MrbgemsとMrbgems.lock](docs/mrbgems.ja.md) / [English](docs/mrbgems.md)
 - [PicoModem DFUによるアプリケーション更新](docs/dfu.ja.md) / [English](docs/dfu.md)
 - [CLIリファレンスとRubyGemパッケージガイド](packages/rpremote/README.ja.md)
+- [リポジトリの変更履歴](CHANGELOG.md)
 
 ## 開発
 

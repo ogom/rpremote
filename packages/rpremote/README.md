@@ -60,6 +60,8 @@ rpremote build
 
 `Mrbgems.lock` pins GitHub commits and hashes local gem contents. Existing locks are reused by `build`; `rpremote mrbgems update` deliberately resolves new commits.
 
+Set `auto_require: false` for a gem that should remain embedded in firmware without being loaded before every `run`, `exec`, or `deploy`. Require that gem explicitly from the application when needed.
+
 ## Select a target
 
 ```sh

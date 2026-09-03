@@ -92,6 +92,14 @@ For a GitHub gem, specify the name explicitly because its `mrbgem.rake` is not a
 gem github: "owner/repository", branch: "main", require: "device_driver"
 ```
 
+Use `auto_require: false` for a gem that should be embedded in firmware without being loaded before every `run`, `exec`, or `deploy`. The application must explicitly `require` it when needed. This is useful when several applications share one firmware or when limiting symbol-table and RAM usage.
+
+```ruby
+gem path: "../mrbgems/my-application", auto_require: false
+```
+
+The gem remains part of the build, but its auto-loading `require_name` is omitted from the lock file. The gem's own `spec.require_name` is unchanged, so applications can still require it explicitly. Omitting this option preserves the existing `auto_require: true` behavior.
+
 ## Mrbgems.lock
 
 `Mrbgems.lock` is JSON. GitHub gems record the resolved commit; local gems record their content SHA-256 and, when available, their `require_name`.

@@ -7,6 +7,10 @@ class WS2812
 
   attr_reader :brightness, :checksum, :closed, :frame_count, :invalid_indices, :pixels
 
+  class << self
+    attr_reader :last_instance
+  end
+
   def initialize(pin:, num:, order: :grb)
     raise ArgumentError, "num must be positive" unless num > 0
     raise ArgumentError, "order must be :rgb or :grb" unless order == :rgb || order == :grb
@@ -20,6 +24,7 @@ class WS2812
     @checksum = FNV_OFFSET
     @invalid_indices = []
     @closed = false
+    self.class.instance_variable_set(:@last_instance, self)
   end
 
   def brightness=(value)

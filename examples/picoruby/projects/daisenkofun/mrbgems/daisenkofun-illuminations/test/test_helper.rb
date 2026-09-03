@@ -21,6 +21,7 @@ end
 
 require "daisenkofun/setlist"
 require "daisenkofun/illumination"
+require "daisenkofun/beat_illumination"
 
 class AddressCheckingDisplay < Daisenkofun::Display
   attr_reader :invalid_indices

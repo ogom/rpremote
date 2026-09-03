@@ -1,0 +1,42 @@
+# frozen_string_literal: true
+
+module Daisenkofun
+  module Oximeter
+    module Config
+      I2C_UNIT = :RP2040_I2C0
+      I2C_SDA_PIN = 16
+      I2C_SCL_PIN = 17
+      I2C_FREQUENCY = 400_000
+
+      SPI_UNIT = :RP2040_SPI0
+      SPI_SCK_PIN = 2
+      SPI_COPI_PIN = 3
+
+      SMOOTH_SAMPLES = 8
+      BASELINE_SAMPLES = 50
+      RESULT_SAMPLES = 8
+      SIGNAL_SAMPLES = 100
+      MIN_BEAT_INTERVAL_MS = 350
+      MAX_BEAT_INTERVAL_MS = 1_500
+      BEAT_HYSTERESIS = 80
+      FINGER_THRESHOLD = 20_000
+      FINGER_HYSTERESIS = 3_000
+      STABILIZE_MS = 500
+      SPO2_INTERCEPT = 110.0
+      SPO2_RATIO_SCALE = 25.0
+
+      LED_COUNT = 8
+      LED_BRIGHTNESS = 12
+      LED_TRAIL_DIM = 3
+      SPO2_GREEN_LIMIT = 97.0
+      NO_FINGER_FRAME_INTERVAL_MS = 120
+      MEASURING_FRAME_INTERVAL_MS = 90
+      RESULT_FRAME_INTERVAL_MS = 40
+
+      RUN_DURATION_MS = 60_000
+      POLL_INTERVAL_MS = 2
+      MAX_SAMPLES_PER_TICK = 4
+      ERROR_DISPLAY_MS = 1_000
+    end
+  end
+end

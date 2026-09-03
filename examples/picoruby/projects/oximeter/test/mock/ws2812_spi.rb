@@ -1,0 +1,4 @@
+class WS2812SPI
+  FREQUENCY = 2_400_000
+  MODE = 0
+end

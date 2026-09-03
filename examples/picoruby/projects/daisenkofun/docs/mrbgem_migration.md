@@ -11,7 +11,7 @@ The Daisen Kofun project evaluated the following ways to load many illuminations
 
 Both eager and lazy loading required the device to compile many `.rb` files and were unstable. Precompilation avoided compilation on the device, but the lifetime of the loaded files caused consecutive execution to fail. The final approach removed Sandbox-based file loading and embedded the illuminations in the firmware as an mrbgem; this successfully ran `Setlist::SHORT` from beginning to end.
 
-The commands, paths, logs, and `wait_ms` values in this document record the configuration at the time each approach was evaluated. See the project [`README.md`](../README.md) and current [`setlist.rb`](../mrbgems/daisenkofun-illuminations/mrblib/daisenkofun/setlist.rb) for the present configuration.
+The commands, paths, logs, and `wait_ms` values in this document record the configuration at the time each approach was evaluated. See the project [operating modes and settings](modes.md) and current [`setlist.rb`](../mrbgems/daisenkofun-illuminations/mrblib/daisenkofun/setlist.rb) for the present configuration.
 
 ## 1. Eager loading
 
@@ -212,7 +212,7 @@ $ rpremote run examples/picoruby/projects/daisenkofun/main.rb --timeout 120
 
 All seven `Setlist::SHORT` patterns ran in their configured order.
 
-The following log records the test with `wait_ms=10`. The current `Setlist::SHORT` uses `SHORT_FRAME_MS`.
+The following log records the test with `wait_ms=10`. At the time of this test, the setlist was named `Setlist::SHORT` and used `SHORT_FRAME_MS`; the current names are `Setlist::HIGHLIGHTS` and `HIGHLIGHTS_FRAME_MS`.
 
 ```text
 daisenkofun: start
@@ -237,5 +237,11 @@ No compilation failure, hang, `Shell::TimeoutError`, or `Unimplemented opcode` o
 An mrbgem's instruction sequence is retained in the firmware as a prebuilt gem. It does not reference a temporary string loaded from the filesystem, so it avoids the invalid instruction pointer after GC that affected the precompiled-file approach.
 
 It also avoids compiling each pattern's `.rb` file at runtime and does not create a Sandbox per pattern. `Illuminations.const_get` retrieves and executes classes embedded in the firmware, avoiding the device-side compilation load that affected eager and lazy loading.
+
+### Loading rules for files inside an mrbgem
+
+In the mruby/c firmware, an mrbgem's `mrblib` is registered as one picogem under its `spec.require_name`. For example, external code can call `require "daisenkofun-oximeter"`, but an internal path such as `require "daisenkofun/oximeter/config"` is not registered as a separate picogem name. It raises `LoadError` when no matching file exists on the device filesystem.
+
+The Ruby files in an mrbgem are compiled together during the build, so files in the same mrbgem do not `require` each other by individual path. Dependencies on other mrbgems are declared with `add_dependency` in `mrbgem.rake`, and only required external gem names are loaded. The CRuby test helper explicitly loads individual files for unit tests.
 
 For these reasons, this project embeds the illuminations in the firmware as an mrbgem.

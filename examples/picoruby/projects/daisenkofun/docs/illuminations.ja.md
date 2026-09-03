@@ -41,19 +41,18 @@
 
 ## 実行設定
 
-各セットリストのエントリは`[key, wait_ms, loops]`で定義します。同じパターンでも、実行モードごとに待ち時間と繰り返し回数を変更できます。
+各セットリストのエントリは`[key, wait_ms, loops]`で定義します。同じパターンでも、セットリストごとに待ち時間と繰り返し回数を変更できます。
 
 ```ruby
-[:water_ripples, SHORT_FRAME_MS, 3]
+[:water_ripples, HIGHLIGHTS_FRAME_MS, 3]
 ```
 
-[`setlist.rb`](../mrbgems/daisenkofun-illuminations/mrblib/daisenkofun/setlist.rb)では、`:short`に`SHORT_FRAME_MS`、`:long`に`LONG_FRAME_MS`、`:all`に`ALL_FRAME_MS`を使用します。`:only`では`PATTERNS`レジストリにある既定値を使用します。
+[`setlist.rb`](../mrbgems/daisenkofun-illuminations/mrblib/daisenkofun/setlist.rb)では、`:highlights`に`HIGHLIGHTS_FRAME_MS`、`:story`に`STORY_FRAME_MS`、`:showcase`に`SHOWCASE_FRAME_MS`を使用します。単独パターンは`Illumination#play_pattern`で実行し、`PATTERNS`レジストリにある既定値を使用します。
 
-| モード   | パターン数 | `wait_ms`の設定                                  |
-| -------- | ---------: | ------------------------------------------------ |
-| `:short` |          7 | `SHORT_FRAME_MS`（10 ms）                        |
-| `:long`  |         19 | `LONG_FRAME_MS`（5 ms）                          |
-| `:all`   |         30 | `ALL_FRAME_MS`（2 ms）                           |
-| `:only`  |          1 | `PATTERNS`にある選択パターンの既定値             |
+| セットリスト  | パターン数 | `wait_ms`の設定                                  |
+| ------------- | ---------: | ------------------------------------------------ |
+| `:highlights` |          7 | `HIGHLIGHTS_FRAME_MS`（10 ms）                   |
+| `:story`      |         19 | `STORY_FRAME_MS`（5 ms）                         |
+| `:showcase`   |         30 | `SHOWCASE_FRAME_MS`（2 ms）                      |
 
-`:short`と`:long`の`water_ripples`だけは`loops`を3にし、それ以外のエントリは`loops`を1にしています。`:only`の`loops`は`PATTERNS`の設定に従います。
+`:highlights`と`:story`の`water_ripples`だけは`loops`を3にし、それ以外のエントリは`loops`を1にしています。`play_pattern`の`loops`は、選択したパターンの`PATTERNS`にある既定値に従います。
