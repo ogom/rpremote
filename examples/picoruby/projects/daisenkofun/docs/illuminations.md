@@ -41,19 +41,18 @@
 
 ## Execution settings
 
-Each setlist entry has the form `[key, wait_ms, loops]`. The wait time and number of repetitions can differ by execution mode, even for the same pattern.
+Each setlist entry has the form `[key, wait_ms, loops]`. The wait time and number of repetitions can differ by setlist, even for the same pattern.
 
 ```ruby
-[:water_ripples, SHORT_FRAME_MS, 3]
+[:water_ripples, HIGHLIGHTS_FRAME_MS, 3]
 ```
 
-[`setlist.rb`](../mrbgems/daisenkofun-illuminations/mrblib/daisenkofun/setlist.rb) uses `SHORT_FRAME_MS` for `:short`, `LONG_FRAME_MS` for `:long`, and `ALL_FRAME_MS` for `:all`. The `:only` mode uses the defaults in the `PATTERNS` registry.
+[`setlist.rb`](../mrbgems/daisenkofun-illuminations/mrblib/daisenkofun/setlist.rb) uses `HIGHLIGHTS_FRAME_MS` for `:highlights`, `STORY_FRAME_MS` for `:story`, and `SHOWCASE_FRAME_MS` for `:showcase`. To play one pattern, call `Illumination#play_pattern`; it uses the defaults in the `PATTERNS` registry.
 
-| Mode | Pattern count | `wait_ms` setting |
+| Setlist | Pattern count | `wait_ms` setting |
 | --- | ---: | --- |
-| `:short` | 7 | `SHORT_FRAME_MS` (10 ms) |
-| `:long` | 19 | `LONG_FRAME_MS` (5 ms) |
-| `:all` | 30 | `ALL_FRAME_MS` (2 ms) |
-| `:only` | 1 | Default for the selected pattern in `PATTERNS` |
+| `:highlights` | 7 | `HIGHLIGHTS_FRAME_MS` (10 ms) |
+| `:story` | 19 | `STORY_FRAME_MS` (5 ms) |
+| `:showcase` | 30 | `SHOWCASE_FRAME_MS` (2 ms) |
 
-Only `water_ripples` in `:short` and `:long` uses `loops` set to `3`; all other entries use `1`. In `:only` mode, `loops` follows the `PATTERNS` setting.
+Only `water_ripples` in `:highlights` and `:story` uses `loops` set to `3`; all other entries use `1`. `play_pattern` uses the selected pattern's default `loops` setting from `PATTERNS`.

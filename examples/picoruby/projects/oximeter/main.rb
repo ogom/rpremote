@@ -1,66 +1,75 @@
 # frozen_string_literal: true
 
-require "i2c"
-require "machine"
-require "max30102"
-require "spi"
-require "ws2812_spi"
+require "/lib/oximeter/board_clock"
 require "/lib/oximeter/config"
-require "/lib/oximeter/monitor"
-require "/lib/oximeter/status_leds"
+require "/lib/oximeter/console_logger"
+require "/lib/oximeter/dispatcher"
+require "/lib/oximeter/measurement/processor"
+require "/lib/oximeter/sensor_factory"
+require "/lib/oximeter/status_led/factory"
+require "/lib/oximeter/status_led/presenter"
 
-spi = SPI.new(
-  unit: Oximeter::Config::SPI_UNIT,
-  frequency: WS2812SPI::FREQUENCY,
-  sck_pin: Oximeter::Config::SPI_SCK_PIN,
-  copi_pin: Oximeter::Config::SPI_COPI_PIN,
-  mode: WS2812SPI::MODE
-)
-pixels = WS2812SPI.new(spi: spi, count: Oximeter::Config::LED_COUNT)
-status_leds = Oximeter::StatusLeds.new(pixels)
-status_leds.clear
+clock = Oximeter::BoardClock.new
+logger = Oximeter::ConsoleLogger.new
+dispatcher = Oximeter::Dispatcher.new
+sensor_factory = Oximeter::SensorFactory.new
+status_led_factory = Oximeter::StatusLed::Factory.new
+duration_ms = Oximeter::Config::RUN_DURATION_MS
+poll_interval_ms = Oximeter::Config::POLL_INTERVAL_MS
+
+sensor = nil
+renderer = nil
+processor = nil
 
 begin
-  i2c = I2C.new(
-    unit: Oximeter::Config::I2C_UNIT,
-    sda_pin: Oximeter::Config::I2C_SDA_PIN,
-    scl_pin: Oximeter::Config::I2C_SCL_PIN,
-    frequency: Oximeter::Config::I2C_FREQUENCY
+  renderer = status_led_factory.call
+  renderer.clear
+  presenter = Oximeter::StatusLed::Presenter.new(renderer)
+  dispatcher.subscribe(presenter)
+
+  begin
+    sensor = sensor_factory.call
+  rescue => error
+    renderer.error
+    logger.puts("OXIMETER_ERROR,#{error.class},#{error.message}")
+    clock.wait_ms(Oximeter::Config::ERROR_DISPLAY_MS)
+    raise
+  end
+
+  processor = Oximeter::Measurement::Processor.new(
+    dispatcher: dispatcher,
+    logger: logger
   )
-  sensor = MAX30102.new(i2c: i2c)
-rescue => error
-  status_leds.error
-  puts "OXIMETER_ERROR,#{error.class},#{error.message}"
-  sleep_ms 1_000
-  status_leds.clear
-  raise
-end
+  started_at = clock.millis
+  logger.puts("OXIMETER_START,address=0x57,duration_ms=#{duration_ms}")
+  logger.puts("Place a fingertip steadily over the MAX30102.")
 
-monitor = Oximeter::Monitor.new(status_leds: status_leds)
-started_at = Machine.board_millis
-puts "OXIMETER_START,address=0x57,duration_ms=#{Oximeter::Config::RUN_DURATION_MS}"
-puts "Place a fingertip steadily over the MAX30102."
-
-begin
-  while Machine.board_millis - started_at < Oximeter::Config::RUN_DURATION_MS
+  while clock.millis - started_at < duration_ms
     available = sensor.available_samples
     while available > 0
       sample = sensor.read
-      monitor.process(sample[:red], sample[:ir], Machine.board_millis)
+      processor.process_sample(
+        red: sample[:red],
+        ir: sample[:ir],
+        timestamp_ms: clock.millis
+      )
       available -= 1
     end
-    sleep_ms 2
+    presenter.tick(clock.millis)
+    clock.wait_ms(poll_interval_ms)
   end
 ensure
-  begin
-    sensor.shutdown
-  rescue => error
-    puts "OXIMETER_WARN,shutdown,#{error.class},#{error.message}"
+  if sensor
+    begin
+      sensor.shutdown
+    rescue => error
+      logger.puts("OXIMETER_WARN,shutdown,#{error.class},#{error.message}")
+    end
   end
-  status_leds.clear
+  renderer.clear if renderer
 end
 
-puts sprintf(
+logger.puts(sprintf(
   "OXIMETER_DONE,bpm=%.1f,spo2=%.1f",
-  monitor.latest_bpm, monitor.latest_spo2
-)
+  processor.latest_bpm, processor.latest_spo2
+))

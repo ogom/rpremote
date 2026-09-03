@@ -92,6 +92,14 @@ GitHub gemはlock作成時に`mrbgem.rake`を読めないため、名前を明�
 gem github: "owner/repository", branch: "main", require: "device_driver"
 ```
 
+ファームウェアへ組み込むだけで、すべての`run`、`exec`、`deploy`に先行ロードしたくないgemには`auto_require: false`を指定します。アプリケーションは必要なときに明示的に`require`してください。複数のアプリケーションが同じファームウェアを共有する場合や、シンボル数・RAM使用量を抑えたい場合に使用します。
+
+```ruby
+gem path: "../mrbgems/my-application", auto_require: false
+```
+
+この設定でもgemはビルド対象になりますが、自動読み込みに使う`require_name`はlockへ記録しません。gem自体の`spec.require_name`は変わらないため、アプリケーションから明示的に読み込めます。省略時は従来どおり`auto_require: true`です。
+
 ## Mrbgems.lock
 
 `Mrbgems.lock`はJSON形式です。GitHub gemは解決済みコミット、ローカルgemは内容のSHA-256と、取得できる場合は`require_name`を記録します。

@@ -40,12 +40,14 @@ rpremote build
 rpremote bootsel
 rpremote flash
 rpremote fs push examples/picoruby/projects/oximeter/lib/oximeter :/lib/oximeter
-rpremote run examples/picoruby/projects/oximeter/main.rb --timeout 70
+rpremote run examples/picoruby/projects/oximeter/main.rb
 ```
 
-`fs push` copies the application classes to R2P2's `/lib/oximeter`. Run it again after changing a file in local `lib/oximeter`.
+`main.rb` contains hardware composition, the measurement loop, and cleanup. During normal development, edit `main.rb` and repeat only `rpremote run`; that command uploads only `main.rb`.
 
-The application runs for 60 seconds, then shuts down the MAX30102 and turns off the LEDs. To change that duration, edit `RUN_DURATION_MS` in `lib/oximeter/config.rb`. Set `rpremote run --timeout` longer than the application duration.
+`lib/oximeter` contains reusable measurement and LED-display components. Repeat `fs push` only after changing one of those files.
+
+The application runs for 60 seconds, then shuts down the MAX30102 and turns off the LEDs. To change that duration, edit `RUN_DURATION_MS` in `lib/oximeter/config.rb`. The `rpremote run` timeout measures idle time and resets while the application continues to write logs.
 
 ## How to use it
 
@@ -55,6 +57,12 @@ The application runs for 60 seconds, then shuts down the MAX30102 and turns off 
 4. When the serial log prints `OXIMETER_DATA,...,RESULT`, check the estimated heart rate and SpO2.
 
 Removing the finger during measurement resets the result and returns the application to the waiting state. Place the fingertip steadily on the sensor again to restart the measurement.
+
+## Measurement events
+
+`Measurement::Processor` does not control LEDs directly. It publishes `finger_detected`, `finger_removed`, `beat`, `measurement_updated`, and `measurement_completed` events through `Dispatcher`. `StatusLed::Presenter` subscribes to them and translates them into state for the eight-LED display.
+
+See [the Pub/Sub implementation](docs/pub_sub.md) for its implementation and rationale, and [time-driven processing with `tick`](docs/tick.md) for how animation advances separately from event delivery.
 
 ## Status display
 
@@ -112,8 +120,17 @@ The coefficients in this calculation are not calibrated for this hardware. Movem
 
 | File | Role |
 | --- | --- |
-| `main.rb` | Initializes the hardware and manages the application duration and shutdown. |
-| `lib/oximeter/config.rb` | Defines wiring, sampling, detection, and display settings. |
-| `lib/oximeter/rolling_statistics.rb` | Stores samples and calculates averages and standard deviations. |
-| `lib/oximeter/monitor.rb` | Detects fingers and beats, then estimates heart rate and SpO2. |
-| `lib/oximeter/status_leds.rb` | Controls the NeoPixel status display. |
+| `main.rb` | Owns hardware initialization, component composition, the measurement loop, and cleanup. |
+| `lib/oximeter/config.rb` | Defines hardware, measurement, runtime, and LED-display settings together. |
+| `lib/oximeter/board_clock.rb` | Provides board elapsed time and waiting to the application. |
+| `lib/oximeter/console_logger.rb` | Writes runtime messages to the console. |
+| `lib/oximeter/dispatcher.rb` | Registers subscribers and delivers events synchronously. |
+| `lib/oximeter/sensor_factory.rb` | Initializes I2C and the MAX30102. |
+| `lib/oximeter/measurement/` | Handles finger and beat detection, statistics, SpO2 estimation, and measurement sessions. |
+| `lib/oximeter/measurement/processor.rb` | Accepts one sample, coordinates measurement processing, and publishes events. |
+| `lib/oximeter/measurement/events.rb` | Defines measurement event names. |
+| `lib/oximeter/status_led/` | Translates measurement events into display state and renders NeoPixels. |
+| `test/main_test.rb` | Verifies `main.rb` component composition, measurement-loop execution, and cleanup. |
+| `test/measurement_processor_test.rb` | Verifies measurement events and public class names. |
+| `docs/pub_sub.md` | Explains the Pub/Sub implementation, event contract, and rationale. |
+| `docs/tick.md` | Explains time-driven processing with `tick` and its implementation constraints. |

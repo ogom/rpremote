@@ -245,7 +245,7 @@ RSpec.describe Rpremote::CLI do
     dependencies = [
       Rpremote::Mrbgems::Dependency.new(
         type: :github, source: "ksbmyk/picoruby-ws2812-plus",
-        branch: "main", commit: nil, path: nil, require_name: nil
+        branch: "main", commit: nil, path: nil, require_name: nil, auto_require: true
       )
     ]
     manager = instance_double(

@@ -5,8 +5,11 @@ vm :mrubyc
 gem github: "ogom/picoruby-ws2812-plus", branch: "develop"
 # gem path: "examples/picoruby/mrbgems/mpu6050"
 # gem path: "examples/picoruby/mrbgems/bmi270"
-# gem path: "examples/picoruby/mrbgems/max30102"
+gem path: "examples/picoruby/mrbgems/max30102"
 # gem path: "examples/picoruby/mrbgems/hcsr04_temp"
-# gem path: "examples/picoruby/mrbgems/ws2812_spi"
+gem path: "examples/picoruby/mrbgems/ws2812_spi"
 # gem path: "examples/picoruby/mrbgems/my_gems"
-gem path: "examples/picoruby/projects/daisenkofun/mrbgems/daisenkofun-illuminations"
+gem path: "examples/picoruby/projects/daisenkofun/mrbgems/daisenkofun-illuminations", auto_require: false
+gem path: "examples/picoruby/projects/daisenkofun/mrbgems/daisenkofun-oximeter", auto_require: false
+gem path: "examples/picoruby/projects/daisenkofun/mrbgems/daisenkofun-musical", auto_require: false
+gem path: "examples/picoruby/projects/daisenkofun/mrbgems/daisenkofun-runtime", auto_require: false

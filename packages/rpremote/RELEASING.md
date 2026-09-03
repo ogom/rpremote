@@ -5,9 +5,10 @@ This checklist prepares and publishes one immutable gem version. Run every comma
 ## 1. Prepare the version
 
 1. Update `Rpremote::VERSION` in `lib/rpremote/version.rb`.
-2. Add the same version and release date to `CHANGELOG.md`.
-3. Commit all intended files and verify that `git status --short` is empty.
-4. Run the non-publishing release check:
+2. Replace `Unreleased` in the package `CHANGELOG.md` with the same version and release date, then add a new empty `Unreleased` section.
+3. If repository-level examples, local mrbgems, or support files changed, finalize the corresponding `Unreleased` section in `../../CHANGELOG.md` with the same release version and date, then add a new empty `Unreleased` section.
+4. Commit all intended files and verify that `git status --short` is empty.
+5. Run the non-publishing release check:
 
 ```sh
 bundle exec rake release:check

@@ -78,6 +78,21 @@ RSpec.describe Rpremote::Mrbgems do
     end
   end
 
+  it "can embed a local gem without automatically requiring it" do
+    Dir.mktmpdir do |root|
+      create_local_gem(root)
+      File.write(File.join(root, "Mrbgems"), "gem path: \"my-led\", auto_require: false\n")
+      manager = described_class.new(cwd: root)
+
+      result = manager.lock
+
+      expect(result.fetch("gems").first).to include("auto_require" => false)
+      expect(result.fetch("gems").first).not_to have_key("require_name")
+      expect(manager.require_names).to be_empty
+      expect(manager.prepend_requires("require \"my_led\"\n")).to eq("require \"my_led\"\n")
+    end
+  end
+
   it "records an explicitly configured GitHub require name" do
     Dir.mktmpdir do |root|
       File.write(File.join(root, "Mrbgems"), <<~RUBY)

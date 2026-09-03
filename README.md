@@ -149,6 +149,7 @@ See the [command reference](docs/command.md) for the complete command list, grou
 - [Mrbgems and Mrbgems.lock](docs/mrbgems.md) / [日本語](docs/mrbgems.ja.md)
 - [PicoModem DFU application updates](docs/dfu.md) / [日本語](docs/dfu.ja.md)
 - [CLI reference and RubyGem package guide](packages/rpremote/README.md)
+- [Repository changelog](CHANGELOG.md)
 
 ## Development
 

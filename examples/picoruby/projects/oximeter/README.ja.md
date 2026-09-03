@@ -40,12 +40,14 @@ rpremote build
 rpremote bootsel
 rpremote flash
 rpremote fs push examples/picoruby/projects/oximeter/lib/oximeter :/lib/oximeter
-rpremote run examples/picoruby/projects/oximeter/main.rb --timeout 70
+rpremote run examples/picoruby/projects/oximeter/main.rb
 ```
 
-`fs push`はアプリのクラスをR2P2の`/lib/oximeter`へ転送します。ローカルの`lib/oximeter`内を変更した場合は、再度実行してください。
+`main.rb`には、ハードウェアの組み立て、測定ループ、終了処理があります。通常の開発では`main.rb`を修正し、`rpremote run`だけを繰り返します。このコマンドが転送するのは`main.rb`だけです。
 
-アプリは60秒間動作した後、MAX30102をシャットダウンしてLEDを消灯します。実行時間を変更するには、`lib/oximeter/config.rb`の`RUN_DURATION_MS`を編集します。`rpremote run --timeout`には、アプリの実行時間より長い値を指定してください。
+`lib/oximeter`には測定アルゴリズムやLED表示などの再利用部品があります。これらを変更した場合に限り、`fs push`をもう一度実行してください。
+
+アプリは60秒間動作した後、MAX30102をシャットダウンしてLEDを消灯します。実行時間を変更するには、`lib/oximeter/config.rb`の`RUN_DURATION_MS`を編集します。`rpremote run`のタイムアウトは無出力時間であり、実行中のログ出力が続く間はリセットされます。
 
 ## 使用方法
 
@@ -55,6 +57,12 @@ rpremote run examples/picoruby/projects/oximeter/main.rb --timeout 70
 4. シリアルログに`OXIMETER_DATA,...,RESULT`が表示されたら、心拍数とSpO2の推定値を確認します。
 
 測定中に指を離すと結果がリセットされ、指待ちの状態に戻ります。もう一度、指先を安定して当てて測定してください。
+
+## 測定イベント
+
+`Measurement::Processor`はLEDを直接操作せず、`finger_detected`、`finger_removed`、`beat`、`measurement_updated`、`measurement_completed`イベントを`Dispatcher`へ発行します。`StatusLed::Presenter`はこれらを購読し、8個のLED表示用の状態へ変換します。
+
+実装と採用理由は[Pub/Sub実装の解説](docs/pub_sub.ja.md)、イベント通知とは別にアニメーションを進める仕組みは[`tick`による時間駆動処理](docs/tick.ja.md)を参照してください。
 
 ## 状態表示
 
@@ -112,8 +120,17 @@ SpO2の推定には、赤色光と赤外光をそれぞれ100サンプル使用�
 
 | ファイル | 役割 |
 | --- | --- |
-| `main.rb` | ハードウェアを初期化し、アプリの実行時間と終了処理を管理します。 |
-| `lib/oximeter/config.rb` | 配線、サンプリング、検出、表示の設定を定義します。 |
-| `lib/oximeter/rolling_statistics.rb` | サンプルの保持、平均値、標準偏差の計算を担当します。 |
-| `lib/oximeter/monitor.rb` | 指と拍動を検出し、心拍数とSpO2を推定します。 |
-| `lib/oximeter/status_leds.rb` | NeoPixelの状態表示を制御します。 |
+| `main.rb` | ハードウェア初期化、依存部品の組み立て、測定ループ、終了処理を記述します。 |
+| `lib/oximeter/config.rb` | ハードウェア、測定、実行時間、LED表示の設定をまとめて定義します。 |
+| `lib/oximeter/board_clock.rb` | ボードの経過時間と待機処理をアプリケーションへ提供します。 |
+| `lib/oximeter/console_logger.rb` | 実行状況をコンソールへ出力します。 |
+| `lib/oximeter/dispatcher.rb` | 購読先の登録と同期イベント配送を担当します。 |
+| `lib/oximeter/sensor_factory.rb` | I2CとMAX30102を初期化します。 |
+| `lib/oximeter/measurement/` | 指・拍動の検出、統計、SpO2推定、測定セッションを担当します。 |
+| `lib/oximeter/measurement/processor.rb` | 1サンプルを受け取り、測定処理を組み立ててイベントを発行します。 |
+| `lib/oximeter/measurement/events.rb` | 測定イベント名を定義します。 |
+| `lib/oximeter/status_led/` | 測定イベントから表示状態への変換とNeoPixel描画を担当します。 |
+| `test/main_test.rb` | `main.rb`の部品組み立て、測定ループ、終了処理を確認します。 |
+| `test/measurement_processor_test.rb` | 測定イベントと公開クラス名を確認します。 |
+| `docs/pub_sub.ja.md` | Pub/Subの実装、イベント契約、必要性を説明します。 |
+| `docs/tick.ja.md` | `tick`による時間駆動処理と実装上の注意を説明します。 |

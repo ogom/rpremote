@@ -14,7 +14,7 @@ module Rpremote
     COMMIT_PATTERN = /\A[0-9a-f]{40,64}\z/i
     VMS = %i[mruby mrubyc].freeze
 
-    Dependency = Data.define(:type, :source, :branch, :commit, :path, :require_name)
+    Dependency = Data.define(:type, :source, :branch, :commit, :path, :require_name, :auto_require)
     Overlay = Data.define(:path, :fingerprint)
 
     class Error < Rpremote::Error; end
@@ -72,7 +72,9 @@ module Rpremote
       lock_data = read_lock(required: false)
       return [] unless lock_data
 
-      lock_data.fetch("gems").filter_map { |gem| gem["require_name"] }.uniq
+      lock_data.fetch("gems").filter_map do |gem|
+        gem["require_name"] if gem.fetch("auto_require", true)
+      end.uniq
     end
 
     def prepend_requires(source)
@@ -122,14 +124,19 @@ module Rpremote
         commit = dependency.commit || previous_commit(previous, dependency) || resolver.call(
           dependency.source, dependency.branch
         )
-        { "type" => "github", "source" => dependency.source,
-          "branch" => dependency.branch, "commit" => validate_commit!(commit),
-          "require_name" => dependency.require_name }.compact
+        entry = { "type" => "github", "source" => dependency.source,
+                  "branch" => dependency.branch, "commit" => validate_commit!(commit),
+                  "require_name" => dependency.require_name }.compact
       else
-        { "type" => "path", "source" => dependency.source,
-          "sha256" => digest_directory(dependency.path),
-          "require_name" => dependency.require_name || local_require_name(dependency.path) }.compact
+        entry = { "type" => "path", "source" => dependency.source,
+                  "sha256" => digest_directory(dependency.path),
+                  "require_name" => dependency.require_name || local_require_name(dependency.path) }.compact
       end
+      unless dependency.auto_require
+        entry.delete("require_name")
+        entry["auto_require"] = false
+      end
+      entry
     end
 
     def previous_commit(lock_data, dependency)
@@ -200,16 +207,22 @@ module Rpremote
 
     def valid_github_lock?(entry)
       GITHUB_PATTERN.match?(entry["source"].to_s) && !entry["branch"].to_s.empty? &&
-        COMMIT_PATTERN.match?(entry["commit"].to_s) && valid_require_name?(entry["require_name"])
+        COMMIT_PATTERN.match?(entry["commit"].to_s) && valid_require_name?(entry["require_name"]) &&
+        valid_auto_require?(entry)
     end
 
     def valid_path_lock?(entry)
       entry["type"] == "path" && !entry["source"].to_s.empty? &&
-        /\A[0-9a-f]{64}\z/.match?(entry["sha256"].to_s) && valid_require_name?(entry["require_name"])
+        /\A[0-9a-f]{64}\z/.match?(entry["sha256"].to_s) && valid_require_name?(entry["require_name"]) &&
+        valid_auto_require?(entry)
     end
 
     def valid_require_name?(name)
       name.nil? || (name.is_a?(String) && !name.empty? && !name.match?(/[\x00-\x1f\x7f]/))
+    end
+
+    def valid_auto_require?(entry)
+      !entry.key?("auto_require") || entry["auto_require"] == true || entry["auto_require"] == false
     end
 
     def local_require_name(directory)
@@ -272,17 +285,20 @@ module Rpremote
         @vm_name = value
       end
 
-      def gem(github: nil, path: nil, branch: "main", commit: nil, require: nil)
+      def gem(github: nil, path: nil, branch: "main", commit: nil, require: nil, auto_require: true)
         sources = [github, path].compact
         raise DefinitionError, "gem requires exactly one of github or path" unless sources.length == 1
         unless require.nil? || (require.is_a?(String) && !require.empty? && !require.match?(/[\x00-\x1f\x7f]/))
           raise DefinitionError, "invalid mrbgem require name: #{require.inspect}"
         end
 
+        valid_auto_require = [true, false].include?(auto_require)
+        raise DefinitionError, "mrbgem auto_require must be true or false: #{auto_require.inspect}" unless valid_auto_require
+
         dependency = if github
-                       github_dependency(github, branch, commit, require)
+                       github_dependency(github, branch, commit, require, auto_require)
                      else
-                       path_dependency(path, branch, commit, require)
+                       path_dependency(path, branch, commit, require, auto_require)
                      end
         key = [dependency.type, dependency.source]
         raise DefinitionError, "duplicate mrbgem: #{dependency.source}" if dependencies.any? do |item|
@@ -296,21 +312,23 @@ module Rpremote
 
       attr_reader :directory
 
-      def github_dependency(source, branch, commit, require_name)
+      def github_dependency(source, branch, commit, require_name, auto_require)
         raise DefinitionError, "invalid GitHub mrbgem: #{source.inspect}" unless GITHUB_PATTERN.match?(source.to_s)
         raise DefinitionError, "GitHub mrbgem branch must not be empty" if branch.to_s.empty?
         raise DefinitionError, "invalid Git commit: #{commit.inspect}" if commit && !COMMIT_PATTERN.match?(commit.to_s)
 
         Dependency.new(type: :github, source: source, branch: branch,
-                       commit: commit&.downcase, path: nil, require_name: require_name)
+                       commit: commit&.downcase, path: nil, require_name: require_name,
+                       auto_require: auto_require)
       end
 
-      def path_dependency(source, branch, commit, require_name)
+      def path_dependency(source, branch, commit, require_name, auto_require)
         raise DefinitionError, "local mrbgem path must not be empty" if source.to_s.empty?
         raise DefinitionError, "local mrbgem does not accept branch or commit" if branch != "main" || commit
 
         Dependency.new(type: :path, source: source, branch: nil, commit: nil,
-                       path: File.expand_path(source, directory), require_name: require_name)
+                       path: File.expand_path(source, directory), require_name: require_name,
+                       auto_require: auto_require)
       end
     end
   end
