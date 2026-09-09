@@ -4,6 +4,7 @@ module Rpremote
   class PicoRubySourcePatch
     JOB_PATH = "mrbgems/picoruby-shell/mrblib/job.rb"
     BOOTSEL_PATH = "mrbgems/picoruby-machine/include/machine.h"
+    PWM_PATH = "mrbgems/picoruby-pwm/ports/rp2040/pwm.c"
     PATCH_ALIASES = { "3.4.2" => "3.4.5" }.freeze
 
     class Error < Rpremote::Error; end
@@ -35,7 +36,8 @@ module Rpremote
     def patches(patch_version)
       definitions = {
         "ruby-exception-status" => JOB_PATH,
-        "bootsel" => BOOTSEL_PATH
+        "bootsel" => BOOTSEL_PATH,
+        "pwm-sleep-clock" => PWM_PATH
       }
       definitions.map do |name, prerequisite|
         [File.expand_path("../../patches/picoruby-#{patch_version}-#{name}.patch", __dir__), prerequisite]

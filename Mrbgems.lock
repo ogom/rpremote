@@ -22,26 +22,32 @@
     },
     {
       "type": "path",
-      "source": "examples/picoruby/projects/daisenkofun/mrbgems/daisenkofun-illuminations",
-      "sha256": "f575e65bae959d80282516ce0f88b45d2dbcfd6f8e9df017c3cb970d9c15a32e",
+      "source": "examples/picoruby/projects/daisenkofun/mrbgems/daisenkofun-illumination",
+      "sha256": "28ec863f5b7ae43b5e2c6fe1bcfa725dffba0083fb9df3761cb36c89ebaec6fc",
       "auto_require": false
     },
     {
       "type": "path",
       "source": "examples/picoruby/projects/daisenkofun/mrbgems/daisenkofun-oximeter",
-      "sha256": "37befde0bcf0f7c0ee3eca8cc2b172015256891ed27fba2c8db9b66bb372ab70",
+      "sha256": "0483f031329d9637e0b13a667a91ab503fe606544139a63ca0708534cdbab736",
       "auto_require": false
     },
     {
       "type": "path",
       "source": "examples/picoruby/projects/daisenkofun/mrbgems/daisenkofun-musical",
-      "sha256": "da8213d92666a31c2c65be442ca08e4fd9455236b08f2251558f0da07f9009a9",
+      "sha256": "698c9eb8820d84553861ca6b2b53c64b3620f99e7c05a49eb75fac91b9c7e2d4",
       "auto_require": false
     },
     {
       "type": "path",
       "source": "examples/picoruby/projects/daisenkofun/mrbgems/daisenkofun-runtime",
-      "sha256": "3a59b234487f8731830ba5293c2835cb1934c2b568b8e9005746859d4297b1b8",
+      "sha256": "009ddd847181ad870b5f97712efb241ef92b6c30d2dbae99121ef34943a3003b",
+      "auto_require": false
+    },
+    {
+      "type": "path",
+      "source": "examples/picoruby/projects/daisenkofun/mrbgems/daisenkofun-application",
+      "sha256": "44c22bf7092e16a5e1bdb5698c108b44f6f1edd79507bef88628d7623285bc26",
       "auto_require": false
     }
   ]

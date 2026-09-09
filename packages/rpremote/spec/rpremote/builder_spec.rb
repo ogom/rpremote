@@ -119,7 +119,10 @@ RSpec.describe Rpremote::Builder do
       source = File.join(directory, "firmware", "picoruby-4.0.3")
       FileUtils.mkdir_p(File.join(source, "build_config"))
       File.write(File.join(directory, "Mrbgems"), "")
-      File.write(File.join(source, "build_config", "r2p2-femtoruby-pico2.rb"), "")
+      File.write(
+        File.join(source, "build_config", "r2p2-femtoruby-pico2.rb"),
+        ""
+      )
 
       described_class.new(root: directory, runner: runner, mrbgems_class: mrbgems_class).build
     end

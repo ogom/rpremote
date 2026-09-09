@@ -47,12 +47,13 @@
 [:water_ripples, HIGHLIGHTS_FRAME_MS, 3]
 ```
 
-[`setlist.rb`](../mrbgems/daisenkofun-illuminations/mrblib/daisenkofun/setlist.rb)では、`:highlights`に`HIGHLIGHTS_FRAME_MS`、`:story`に`STORY_FRAME_MS`、`:showcase`に`SHOWCASE_FRAME_MS`を使用します。単独パターンは`Illumination#play_pattern`で実行し、`PATTERNS`レジストリにある既定値を使用します。
+[`setlist.rb`](../mrbgems/daisenkofun-illumination/mrblib/daisenkofun-illumination/setlist.rb)では、`:tests`に`TESTS_FRAME_MS`、`:highlights`に`HIGHLIGHTS_FRAME_MS`、`:story`に`STORY_FRAME_MS`、`:showcase`に`SHOWCASE_FRAME_MS`を使用します。単独パターンは`Daisenkofun::Illumination::Player#play_pattern`で実行し、`PATTERNS`レジストリにある既定値を使用します。
 
 | セットリスト  | パターン数 | `wait_ms`の設定                                  |
 | ------------- | ---------: | ------------------------------------------------ |
+| `:tests`      |          1 | `TESTS_FRAME_MS`（1 ms）                         |
 | `:highlights` |          7 | `HIGHLIGHTS_FRAME_MS`（10 ms）                   |
 | `:story`      |         19 | `STORY_FRAME_MS`（5 ms）                         |
 | `:showcase`   |         30 | `SHOWCASE_FRAME_MS`（2 ms）                      |
 
-`:highlights`と`:story`の`water_ripples`だけは`loops`を3にし、それ以外のエントリは`loops`を1にしています。`play_pattern`の`loops`は、選択したパターンの`PATTERNS`にある既定値に従います。
+`:tests`は`structure_guide`だけを含みます。`:highlights`と`:story`の`water_ripples`だけは`loops`を3にし、それ以外のセットリストエントリは`loops`を1にしています。`play_pattern`の`wait_ms`と`loops`は、選択したパターンの`PATTERNS`にある既定値に従います。

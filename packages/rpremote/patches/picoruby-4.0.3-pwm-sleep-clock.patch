@@ -1,0 +1,22 @@
+diff --git a/mrbgems/picoruby-pwm/ports/rp2040/pwm.c b/mrbgems/picoruby-pwm/ports/rp2040/pwm.c
+--- a/mrbgems/picoruby-pwm/ports/rp2040/pwm.c
++++ b/mrbgems/picoruby-pwm/ports/rp2040/pwm.c
+@@ -1,5 +1,6 @@
+ #include "pico/stdlib.h"
+ #include "hardware/pwm.h"
++#include "hardware/structs/clocks.h"
+ 
+ #include "../../include/pwm.h"
+ 
+@@ -9,6 +10,11 @@
+ void
+ PWM_init(uint32_t pin)
+ {
++  /* The scheduler enters WFI while sleep_ms waits. Keep autonomous PWM
++   * output clocked between scheduler ticks after a PWM pin is initialized. */
++  hw_set_bits(&clocks_hw->sleep_en0,
++              CLOCKS_SLEEP_EN0_CLK_SYS_PWM_BITS);
++
+   gpio_set_function(pin, GPIO_FUNC_PWM);
+   uint slice_num = pwm_gpio_to_slice_num(pin);
+   pwm_set_clkdiv(slice_num, CLK_DIV);

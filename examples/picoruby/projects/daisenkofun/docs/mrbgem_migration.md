@@ -11,7 +11,7 @@ The Daisen Kofun project evaluated the following ways to load many illuminations
 
 Both eager and lazy loading required the device to compile many `.rb` files and were unstable. Precompilation avoided compilation on the device, but the lifetime of the loaded files caused consecutive execution to fail. The final approach removed Sandbox-based file loading and embedded the illuminations in the firmware as an mrbgem; this successfully ran `Setlist::SHORT` from beginning to end.
 
-The commands, paths, logs, and `wait_ms` values in this document record the configuration at the time each approach was evaluated. See the project [operating modes and settings](modes.md) and current [`setlist.rb`](../mrbgems/daisenkofun-illuminations/mrblib/daisenkofun/setlist.rb) for the present configuration.
+The commands, paths, logs, and `wait_ms` values in this document record the configuration at the time each approach was evaluated. See the project [operating modes and settings](modes.md) and current [`setlist.rb`](../mrbgems/daisenkofun-illumination/mrblib/daisenkofun-illumination/setlist.rb) for the present configuration.
 
 ## 1. Eager loading
 
@@ -21,7 +21,7 @@ As the number of files increased, compilation failed partway through the list.
 
 ```text
 Exception(vm_id=23): in `load_file':
-/lib/daisenkofun/illuminations/fireworks.rb: compile failed (RuntimeError)
+/lib/daisenkofun/patterns/fireworks.rb: compile failed (RuntimeError)
 ```
 
 After the target file was corrected, the failure moved to the next file, `golden_breath.rb`. This indicated that the problem involved resource consumption from consecutive compilation on the device, rather than only Ruby syntax in one specific file.
@@ -32,8 +32,10 @@ Eager loading reduces the number of `require` calls after execution starts. For 
 
 The next approach stopped loading every file at startup and loaded only the corresponding file immediately before executing each pattern.
 
+The following snippet preserves the namespace and filesystem layout used during that experiment; it is not the current public API.
+
 ```ruby
-require "/lib/daisenkofun/illuminations/#{key}"
+require "/lib/daisenkofun/patterns/#{key}"
 Illuminations.const_get(Setlist.class_name(key))
 ```
 
@@ -92,7 +94,7 @@ The 20-second limit was therefore not the reason execution stopped. The device f
 The following code produces the expected absolute path from `key`:
 
 ```ruby
-require "/lib/daisenkofun/illuminations/#{key}"
+require "/lib/daisenkofun/patterns/#{key}"
 ```
 
 The first pattern, `moonlight`, loaded and reached its lighting code. An incorrect path or interpolation would have produced `LoadError` on the first load.
@@ -103,7 +105,7 @@ The lazy-loading investigation temporarily added the following logs to distingui
 
 ```ruby
 puts "load start: #{key}"
-require "/lib/daisenkofun/illuminations/#{key}"
+require "/lib/daisenkofun/patterns/#{key}"
 puts "load done: #{key}"
 
 klass = Illuminations.const_get(Setlist.class_name(key))
@@ -135,19 +137,19 @@ Each `.rb` file was compiled for the same PicoRuby 4.0.3 version as the device. 
 
 ```console
 $ rpremote dfu compile \
-    examples/picoruby/projects/daisenkofun/mrbgems/daisenkofun-illuminations/mrblib/daisenkofun/illuminations/structure_guide.rb \
+    examples/picoruby/projects/daisenkofun/mrbgems/daisenkofun-illumination/mrblib/daisenkofun-illumination/patterns/structure_guide.rb \
     --language-version 4.0.3 \
-    --output examples/picoruby/projects/daisenkofun/mrbgems/daisenkofun-illuminations/mrblib/daisenkofun/illuminations/structure_guide.mrb
+    --output examples/picoruby/projects/daisenkofun/mrbgems/daisenkofun-illumination/mrblib/daisenkofun-illumination/patterns/structure_guide.mrb
 ```
 
 When files with the same base name are present, PicoRuby 4.0.3 `require` looks for `.mrb` before `.rb`. Existing extensionless `require` calls therefore require no changes.
 
 ```text
-/lib/daisenkofun/illuminations/structure_guide.mrb
-/lib/daisenkofun/illuminations/structure_guide.rb
+/lib/daisenkofun/patterns/structure_guide.mrb
+/lib/daisenkofun/patterns/structure_guide.rb
 ```
 
-The eight generated files were verified as PicoRuby 4.0.3 `RITE0400` files and placed under `:/lib/daisenkofun/illuminations` on the device. This avoided compiling Ruby source on the device, but still created one Sandbox per pattern.
+The eight generated files were verified as PicoRuby 4.0.3 `RITE0400` files and placed under `:/lib/daisenkofun/patterns` on the device. This avoided compiling Ruby source on the device, but still created one Sandbox per pattern.
 
 ### Result
 
@@ -194,11 +196,11 @@ The Sandbox's `@code` retains the `.mrb` while that Sandbox task is running. It 
 
 ## 4. Embedding in the firmware
 
-The final test moved all illuminations into the local `mrbgems/daisenkofun-illuminations` mrbgem and embedded them in the firmware. This approach does not use a Sandbox to load `.rb` or `.mrb` files from the filesystem.
+The final test moved all illuminations into the local `mrbgems/daisenkofun-illumination` mrbgem and embedded them in the firmware. This approach does not use a Sandbox to load `.rb` or `.mrb` files from the filesystem.
 
 The test embedded the `Setlist::SHORT` patterns and verified that:
 
-1. `require "daisenkofun-illuminations"` made every embedded class available
+1. `require "daisenkofun-illumination"` made every embedded class available
 2. Patterns from `structure_guide` through `water_ripples` ran consecutively
 3. Execution did not depend on a Sandbox or source files on the filesystem
 
@@ -236,12 +238,12 @@ No compilation failure, hang, `Shell::TimeoutError`, or `Unimplemented opcode` o
 
 An mrbgem's instruction sequence is retained in the firmware as a prebuilt gem. It does not reference a temporary string loaded from the filesystem, so it avoids the invalid instruction pointer after GC that affected the precompiled-file approach.
 
-It also avoids compiling each pattern's `.rb` file at runtime and does not create a Sandbox per pattern. `Illuminations.const_get` retrieves and executes classes embedded in the firmware, avoiding the device-side compilation load that affected eager and lazy loading.
+It also avoids compiling each pattern's `.rb` file at runtime and does not create a Sandbox per pattern. In the current implementation, `Daisenkofun::Illumination::Setlist.pattern_class` returns a class under `Daisenkofun::Illumination::Patterns`, and `Daisenkofun::Illumination::Player` executes that embedded class. This avoids the device-side compilation load that affected eager and lazy loading.
 
 ### Loading rules for files inside an mrbgem
 
-In the mruby/c firmware, an mrbgem's `mrblib` is registered as one picogem under its `spec.require_name`. For example, external code can call `require "daisenkofun-oximeter"`, but an internal path such as `require "daisenkofun/oximeter/config"` is not registered as a separate picogem name. It raises `LoadError` when no matching file exists on the device filesystem.
+In the mruby/c firmware, an mrbgem's `mrblib` is registered as one picogem under its `spec.require_name`. For example, external code can call `require "daisenkofun-oximeter"`, but an internal path such as `require "daisenkofun-oximeter/config"` is not registered as a separate picogem name. It raises `LoadError` when no matching file exists on the device filesystem.
 
-The Ruby files in an mrbgem are compiled together during the build, so files in the same mrbgem do not `require` each other by individual path. Dependencies on other mrbgems are declared with `add_dependency` in `mrbgem.rake`, and only required external gem names are loaded. The CRuby test helper explicitly loads individual files for unit tests.
+The Ruby files in an mrbgem are compiled together during the build, so files in the same mrbgem do not `require` each other by individual path. Dependencies on other mrbgems are declared with `add_dependency` in `mrbgem.rake`, and only required external gem names are loaded. Host-test helpers explicitly load the individual files needed by each retained regression test.
 
 For these reasons, this project embeds the illuminations in the firmware as an mrbgem.

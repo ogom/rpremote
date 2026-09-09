@@ -92,7 +92,7 @@ class DaisenkofunEventLoopTest < Picotest::Test
     publisher = DaisenkofunEventLoopFakePublisher.new(trace)
     first = DaisenkofunEventLoopFakeComponent.new(:first, trace)
     second = DaisenkofunEventLoopFakeComponent.new(:second, trace)
-    event_loop = Daisenkofun::EventLoop.new(
+    event_loop = Daisenkofun::Runtime::EventLoop.new(
       publisher: publisher,
       components: [first, second],
       clock: DaisenkofunEventLoopFakeClock.new(trace),
@@ -100,7 +100,7 @@ class DaisenkofunEventLoopTest < Picotest::Test
       mode: :generic
     )
 
-    assert_equal :result, event_loop.run
+    assert_equal :result, event_loop.call
     assert_equal [
       [:first, :start],
       [:second, :start],
@@ -116,7 +116,7 @@ class DaisenkofunEventLoopTest < Picotest::Test
     trace = []
     publisher = DaisenkofunEventLoopFakePublisher.new(trace, RuntimeError.new("tick failed"))
     component = DaisenkofunEventLoopFakeComponent.new(:component, trace)
-    event_loop = Daisenkofun::EventLoop.new(
+    event_loop = Daisenkofun::Runtime::EventLoop.new(
       publisher: publisher,
       components: [component],
       clock: DaisenkofunEventLoopFakeClock.new(trace),
@@ -124,7 +124,7 @@ class DaisenkofunEventLoopTest < Picotest::Test
       mode: :generic
     )
 
-    assert_raise(RuntimeError) { event_loop.run }
+    assert_raise(RuntimeError) { event_loop.call }
     assert_equal :publisher_stop, trace[-2]
     assert_equal [:component, :stop], trace[-1]
   end
