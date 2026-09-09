@@ -2,7 +2,7 @@
 
 [English](led_layout.md)
 
-この資料は、[構造確認資料](structure.ja.md)で説明する大仙古墳の構造を、模型の572個のWS2812B LEDへどのように対応付けているかを示します。物理アドレスの唯一の定義は[`led_layout.rb`](../mrbgems/daisenkofun-illuminations/mrblib/daisenkofun/led_layout.rb)です。LEDの追加、配線順の変更、区間の調整はRubyファイルだけを変更し、この資料には対応関係を記載します。
+この資料は、[構造確認資料](structure.ja.md)で説明する大仙古墳の構造を、模型の572個のWS2812B LEDへどのように対応付けているかを示します。物理アドレスの唯一の定義は[`led_layout.rb`](../mrbgems/daisenkofun-illumination/mrblib/daisenkofun-illumination/led_layout.rb)です。LEDの追加、配線順の変更、区間の調整はRubyファイルだけを変更し、この資料には対応関係を記載します。
 
 ## 構造資料とLED輪郭の対応
 

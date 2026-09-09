@@ -4,11 +4,10 @@ Notable changes to the examples, local mrbgems, firmware support files, and repo
 
 ## Unreleased
 
-- Rename the Daisen Kofun illumination setlists from duration-based modes to `highlights`, `story`, and `showcase`, and add explicit APIs for playing a setlist or one pattern.
-- Add a prepared `daisenkofun-oximeter` mrbgem with injectable sensor, clock, logger, and status display dependencies plus explicit `start`, `tick`, and `stop` lifecycle methods.
-- Decouple Oximeter measurement from LED rendering through finger, beat, and measurement events that can be consumed by the eight-LED display, the Daisen Kofun LEDs, or future musical behavior.
-- Include MAX30102, WS2812 SPI, and `daisenkofun-oximeter` in the firmware manifest, with explicit mrbgem dependencies for the sensor and eight-LED status display.
-- Add `Daisenkofun::Application` to select illumination or Oximeter execution, validate program-specific settings, standardize lifecycle logs and status, and guarantee hardware cleanup on errors.
+- Refactor the Daisen Kofun application and local mrbgems to follow their require-name CoC, with dedicated `Application`, `Runtime`, `Oximeter`, `Musical`, and singular `Illumination` namespaces, callable runners, explicit ownership and cleanup, configurable WS2812/I2C/SPI/PWM pins, and mruby/c-compatible loading.
+- Add event-driven MAX30102 measurement and live biometric PWM music, including pulse translation, a synchronized three-moat canon, repeatable eight-beat heartbeat signatures, performance verification, and physical Pico 2 validation.
+- Improve real-time combined operation with C-backed 572-pixel transfers, indexed fills, frame caching, and uninterrupted PWM across `sleep_ms`, while preserving all 32 illumination pattern checksums.
+- Add continuous setlist and pattern playback, clarify the `illumination`, `oximeter`, and `combined` modes, and consolidate the bilingual setup, hardware, safety, development, and verification documentation.
 
 ## 0.4.0 - 2026-08-31
 

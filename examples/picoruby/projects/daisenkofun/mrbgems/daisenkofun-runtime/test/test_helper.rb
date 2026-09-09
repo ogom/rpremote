@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
 require "picotest"
-require "daisenkofun/console_logger"
-require "daisenkofun/event_loop"
+require "daisenkofun-runtime"
+require "daisenkofun-runtime/console_logger"
+require "daisenkofun-runtime/event_loop"

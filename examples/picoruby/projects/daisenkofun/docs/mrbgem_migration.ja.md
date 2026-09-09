@@ -11,7 +11,7 @@
 
 一括ロードと遅延ロードでは、どちらも実機上で多数の`.rb`をコンパイルする必要があり、安定しませんでした。事前コンパイルでは実機上のコンパイルを避けられましたが、ファイルを保持する期間に問題があり、連続実行に失敗しました。最終的に、Sandboxを介したファイル読み込みをやめ、イルミネーションをmrbgemとしてファームウェアへ組み込むことで、`Setlist::SHORT`の連続実行に成功しました。
 
-この文書のコマンド、パス、ログ、`wait_ms`は各方式を検証した時点の記録です。現行の構成と設定は、[動作モードと設定](modes.ja.md)と[`setlist.rb`](../mrbgems/daisenkofun-illuminations/mrblib/daisenkofun/setlist.rb)を参照してください。
+この文書のコマンド、パス、ログ、`wait_ms`は各方式を検証した時点の記録です。現行の構成と設定は、[動作モードと設定](modes.ja.md)と[`setlist.rb`](../mrbgems/daisenkofun-illumination/mrblib/daisenkofun-illumination/setlist.rb)を参照してください。
 
 ## 1. 一括ロード
 
@@ -21,7 +21,7 @@
 
 ```text
 Exception(vm_id=23): in `load_file':
-/lib/daisenkofun/illuminations/fireworks.rb: compile failed (RuntimeError)
+/lib/daisenkofun/patterns/fireworks.rb: compile failed (RuntimeError)
 ```
 
 対象ファイルを修正すると、失敗位置は次の`golden_breath.rb`へ移りました。このことから、特定のファイルにあるRuby構文だけでなく、連続したコンパイルによる実機側リソースの消費も影響していると判断しました。
@@ -32,8 +32,10 @@ Exception(vm_id=23): in `load_file':
 
 次に、一括ロードをやめて、各パターンを実行する直前に対応するファイルだけを読み込むようにしました。
 
+次のコードは検証時点の名前空間とファイル配置を記録したもので、現行の公開APIではありません。
+
 ```ruby
-require "/lib/daisenkofun/illuminations/#{key}"
+require "/lib/daisenkofun/patterns/#{key}"
 Illuminations.const_get(Setlist.class_name(key))
 ```
 
@@ -92,7 +94,7 @@ mruby/c向けSandboxの`picoruby-sandbox/src/mrubyc/sandbox.c`では、Sandbox V
 次のコードでは、`key`から期待どおりの絶対パスが生成されます。
 
 ```ruby
-require "/lib/daisenkofun/illuminations/#{key}"
+require "/lib/daisenkofun/patterns/#{key}"
 ```
 
 実際に最初の`moonlight`は読み込まれ、点灯処理まで進みました。パスや文字列展開が誤っている場合は、最初の読み込みで`LoadError`になります。
@@ -103,7 +105,7 @@ require "/lib/daisenkofun/illuminations/#{key}"
 
 ```ruby
 puts "load start: #{key}"
-require "/lib/daisenkofun/illuminations/#{key}"
+require "/lib/daisenkofun/patterns/#{key}"
 puts "load done: #{key}"
 
 klass = Illuminations.const_get(Setlist.class_name(key))
@@ -135,19 +137,19 @@ water_ripples
 
 ```console
 $ rpremote dfu compile \
-    examples/picoruby/projects/daisenkofun/mrbgems/daisenkofun-illuminations/mrblib/daisenkofun/illuminations/structure_guide.rb \
+    examples/picoruby/projects/daisenkofun/mrbgems/daisenkofun-illumination/mrblib/daisenkofun-illumination/patterns/structure_guide.rb \
     --language-version 4.0.3 \
-    --output examples/picoruby/projects/daisenkofun/mrbgems/daisenkofun-illuminations/mrblib/daisenkofun/illuminations/structure_guide.mrb
+    --output examples/picoruby/projects/daisenkofun/mrbgems/daisenkofun-illumination/mrblib/daisenkofun-illumination/patterns/structure_guide.mrb
 ```
 
 PicoRuby 4.0.3の`require`は、同名のファイルがある場合に`.mrb`を`.rb`より先に探します。そのため、既存の拡張子なしの`require`は変更する必要がありません。
 
 ```text
-/lib/daisenkofun/illuminations/structure_guide.mrb
-/lib/daisenkofun/illuminations/structure_guide.rb
+/lib/daisenkofun/patterns/structure_guide.mrb
+/lib/daisenkofun/patterns/structure_guide.rb
 ```
 
-生成した8ファイルは、PicoRuby 4.0.3用の`RITE0400`形式であることを確認し、実機の`:/lib/daisenkofun/illuminations`へ配置しました。これにより、実機上でのRubyソースコンパイルは避けられます。ただし、パターンごとにSandboxを生成する構造は残ります。
+生成した8ファイルは、PicoRuby 4.0.3用の`RITE0400`形式であることを確認し、実機の`:/lib/daisenkofun/patterns`へ配置しました。これにより、実機上でのRubyソースコンパイルは避けられます。ただし、パターンごとにSandboxを生成する構造は残ります。
 
 ### 実行結果
 
@@ -194,11 +196,11 @@ divine_light.mrbをrequire
 
 ## 4. ファームウェアへの組み込み
 
-イルミネーション一式をローカルmrbgemの`mrbgems/daisenkofun-illuminations`へ移管し、ファームウェアへ組み込む方法を検証しました。この方法では、ファイルシステムから`.rb`や`.mrb`を読み込むSandboxを使用しません。
+イルミネーション一式をローカルmrbgemの`mrbgems/daisenkofun-illumination`へ移管し、ファームウェアへ組み込む方法を検証しました。この方法では、ファイルシステムから`.rb`や`.mrb`を読み込むSandboxを使用しません。
 
 検証では、`Setlist::SHORT`のパターンを組み込み、次の点を確認しました。
 
-1. `require "daisenkofun-illuminations"`で組み込み済みの全クラスを利用できること
+1. `require "daisenkofun-illumination"`で組み込み済みの全クラスを利用できること
 2. `structure_guide`から`water_ripples`まで連続実行できること
 3. Sandboxとファイルシステム上のソースに依存していないこと
 
@@ -236,12 +238,12 @@ rpremote: run event=CLEANUP_DONE
 
 mrbgemの命令列はファームウェア内のプリビルドgemとして保持されます。ファイルシステムから読み込んだ一時的な文字列を命令列として参照しないため、事前コンパイル方式で発生した、GC後に無効な命令ポインタを参照する問題がありません。
 
-また、実行時に各パターンの`.rb`をコンパイルせず、パターンごとのSandboxも生成しません。`Illuminations.const_get`でファームウェアへ組み込まれたクラスを取得して実行するため、一括ロードと遅延ロードで問題になった実機コンパイルの負荷も回避できました。
+また、実行時に各パターンの`.rb`をコンパイルせず、パターンごとのSandboxも生成しません。現行実装では、`Daisenkofun::Illumination::Setlist.pattern_class`が`Daisenkofun::Illumination::Patterns`配下のクラスを返し、`Daisenkofun::Illumination::Player`が組み込み済みクラスを実行します。これにより、一括ロードと遅延ロードで問題になった実機コンパイルの負荷を回避できます。
 
 ### mrbgem内部ファイルの読み込み規則
 
-mruby/c向けファームウェアでは、mrbgemの`mrblib`は`spec.require_name`で指定した1つのpicogemとして登録されます。例えばOximeter mrbgemで外部から`require "daisenkofun-oximeter"`することはできますが、内部ファイルのパスである`require "daisenkofun/oximeter/config"`は個別のpicogem名として登録されません。実機のファイルシステムにも同名ファイルがなければ`LoadError`になります。
+mruby/c向けファームウェアでは、mrbgemの`mrblib`は`spec.require_name`で指定した1つのpicogemとして登録されます。例えばOximeter mrbgemで外部から`require "daisenkofun-oximeter"`することはできますが、内部ファイルのパスである`require "daisenkofun-oximeter/config"`は個別のpicogem名として登録されません。実機のファイルシステムにも同名ファイルがなければ`LoadError`になります。
 
-mrbgem内のRubyファイルはビルド時にまとめてコンパイルされるため、同じmrbgem内のファイル同士では個別パスを`require`しません。別mrbgemへの依存は`mrbgem.rake`の`add_dependency`で宣言し、必要な外部gem名だけを`require`します。CRuby単体テストでは、テストヘルパーが各ファイルを明示的に読み込みます。
+mrbgem内のRubyファイルはビルド時にまとめてコンパイルされるため、同じmrbgem内のファイル同士では個別パスを`require`しません。別mrbgemへの依存は`mrbgem.rake`の`add_dependency`で宣言し、必要な外部gem名だけを`require`します。ホストテストでは、残した回帰テストごとに必要なファイルをテストヘルパーから明示的に読み込みます。
 
 以上から、このプロジェクトではイルミネーションをmrbgemとしてファームウェアへ組み込む方法を採用します。

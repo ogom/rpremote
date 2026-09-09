@@ -46,4 +46,36 @@ RSpec.describe Rpremote::PicoRubySourcePatch do
       expect(patcher.apply(source)).to be_nil
     end
   end
+
+  it "keeps the PWM clock running during scheduler sleep on PicoRuby 4.0.3" do
+    Dir.mktmpdir do |source|
+      pwm = File.join(source, described_class::PWM_PATH)
+      FileUtils.mkdir_p(File.dirname(pwm))
+      File.write(pwm, <<~C)
+        #include "pico/stdlib.h"
+        #include "hardware/pwm.h"
+
+        #include "../../include/pwm.h"
+
+        #define APB_CLK_FREQ 125000000
+        #define CLK_DIV      100.0
+
+        void
+        PWM_init(uint32_t pin)
+        {
+          gpio_set_function(pin, GPIO_FUNC_PWM);
+          uint slice_num = pwm_gpio_to_slice_num(pin);
+          pwm_set_clkdiv(slice_num, CLK_DIV);
+        }
+      C
+
+      patcher = described_class.new(version: "4.0.3")
+      expect(patcher.apply(source)).to be_nil
+      expect(File.read(pwm)).to include("CLOCKS_SLEEP_EN0_CLK_SYS_PWM_BITS")
+
+      patched = File.read(pwm)
+      expect(patcher.apply(source)).to be_nil
+      expect(File.read(pwm)).to eq(patched)
+    end
+  end
 end

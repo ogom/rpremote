@@ -26,6 +26,28 @@ class DaisenkofunOximeterEventCollector
   end
 end
 
+class DaisenkofunOximeterRestartableSubscriber
+  attr_reader :beats, :measurements, :reset_count
+
+  def initialize
+    @beats = []
+    @measurements = []
+    @reset_count = 0
+  end
+
+  def call(event, payload)
+    if event == :finger_detected || event == :finger_removed
+      @beats = []
+      @measurements = []
+      @reset_count += 1
+    elsif event == :beat
+      @beats << payload
+    elsif event == :measurement_updated
+      @measurements << payload
+    end
+  end
+end
+
 class DaisenkofunOximeterTransitioningFingerDetector
   def initialize
     @present = false
@@ -113,46 +135,30 @@ class DaisenkofunOximeterMeasurementProcessorTest < Picotest::Test
     logger = DaisenkofunOximeterProcessorLogger.new
     collector = DaisenkofunOximeterEventCollector.new
     dispatcher = Daisenkofun::Oximeter::Dispatcher.new.subscribe(collector)
-    processor = Daisenkofun::Oximeter::Measurement::Processor.new(
-      dispatcher: dispatcher,
-      logger: logger
-    )
+    processor = Daisenkofun::Oximeter::Measurement::Processor.new(dispatcher: dispatcher, logger: logger)
 
     processor.process_sample(red: 10_000, ir: 10_000, timestamp_ms: 1_000)
-    assert logger.messages.include?(
-      "DAISENKOFUN component=oximeter event=wait timestamp_ms=1000 red=10000 ir=10000"
-    )
+    assert logger.messages.include?("DAISENKOFUN component=oximeter event=wait timestamp_ms=1000 red=10000 ir=10000")
     assert_equal [], collector.events
 
     processor.process_sample(red: 30_000, ir: 30_000, timestamp_ms: 1_100)
-    assert logger.messages.include?(
-      "DAISENKOFUN component=oximeter event=finger_detected timestamp_ms=1100 ir=30000"
-    )
+    assert logger.messages.include?("DAISENKOFUN component=oximeter event=finger_detected timestamp_ms=1100 ir=30000")
     assert_equal Daisenkofun::Oximeter::Measurement::Events::FINGER_DETECTED, collector.events[-1][0]
 
     processor.process_sample(red: 10_000, ir: 10_000, timestamp_ms: 1_200)
-    assert logger.messages.include?(
-      "DAISENKOFUN component=oximeter event=finger_removed timestamp_ms=1200 ir=10000"
-    )
+    assert logger.messages.include?("DAISENKOFUN component=oximeter event=finger_removed timestamp_ms=1200 ir=10000")
     assert_equal Daisenkofun::Oximeter::Measurement::Events::FINGER_REMOVED, collector.events[-1][0]
   end
 
   def test_emits_beat_and_measurement_events
     collector = DaisenkofunOximeterEventCollector.new
     dispatcher = Daisenkofun::Oximeter::Dispatcher.new.subscribe(collector)
-    processor = Daisenkofun::Oximeter::Measurement::Processor.new(
-      dispatcher: dispatcher,
-      logger: DaisenkofunOximeterProcessorLogger.new
-    )
+    processor = Daisenkofun::Oximeter::Measurement::Processor.new(dispatcher: dispatcher, logger: DaisenkofunOximeterProcessorLogger.new)
 
     index = 0
     while index < 100
       offset = index.even? ? -10 : 10
-      processor.process_sample(
-        red: 30_000 + offset * 10,
-        ir: 30_000 + offset,
-        timestamp_ms: index * 10
-      )
+      processor.process_sample(red: 30_000 + offset * 10, ir: 30_000 + offset, timestamp_ms: index * 10)
       index += 1
     end
 
@@ -180,6 +186,16 @@ class DaisenkofunOximeterMeasurementProcessorTest < Picotest::Test
     assert_equal 1, completed_count
     assert_equal Daisenkofun::Oximeter::Measurement::Events::FINGER_DETECTED, names[0]
     assert_equal Daisenkofun::Oximeter::Measurement::Events::MEASUREMENT_COMPLETED, names[-1]
+    beat_payloads = collector.events.select do |event|
+      event[0] == Daisenkofun::Oximeter::Measurement::Events::BEAT
+    end.map { |event| event[1] }
+    pulse_payload = beat_payloads.find { |payload| payload.key?(:pulse_width_ratio) }
+    assert pulse_payload
+    assert pulse_payload[:pulse_width_ratio] > 0.0
+    assert pulse_payload[:pulse_width_ratio] <= 1.0
+    assert pulse_payload[:pulse_width_ms] > 0
+    assert pulse_payload[:pulse_amplitude] >= 160
+    assert pulse_payload[:pulse_samples] >= 8
     completed_payload = collector.events[-1][1]
     assert completed_payload.key?(:timestamp_ms)
     assert completed_payload.key?(:red)
@@ -188,6 +204,43 @@ class DaisenkofunOximeterMeasurementProcessorTest < Picotest::Test
     assert completed_payload.key?(:spo2)
     assert processor.latest_bpm > 0.0
     assert processor.latest_spo2 > 0.0
+  end
+
+  def test_finger_events_reset_a_subscriber_and_beats_resume_after_replacement
+    subscriber = DaisenkofunOximeterRestartableSubscriber.new
+    dispatcher = Daisenkofun::Oximeter::Dispatcher.new.subscribe(subscriber)
+    processor = Daisenkofun::Oximeter::Measurement::Processor.new(dispatcher: dispatcher, logger: DaisenkofunOximeterProcessorLogger.new)
+
+    processor.process_sample(red: 30_000, ir: 30_000, timestamp_ms: 0)
+    100.times do |index|
+      offset = index.even? ? -10 : 10
+      processor.process_sample(red: 30_000 + offset * 10, ir: 30_000 + offset, timestamp_ms: index * 10)
+    end
+    8.times do
+      processor.process_sample(red: 32_000, ir: 31_000, timestamp_ms: 1_090)
+    end
+    8.times do
+      processor.process_sample(red: 28_000, ir: 29_000, timestamp_ms: 1_100)
+    end
+    assert_equal 1, subscriber.beats.length
+
+    processor.process_sample(red: 10_000, ir: 10_000, timestamp_ms: 1_200)
+    assert_equal 0, subscriber.beats.length
+    processor.process_sample(red: 30_000, ir: 30_000, timestamp_ms: 1_300)
+    100.times do |index|
+      offset = index.even? ? -10 : 10
+      processor.process_sample(red: 30_000 + offset * 10, ir: 30_000 + offset, timestamp_ms: 1_300 + index * 10)
+    end
+    8.times do
+      processor.process_sample(red: 32_000, ir: 31_000, timestamp_ms: 2_390)
+    end
+    8.times do
+      processor.process_sample(red: 28_000, ir: 29_000, timestamp_ms: 2_400)
+    end
+
+    assert_equal 3, subscriber.reset_count
+    assert_equal 1, subscriber.beats.length
+    assert_equal 2_400, subscriber.beats[0][:timestamp_ms] if subscriber.beats[0]
   end
 
   def test_clears_measurement_state_when_a_finger_is_removed
@@ -210,26 +263,5 @@ class DaisenkofunOximeterMeasurementProcessorTest < Picotest::Test
     assert_equal 2, session.clear_count
     assert_in_delta 0.0, processor.latest_bpm
     assert_in_delta 0.0, processor.latest_spo2
-  end
-
-  def test_public_class_names_match_the_file_layout
-    namespace = Daisenkofun::Oximeter
-
-    assert namespace.const_defined?(:BoardClock, false)
-    assert namespace.const_defined?(:ConsoleLogger, false)
-    assert namespace.const_defined?(:Dispatcher, false)
-    assert namespace.const_defined?(:SensorFactory, false)
-
-    assert_false namespace.const_defined?(:Clock, false)
-    assert_false namespace.const_defined?(:Events, false)
-    assert_false namespace.const_defined?(:Logging, false)
-    assert_false namespace.const_defined?(:Sensor, false)
-    assert_false namespace.const_defined?(:Monitor, false)
-    assert_false namespace.const_defined?(:EventBus, false)
-    assert_false namespace.const_defined?(:StatusLedSubscriber, false)
-    assert_false namespace.const_defined?(:StatusLeds, false)
-    assert_false namespace.const_defined?(:RollingStatistics, false)
-    assert_false namespace.const_defined?(:StatusDisplayFactory, false)
-    assert_false namespace.const_defined?(:NullStatusDisplay, false)
   end
 end

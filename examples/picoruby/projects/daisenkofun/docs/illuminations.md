@@ -47,12 +47,13 @@ Each setlist entry has the form `[key, wait_ms, loops]`. The wait time and numbe
 [:water_ripples, HIGHLIGHTS_FRAME_MS, 3]
 ```
 
-[`setlist.rb`](../mrbgems/daisenkofun-illuminations/mrblib/daisenkofun/setlist.rb) uses `HIGHLIGHTS_FRAME_MS` for `:highlights`, `STORY_FRAME_MS` for `:story`, and `SHOWCASE_FRAME_MS` for `:showcase`. To play one pattern, call `Illumination#play_pattern`; it uses the defaults in the `PATTERNS` registry.
+[`setlist.rb`](../mrbgems/daisenkofun-illumination/mrblib/daisenkofun-illumination/setlist.rb) uses `TESTS_FRAME_MS` for `:tests`, `HIGHLIGHTS_FRAME_MS` for `:highlights`, `STORY_FRAME_MS` for `:story`, and `SHOWCASE_FRAME_MS` for `:showcase`. To play one pattern, call `Daisenkofun::Illumination::Player#play_pattern`; it uses the defaults in the `PATTERNS` registry.
 
 | Setlist | Pattern count | `wait_ms` setting |
 | --- | ---: | --- |
+| `:tests` | 1 | `TESTS_FRAME_MS` (1 ms) |
 | `:highlights` | 7 | `HIGHLIGHTS_FRAME_MS` (10 ms) |
 | `:story` | 19 | `STORY_FRAME_MS` (5 ms) |
 | `:showcase` | 30 | `SHOWCASE_FRAME_MS` (2 ms) |
 
-Only `water_ripples` in `:highlights` and `:story` uses `loops` set to `3`; all other entries use `1`. `play_pattern` uses the selected pattern's default `loops` setting from `PATTERNS`.
+`:tests` contains only `structure_guide`. Only `water_ripples` in `:highlights` and `:story` uses `loops` set to `3`; all other setlist entries use `1`. `play_pattern` uses the selected pattern's default `wait_ms` and `loops` settings from `PATTERNS`.

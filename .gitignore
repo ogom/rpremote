@@ -5,9 +5,9 @@
 /config/setting.json
 
 # Downloaded sources and generated firmware
-/build/
-/firmware/
-/tmp/
+build/
+firmware/
+tmp/
 
 # Wi-Fi credentials for the education example
 /examples/education/07_wifi/main.local.rb

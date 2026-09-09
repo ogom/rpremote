@@ -2,7 +2,7 @@
 
 [日本語](led_layout.ja.md)
 
-This document shows how the Daisen Kofun structure described in the [structure reference](structure.md) maps to the model's 572 WS2812B LEDs. [`led_layout.rb`](../mrbgems/daisenkofun-illuminations/mrblib/daisenkofun/led_layout.rb) is the single source of truth for physical addresses. Change only the Ruby file when adding LEDs or adjusting wiring order or ranges; use this document to describe the mapping.
+This document shows how the Daisen Kofun structure described in the [structure reference](structure.md) maps to the model's 572 WS2812B LEDs. [`led_layout.rb`](../mrbgems/daisenkofun-illumination/mrblib/daisenkofun-illumination/led_layout.rb) is the single source of truth for physical addresses. Change only the Ruby file when adding LEDs or adjusting wiring order or ranges; use this document to describe the mapping.
 
 ## Mapping the structure to LED outlines
 
