@@ -3,7 +3,6 @@
 module Daisenkofun
   module Musical
     module Translators
-      # C major pentatonic. Frequencies are requested PWM values, in Hz.
       class Pulse
       NOTES = [131, 147, 165, 196, 220, 262, 294, 330, 392, 440, 523, 587, 659, 784, 880]
       SPO2_MAX_AGE_MS = 5_000

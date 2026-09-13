@@ -105,6 +105,8 @@ Write paired `README.md` and `README.ja.md` files around the user's path to a wo
 
 Keep both languages equivalent in commands, tables, safety information, and expected behavior. Explain what each deployment command changes on the device and what the user should observe after execution.
 
+When a project adopts local mrbgems because of device-side compilation, memory lifetime, or runtime-loading constraints, preserve a concise human-facing design note. Include the alternatives, why embedding was selected, its build/deploy consequences, tradeoffs, and reasons to reconsider it. Put exact require rules and other enforceable invariants in tests as a complement to that explanation, not as its replacement, and link the note from the README or development guide.
+
 ## Verification
 
 Before handing off a project:

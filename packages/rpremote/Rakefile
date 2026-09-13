@@ -4,6 +4,9 @@ require "bundler/gem_tasks"
 require "rspec/core/rake_task"
 
 RSpec::Core::RakeTask.new(:spec)
+RSpec::Core::RakeTask.new("spec:daisenkofun") do |task|
+  task.pattern = "../../examples/picoruby/projects/daisenkofun/spec/**/*_spec.rb"
+end
 
 require "rubocop/rake_task"
 

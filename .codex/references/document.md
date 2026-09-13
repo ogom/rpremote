@@ -13,6 +13,16 @@
 - Keep paired Japanese and English documents equivalent in heading order, commands, tables, code examples, and safety information. Translate for equivalent reader outcomes rather than word-for-word correspondence.
 - When changing documentation, check Markdown links, heading hierarchy, table rendering, paired-document structure, and the standard terminology and punctuation searches.
 
+## Documentation cleanup and preservation
+
+- Classify information by purpose before shortening it: operating guidance, safety, design rationale, executable contract, or temporary investigation record. Do not classify material only from its filename, age, or level of technical detail.
+- Keep design rationale in human-facing documentation. A document that explains the problem, alternatives considered, selected approach, tradeoffs, and conditions for reconsideration remains useful even when it originated during a migration or debugging effort.
+- Move measurable behavior, boundaries, ordering, and mappings to tests, but do not use tests as a replacement for explaining why an architecture was chosen. Tests preserve what the system does; documentation preserves the human decision behind it.
+- Remove raw logs, stale paths, temporary names, and step-by-step investigation history when they no longer help a reader make a current decision. Condense them into evidence for the conclusion instead of deleting the conclusion with them.
+- Before deleting an entire tracked document, inspect its current content, inbound links, neighboring guides, and Git history. State what unique human purpose it serves. If that purpose is plausible or ambiguous, reorganize the document and improve its navigation rather than deleting it.
+- Treat line-count reduction as a diagnostic metric, not a completion target. A smaller document set is only better when users retain the context needed to operate the project safely and understand consequential design choices.
+- When feedback changes a cleanup decision, update the plan, documentation index, paired-language file, and automated documentation checks together so they no longer encode the rejected assumption.
+
 ### Japanese
 
 - Use polite `です・ます` style in prose. Express required and unsafe actions explicitly with `〜してください` or `〜しないでください`.

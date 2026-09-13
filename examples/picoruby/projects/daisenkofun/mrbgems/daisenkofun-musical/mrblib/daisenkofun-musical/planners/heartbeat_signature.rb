@@ -3,7 +3,6 @@
 module Daisenkofun
   module Musical
     module Planners
-      # Replaces every eighth canon beat with an eight-note biometric signature.
       class HeartbeatSignature
       SIGNATURE_BEATS = 8
       MOATS = [:inner, :middle, :outer]

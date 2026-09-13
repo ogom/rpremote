@@ -2,7 +2,6 @@
 
 module Daisenkofun
   module Musical
-    # Builds stable, machine-readable summaries for normal and diagnostic runs.
     class PerformanceVerification
       def self.pulse(output, min_main_notes: 10, max_main_delay_ms: 25, min_baselines: 2, min_pulse_notes: 10)
         verified = output.main_note_count >= min_main_notes && output.max_main_delay_ms <= max_main_delay_ms &&
