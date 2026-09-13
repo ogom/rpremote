@@ -4,6 +4,9 @@ Notable changes to the `rpremote` RubyGem will be documented in this file. Repos
 
 ## Unreleased
 
+## 0.5.0 - 2026-09-12
+
+- Make `deploy PATH` flash the existing UF2 by default, and add `deploy PATH --build` for the previous build-and-deploy workflow.
 - Keep the RP2350 PWM clock running during scheduler sleep after PWM initialization, preventing buzzer and other PWM output from pausing between scheduler ticks on PicoRuby 4.0.3.
 - Add `auto_require: false` to `Mrbgems` entries so a gem can remain embedded in firmware without being prepended to every `run`, `exec`, and `deploy` source.
 

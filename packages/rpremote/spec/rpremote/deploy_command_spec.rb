@@ -74,7 +74,7 @@ RSpec.describe Rpremote::DeployCommand do
 
     described_class.run(
       [
-        project, "--board", "pico2_w", "--firmware", "firmware/custom.uf2",
+        "--build", project, "--board", "pico2_w", "--firmware", "firmware/custom.uf2",
         "--mrbgems", "Mrbgems.dev", "--mount", "/Volumes/RP2350",
         "--port", "/dev/cu.config", "--baud", "9600", "--timeout", "4"
       ],
@@ -97,6 +97,29 @@ RSpec.describe Rpremote::DeployCommand do
         "deploy run: completed; output bytes: 9\n"
       ]
     )
+  end
+
+  it "uses the existing firmware without building by default" do
+    FileUtils.remove_entry(File.join(project, "lib"))
+    expect(builder).not_to receive(:build)
+    allow(flasher).to receive(:new).and_return(flasher_instance)
+    allow(flasher_instance).to receive(:find_mounted).and_return("/Volumes/RP2350")
+    allow(flasher_instance).to receive(:flash).and_return(result)
+    allow(serial).to receive(:open).and_yield(port_io)
+    allow(runner).to receive(:new).and_return(runner_instance)
+    allow(runner_instance).to receive(:run).and_return("")
+
+    described_class.run(
+      [project], defaults: { mount: "/Volumes/RP2350" }, output: output, error: error,
+                 services: {
+                   builder: builder, flasher: flasher, serial: serial, device: device,
+                   recursive_copy: recursive_copy, shell: shell, runner: runner
+                 }
+    )
+
+    expect(output.string).not_to include("deploy build:")
+    expect(output.string).to include("deploy flash:")
+    expect(output.string).to include("deploy run:")
   end
 
   it "validates the project before building or flashing" do
@@ -225,8 +248,8 @@ RSpec.describe Rpremote::DeployCommand do
 
     expect do
       described_class.run(
-        [project], defaults: {}, output: output, error: error,
-                   services: { builder: builder, flasher: flasher, recursive_copy: recursive_copy }
+        [project, "--build"], defaults: {}, output: output, error: error,
+                              services: { builder: builder, flasher: flasher, recursive_copy: recursive_copy }
       )
     end.to raise_error(Rpremote::Builder::Error, "build failed")
   end

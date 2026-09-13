@@ -93,4 +93,4 @@ rpremote flash --firmware firmware/r2p2-picoruby-4.0.3-pico2.uf2
 rpremote run examples/picoruby/education/06_mpu6050/main.rb --timeout 15
 ```
 
-`deploy PATH` performs the build, BOOTSEL transition, and flash above, then copies the project's `PATH/lib/NAME` directory to `:/lib/NAME` and temporarily runs `PATH/main.rb`.
+`deploy PATH --build` performs the build, BOOTSEL transition, and flash above, then copies the project's `PATH/lib/NAME` directory to `:/lib/NAME` and temporarily runs `PATH/main.rb`. Without `--build`, `deploy PATH` skips the build and flashes the existing UF2 before copying and running the project.

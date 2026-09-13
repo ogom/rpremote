@@ -98,6 +98,7 @@ config = Daisenkofun::Application::Config.new(
   mode: :combined,
   duration_ms: 60_000,
   buzzer_pin: 18,
+  buzzer_volume: 3,
   musical_style: :heartbeat_signature
 )
 ```

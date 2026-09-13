@@ -4,6 +4,9 @@ Notable changes to the examples, local mrbgems, firmware support files, and repo
 
 ## Unreleased
 
+## 0.5.0 - 2026-09-12
+
+- Add the Goryokaku PicoRuby project with illumination, musical, and combined modes, Y-UP shake/strike detection, synchronized PWM and WS2812 performance cues, IMU-and-touch mode selection, migrated local mrbgems, dedicated illumination patterns, and bilingual structure and LED-layout documentation.
 - Refactor the Daisen Kofun application and local mrbgems to follow their require-name CoC, with dedicated `Application`, `Runtime`, `Oximeter`, `Musical`, and singular `Illumination` namespaces, callable runners, explicit ownership and cleanup, configurable WS2812/I2C/SPI/PWM pins, and mruby/c-compatible loading.
 - Add event-driven MAX30102 measurement and live biometric PWM music, including pulse translation, a synchronized three-moat canon, repeatable eight-beat heartbeat signatures, performance verification, and physical Pico 2 validation.
 - Improve real-time combined operation with C-backed 572-pixel transfers, indexed fills, frame caching, and uninterrupted PWM across `sleep_ms`, while preserving all 32 illumination pattern checksums.

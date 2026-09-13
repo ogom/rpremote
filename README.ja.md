@@ -41,10 +41,11 @@ rpremote flash --mount /Volumes/RP2350
 rpremote run examples/picoruby/education/01_blink/main.rb
 ```
 
-再利用するRubyコードを`lib/NAME`へ置くプロジェクトでは、`deploy`がファームウェアをビルドして書き込み、そのディレクトリをR2P2の`/lib/NAME`へコピーしてから`main.rb`を実行します。ディレクトリがない場合、コピー処理はスキップします。
+再利用するRubyコードを`lib/NAME`へ置くプロジェクトでは、`deploy`が既存ファームウェアを書き込み、そのディレクトリをR2P2の`/lib/NAME`へコピーしてから`main.rb`を一時実行します。`--build`を付けると、同じ処理の前にファームウェアをビルドします。ディレクトリがない場合、コピー処理はスキップします。
 
 ```sh
 rpremote deploy examples/picoruby/projects/oximeter --timeout 70
+rpremote deploy examples/picoruby/projects/oximeter --build --timeout 70
 ```
 
 R2P2のシリアルポートは`rpremote ports`で確認できます。複数台を接続している場合は`--port`でCDC 0を指定してください。

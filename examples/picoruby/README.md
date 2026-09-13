@@ -27,6 +27,8 @@ The [oximeter project](projects/oximeter/README.md) combines the local MAX30102 
 The [Daisen Kofun project](projects/daisenkofun/README.md) controls 572 WS2812B LEDs, estimates heart rate and SpO₂ from a MAX30102, and turns live pulse data into synchronized PWM-buzzer music. Run `rpremote deploy examples/picoruby/projects/daisenkofun` to build, flash, and execute the project in one command.
 Its refactored runtime, Oximeter, musical, and illumination mrbgems have been verified together on physical Pico 2 hardware.
 
+The [Goryokaku project](projects/goryokaku/README.md) combines 380 WS2812B LEDs on a Goryokaku model with an MPU6050, touch switch, and PWM buzzer. It migrates the former `my-*` mrbgems into project-local application, illumination, and musical components.
+
 ```sh
 rpremote setup
 rpremote mrbgems check

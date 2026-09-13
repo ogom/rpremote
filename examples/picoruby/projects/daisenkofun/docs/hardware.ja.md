@@ -12,11 +12,11 @@
 
 ### 572個のイルミネーションLED
 
-| WS2812B | 接続先 |
-| --- | --- |
-| DIN | Pico 2のGP14（物理19番、`ws2812_pin`） |
-| GND | Pico 2とLED用外部電源の共通GND |
-| VDD | LEDの仕様に合う外部電源 |
+| WS2812B | 接続先                                 |
+| ------- | -------------------------------------- |
+| DIN     | Pico 2のGP14（物理19番、`ws2812_pin`） |
+| GND     | Pico 2とLED用外部電源の共通GND         |
+| VDD     | LEDの仕様に合う外部電源                |
 
 5 V動作のLEDが3.3 VのDIN信号を安定して認識しない場合は、適切なレベルシフターを使用してください。
 
@@ -25,26 +25,26 @@
 MAX30102はI2Cで接続します。
 
 | MAX30102 | Raspberry Pi Pico 2／`Application::Config` |
-| --- | --- |
-| VIN | 使用するブレークアウトボードの対応電圧 |
-| GND | GND |
-| SDA | GP16／`i2c_sda_pin` |
-| SCL | GP17／`i2c_scl_pin` |
+| -------- | ------------------------------------------ |
+| VIN      | 使用するブレークアウトボードの対応電圧     |
+| GND      | GND                                        |
+| SDA      | GP16／`i2c_sda_pin`                        |
+| SCL      | GP17／`i2c_scl_pin`                        |
 
 ブレークアウトボードの対応入力電圧と、I2Cレベル変換の有無を確認してください。
 
 ### PWMブザー
 
-WS2812、I2C、SPI、ブザーのPINは[`main.rb`](../main.rb)の`Daisenkofun::Application::Config`で設定します。`:combined`の音楽出力は、教材03_speakerと同じPWMブザーの信号線をGP18（`buzzer_pin`）、GNDを共通GNDへ接続します。既定のdutyは3%です。`buzzer_pin`で信号ピンを変更でき、`nil`で無音になります。
+WS2812、I2C、SPI、ブザーのPINは[`main.rb`](../main.rb)の`Daisenkofun::Application::Config`で設定します。`:combined`の音楽出力は、教材03_speakerと同じPWMブザーの信号線をGP18（`buzzer_pin`）、GNDを共通GNDへ接続します。`buzzer_volume`の既定値は3で、`buzzer_pin`で信号ピンを変更でき、`buzzer_pin: nil`または`buzzer_volume: 0`で無音になります。
 
 ### 8個の状態表示LED
 
 Oximeterの状態表示用WS2812/NeoPixelはSPIで接続します。
 
 | WS2812/NeoPixel | Raspberry Pi Pico 2／`Application::Config` |
-| --- | --- |
-| DIN | GP3（`RP2040_SPI0`のCOPI、`spi_copi_pin`） |
-| GND | Pico 2とLED用外部電源の共通GND |
-| LED電源 | 8個のLEDに対応できる外部電源 |
+| --------------- | ------------------------------------------ |
+| DIN             | GP3（`RP2040_SPI0`のCOPI、`spi_copi_pin`） |
+| GND             | Pico 2とLED用外部電源の共通GND             |
+| LED電源         | 8個のLEDに対応できる外部電源               |
 
 GP2（`spi_sck_pin`）はSPI SCKとして設定されますが、LEDには接続しません。GPIOからLEDへ給電しないでください。SPI unitは`RP2040_SPI0`のままで、`Application::Config`が変更するのはSCK/COPIのPINです。

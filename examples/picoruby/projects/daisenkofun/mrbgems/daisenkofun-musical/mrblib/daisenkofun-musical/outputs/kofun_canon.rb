@@ -5,10 +5,13 @@ module Daisenkofun
     module Outputs
       # Plays one non-overlapping PWM voice for each of the three moat cues.
       class KofunCanon
+      REFERENCE_VOLUME = 3.0
+      MAX_AUDIBLE_DUTY = 50.0
       attr_reader :cue_count, :max_delay_ms, :planner
 
-      def initialize(pin: 18, clock:, logger: nil, pwm: nil, planner: nil)
+      def initialize(pin: 18, volume: 3, clock:, logger: nil, pwm: nil, planner: nil)
         @pin = pin
+        @volume = volume
         @clock = clock
         @logger = logger
         @pwm = pwm
@@ -98,9 +101,10 @@ module Daisenkofun
       private
 
       def sound(cue)
+        duty = scaled_duty(cue[:duty_percent])
         @pwm.duty(0)
         @pwm.frequency(cue[:frequency_hz])
-        @pwm.duty(cue[:duty_percent])
+        @pwm.duty(duty)
         started_at = @clock.millis
         delay = started_at - cue[:due_ms]
         @off_at = started_at + cue[:duration_ms]
@@ -110,9 +114,15 @@ module Daisenkofun
           "DAISENKOFUN component=kofun_canon event=note source=#{cue[:source] || :canon} " \
           "phrase=#{cue[:phrase]} slot=#{cue[:slot]} moat=#{cue[:moat]} beat_ms=#{cue[:beat_ms]} scheduled_ms=#{cue[:due_ms]} " \
           "started_ms=#{started_at} delay_ms=#{delay} frequency_hz=#{cue[:frequency_hz]} duration_ms=#{cue[:duration_ms]} " \
-          "duty_percent=#{cue[:duty_percent]} pulse_width_ratio=#{cue[:pulse_width_ratio]} " \
+          "duty_percent=#{duty} pulse_width_ratio=#{cue[:pulse_width_ratio]} " \
           "spo2_direction=#{cue[:direction]} travel_direction=#{cue[:travel_direction]} order=#{cue[:phrase_order].join(',')}"
         )
+      end
+
+      def scaled_duty(duty)
+        value = duty * @volume / REFERENCE_VOLUME
+        value = MAX_AUDIBLE_DUTY if value > MAX_AUDIBLE_DUTY
+        value.round(1)
       end
 
       def log(message)

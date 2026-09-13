@@ -30,7 +30,7 @@ rpremote flash
 rpremote run examples/picoruby/education/06_mpu6050/main.rb
 ```
 
-`deploy PATH` performs this firmware build, BOOTSEL transition, and flash automatically. After the board reconnects, it copies `PATH/lib/NAME` to `:/lib/NAME` and temporarily runs `PATH/main.rb`.
+`deploy PATH --build` performs this firmware build, BOOTSEL transition, and flash automatically. Without `--build`, `deploy PATH` flashes the existing UF2. After the board reconnects, both forms copy `PATH/lib/NAME` to `:/lib/NAME` and temporarily run `PATH/main.rb`.
 
 `Mrbgems` in the project root is auto-detected. Use `--mrbgems FILE` for a different definition or `--no-mrbgems` to build without extra gems.
 

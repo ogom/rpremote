@@ -24,6 +24,8 @@ rpremote build --language picoruby --language-version 4.0.3 --board pico2
 require "spi"
 require "ws2812_spi"
 
+BRIGHTNESS = 4
+
 spi = SPI.new(
   unit: :RP2040_SPI0,
   frequency: WS2812SPI::FREQUENCY,
@@ -32,13 +34,15 @@ spi = SPI.new(
   mode: WS2812SPI::MODE
 )
 leds = WS2812SPI.new(spi: spi, count: 8)
-leds.set_rgb(0, 255, 0, 0)
-leds.set_hex(1, 0x00FF00)
+leds.set_rgb(0, BRIGHTNESS, 0, 0)
+leds.set_hex(1, BRIGHTNESS << 8)
 leds.show
 
 # 最後のLEDだけを点灯します。
-leds.one(7)
+leds.one(7, (BRIGHTNESS << 16) | (BRIGHTNESS << 8) | BRIGHTNESS)
 ```
+
+この例では消費電流と眩しさを抑えるため、RGB各チャンネルの輝度を`4 / 255`に制限しています。
 
 LEDのDIN信号をSPIのCOPIピンへ接続します。この例ではGP3です。GP2はSPIのSCKとして設定しますが、LEDストリップへは接続しません。チップセレクトとCIPOは使用しません。
 

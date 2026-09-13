@@ -32,7 +32,8 @@ This page summarizes the `rpremote` commands. Use `rpremote --help` for the comp
 | Command | Description |
 | --- | --- |
 | `rpremote ports` | List detected R2P2 serial ports after flashing. |
-| `rpremote deploy PATH` | Build and flash firmware, copy `PATH/lib/NAME` to `:/lib/NAME`, then temporarily run `PATH/main.rb`. |
+| `rpremote deploy PATH` | Flash existing firmware, copy `PATH/lib/NAME` to `:/lib/NAME`, then temporarily run `PATH/main.rb`. |
+| `rpremote deploy PATH --build` | Build and flash firmware, copy `PATH/lib/NAME` to `:/lib/NAME`, then temporarily run `PATH/main.rb`. |
 | `rpremote fs cp SOURCE DESTINATION [--recursive]` | Transfer one file between the local computer and R2P2. Exactly one path uses the `:` remote-path prefix. With `--recursive`, create missing remote directories and upload a local directory tree. |
 | `rpremote fs push LOCAL_DIR :/REMOTE_DIR` | Alias of `fs cp --recursive`. It recursively uploads a local directory tree without deleting remote-only files. |
 | `rpremote fs cat/ls/rm/mkdir` | Print, list, permanently remove, or create remote files and directories. |

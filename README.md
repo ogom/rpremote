@@ -41,10 +41,11 @@ rpremote flash --mount /Volumes/RP2350
 rpremote run examples/picoruby/education/01_blink/main.rb
 ```
 
-For a project that keeps reusable Ruby code in `lib/NAME`, `deploy` builds and flashes the firmware, copies that directory to R2P2's `/lib/NAME`, and runs its `main.rb`. If the directory is absent, the copy step is skipped:
+For a project that keeps reusable Ruby code in `lib/NAME`, `deploy` flashes the existing firmware, copies that directory to R2P2's `/lib/NAME`, and temporarily runs its `main.rb`. Add `--build` to build the firmware before the same deployment workflow. If the directory is absent, the copy step is skipped:
 
 ```sh
 rpremote deploy examples/picoruby/projects/oximeter --timeout 70
+rpremote deploy examples/picoruby/projects/oximeter --build --timeout 70
 ```
 
 Use `rpremote ports` to find the R2P2 serial ports. When more than one board is connected, select CDC 0 with `--port`.

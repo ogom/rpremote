@@ -49,7 +49,7 @@ bundle exec rake release
 After the tag exists on GitHub, create a GitHub Release and attach the exact gem that passed validation. `--verify-tag` prevents GitHub CLI from silently creating a tag at another commit:
 
 ```sh
-gh release create v0.4.0 rpremote-0.4.0.gem --verify-tag --generate-notes
+gh release create v0.5.0 rpremote-0.5.0.gem --verify-tag --generate-notes
 ```
 
-Replace `0.4.0` in both places for later versions. Finally, install from RubyGems.org in a fresh environment and run `rpremote --version`.
+Replace `0.5.0` in both places for later versions. Finally, install from RubyGems.org in a fresh environment and run `rpremote --version`.

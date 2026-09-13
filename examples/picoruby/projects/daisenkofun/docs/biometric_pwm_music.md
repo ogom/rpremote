@@ -82,6 +82,8 @@ duty_percent = 2.0 + 4.0 × pulse_width_ratio
 
 Changing duty alters the buzzer's harmonic content and timbre even when the frequency is unchanged. A beat without a usable pulse width falls back to 3%.
 
+`Application::Config#buzzer_volume` is the master level applied to this biometric duty. Actual output is `biometric duty × buzzer_volume / 3`, capped at 50%, where square-wave amplitude is greatest. The valid range is 0–100; the default `3` preserves the values above, while `0` selects silent output.
+
 ### SpO₂ movement
 
 For pulse translation and the kofun canon, the median of the first eight valid SpO₂ updates becomes the personal baseline. Later readings are smoothed. A difference greater than +0.5 moves the scale upward, and a difference less than -0.5 moves it downward. A reading older than five seconds is not used.
@@ -130,6 +132,7 @@ config = Daisenkofun::Application::Config.new(
   mode: :combined,
   duration_ms: 60_000,
   buzzer_pin: 18,
+  buzzer_volume: 3,
   musical_style: :heartbeat_signature
 )
 ```

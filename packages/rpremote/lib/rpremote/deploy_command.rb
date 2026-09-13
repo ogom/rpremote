@@ -11,7 +11,7 @@ module Rpremote
 
     class Error < Rpremote::Error; end
 
-    # The command intentionally keeps the six deployment stages visible in execution order.
+    # The command intentionally keeps the deployment stages visible in execution order.
     # rubocop:disable Metrics/AbcSize, Metrics/MethodLength
     def self.run(args, defaults:, output: $stdout, error: $stderr, services: {})
       options = parse_options(args, defaults)
@@ -21,7 +21,6 @@ module Rpremote
       library, remote_library, source = project_files(project)
       Language.validate!(options[:language])
 
-      builder = services.fetch(:builder) { Builder.new }
       flasher = services.fetch(:flasher, Flasher)
       serial = services.fetch(:serial, Serial)
       device = services.fetch(:device, Device)
@@ -29,13 +28,16 @@ module Rpremote
       target_options = options.slice(:language, :language_version, :board, :cache_dir, :firmware)
       firmware_path = Target.new(**target_options).firmware_path(root: Dir.pwd)
 
-      output.puts("deploy build: #{firmware_path}")
-      builder.build(
-        **target_options,
-        mrbgems: options[:mrbgems],
-        output: output,
-        error: error
-      )
+      if options[:build]
+        builder = services.fetch(:builder) { Builder.new }
+        output.puts("deploy build: #{firmware_path}")
+        builder.build(
+          **target_options,
+          mrbgems: options[:mrbgems],
+          output: output,
+          error: error
+        )
+      end
 
       flash_service = flasher.new(timeout: options[:timeout])
       bootsel_mount = resolve_bootsel_mount(options, flash_service, output, services)
@@ -48,7 +50,7 @@ module Rpremote
         port: options[:port]
       )
 
-      connection_options = options.merge(port: result.port)
+      connection_options = options.except(:build).merge(port: result.port)
       output.puts("deploy connect: waiting for R2P2 Shell on #{result.port}")
       wait_for_shell(
         port: result.port, baud: options[:baud], timeout: options[:timeout], serial: serial,
@@ -160,13 +162,15 @@ module Rpremote
         mount: defaults[:mount],
         port: defaults[:port],
         baud: defaults.fetch(:baud, Serial::BAUD_RATE),
-        timeout: defaults.fetch(:timeout, Flasher::DEFAULT_TIMEOUT)
+        timeout: defaults.fetch(:timeout, Flasher::DEFAULT_TIMEOUT),
+        build: false
       }
     end
     private_class_method :default_options
 
     def self.option_parser(options)
       OptionParser.new do |parser|
+        parser.on("--build") { options[:build] = true }
         parser.on("--language LANGUAGE") { |value| options[:language] = value }
         parser.on("--language-version VERSION") { |value| options[:language_version] = value }
         parser.on("--board BOARD") { |value| options[:board] = value }

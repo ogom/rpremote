@@ -5,10 +5,13 @@ module Daisenkofun
     module Outputs
       # Single-voice, nonblocking call and response. Hardware is acquired at start.
       class PWM
+      REFERENCE_VOLUME = 3.0
+      MAX_AUDIBLE_DUTY = 50.0
       attr_reader :baseline_count, :main_note_count, :max_main_delay_ms, :pulse_timbre_count, :min_duty_percent, :max_duty_percent
 
-      def initialize(pin: 18, duty: 3, clock:, logger: nil, pwm: nil, timbre_translator: nil)
+      def initialize(pin: 18, duty: 3, volume: nil, clock:, logger: nil, pwm: nil, timbre_translator: nil)
         @pin = pin
+        @volume = volume.nil? ? duty : volume
         @clock = clock
         @logger = logger
         @pwm = pwm
@@ -132,9 +135,10 @@ module Daisenkofun
       end
 
       def sound(frequency, duration, role, beat_at, scheduled_at, direction, timbre)
+        duty = scaled_duty(timbre[:duty_percent])
         @pwm.duty(0)
         @pwm.frequency(frequency)
-        @pwm.duty(timbre[:duty_percent])
+        @pwm.duty(duty)
         started_at = @clock.millis
         delay = started_at - scheduled_at
         @off_at = started_at + duration
@@ -143,7 +147,6 @@ module Daisenkofun
           @max_main_delay_ms = delay if delay > @max_main_delay_ms
           if timbre[:pulse_width_ratio]
             @pulse_timbre_count += 1
-            duty = timbre[:duty_percent]
             @min_duty_percent = duty if !@min_duty_percent || duty < @min_duty_percent
             @max_duty_percent = duty if !@max_duty_percent || duty > @max_duty_percent
           end
@@ -151,9 +154,15 @@ module Daisenkofun
         log(
           "DAISENKOFUN component=musical event=note role=#{role} beat_ms=#{beat_at} scheduled_ms=#{scheduled_at} started_ms=#{started_at} " \
           "delay_ms=#{delay} sensor_age_ms=#{started_at - beat_at} frequency_hz=#{frequency} duration_ms=#{duration} direction=#{direction} " \
-          "duty_percent=#{timbre[:duty_percent]} pulse_width_ratio=#{timbre[:pulse_width_ratio]} " \
+          "duty_percent=#{duty} pulse_width_ratio=#{timbre[:pulse_width_ratio]} " \
           "pulse_width_ms=#{timbre[:pulse_width_ms]} pulse_amplitude=#{timbre[:pulse_amplitude]} pulse_samples=#{timbre[:pulse_samples]}"
         )
+      end
+
+      def scaled_duty(duty)
+        value = duty * @volume / REFERENCE_VOLUME
+        value = MAX_AUDIBLE_DUTY if value > MAX_AUDIBLE_DUTY
+        value.round(1)
       end
       end
     end

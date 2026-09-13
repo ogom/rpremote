@@ -32,7 +32,8 @@
 | コマンド | 説明 |
 | --- | --- |
 | `rpremote ports` | 書き込み後に検出したR2P2シリアルポートを表示します。 |
-| `rpremote deploy PATH` | ファームウェアをビルドして書き込み、`PATH/lib/NAME`を`:/lib/NAME`へコピーしてから`PATH/main.rb`を一時実行します。 |
+| `rpremote deploy PATH` | 既存ファームウェアを書き込み、`PATH/lib/NAME`を`:/lib/NAME`へコピーしてから`PATH/main.rb`を一時実行します。 |
+| `rpremote deploy PATH --build` | ファームウェアをビルドして書き込み、`PATH/lib/NAME`を`:/lib/NAME`へコピーしてから`PATH/main.rb`を一時実行します。 |
 | `rpremote fs cp SOURCE DESTINATION [--recursive]` | ローカルPCとR2P2の間で1ファイルを転送します。片方のパスだけにリモートパスの接頭辞`:`を付けます。`--recursive`を付けると不足しているリモートディレクトリを作成し、ローカルのディレクトリツリーを一括転送します。 |
 | `rpremote fs push LOCAL_DIR :/REMOTE_DIR` | `fs cp --recursive`の別名です。ローカルのディレクトリツリーを一括転送し、リモートにだけ存在するファイルは削除しません。 |
 | `rpremote fs cat/ls/rm/mkdir` | リモートファイルとディレクトリの表示、一覧、完全削除、作成を行います。 |

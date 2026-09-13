@@ -90,4 +90,34 @@ class DaisenkofunMusicalKofunCanonOutputTest < Picotest::Test
   ensure
     subscriber.stop if subscriber
   end
+
+  def test_scales_biometric_duty_with_master_volume
+    clock = DaisenkofunCanonTestClock.new
+    pwm = DaisenkofunCanonTestPWM.new(clock)
+    output = Daisenkofun::Musical::Outputs::KofunCanon.new(clock: clock, pwm: pwm, volume: 1.5)
+    subscriber = Daisenkofun::Musical::Subscriber.new(output: output, immediate_beat: true)
+    subscriber.start
+
+    clock.now = 1_000
+    subscriber.call(:beat, { timestamp_ms: 1_000, interval_ms: 900 })
+
+    assert_equal [[1_000, 294, 1.7]], pwm.notes
+  ensure
+    subscriber.stop if subscriber
+  end
+
+  def test_caps_scaled_duty_at_the_loudest_square_wave
+    clock = DaisenkofunCanonTestClock.new
+    pwm = DaisenkofunCanonTestPWM.new(clock)
+    output = Daisenkofun::Musical::Outputs::KofunCanon.new(clock: clock, pwm: pwm, volume: 50)
+    subscriber = Daisenkofun::Musical::Subscriber.new(output: output, immediate_beat: true)
+    subscriber.start
+
+    clock.now = 1_000
+    subscriber.call(:beat, { timestamp_ms: 1_000, interval_ms: 900 })
+
+    assert_equal [[1_000, 294, 50.0]], pwm.notes
+  ensure
+    subscriber.stop if subscriber
+  end
 end

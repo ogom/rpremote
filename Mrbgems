@@ -14,3 +14,8 @@ gem path: "examples/picoruby/projects/daisenkofun/mrbgems/daisenkofun-oximeter",
 gem path: "examples/picoruby/projects/daisenkofun/mrbgems/daisenkofun-musical", auto_require: false
 gem path: "examples/picoruby/projects/daisenkofun/mrbgems/daisenkofun-runtime", auto_require: false
 gem path: "examples/picoruby/projects/daisenkofun/mrbgems/daisenkofun-application", auto_require: false
+# gem path: "examples/picoruby/projects/goryokaku/mrbgems/goryokaku-illumination", auto_require: false
+# gem path: "examples/picoruby/projects/goryokaku/mrbgems/goryokaku-musical", auto_require: false
+# gem path: "examples/picoruby/projects/goryokaku/mrbgems/goryokaku-runtime", auto_require: false
+# gem path: "examples/picoruby/projects/goryokaku/mrbgems/goryokaku-interaction", auto_require: false
+# gem path: "examples/picoruby/projects/goryokaku/mrbgems/goryokaku-application", auto_require: false
