@@ -32,10 +32,11 @@ rpremote run main.rb
 
 `setup` also downloads the official Raspberry Pi `nuke_universal.uf2` reset firmware into `firmware/`.
 
-For a project that stores reusable Ruby code in `lib/NAME`, `deploy` builds and flashes the firmware, copies that directory to R2P2, and then runs its entry file:
+For a project that stores reusable Ruby code in `lib/NAME`, `deploy` flashes the existing firmware, copies that directory to R2P2, and then temporarily runs its entry file. Add `--build` to build the firmware first:
 
 ```sh
 rpremote deploy path/to/project
+rpremote deploy path/to/project --build
 ```
 
 The defaults prepare `firmware/picoruby-4.0.3/` and create `firmware/picoruby-4.0.3-pico2.uf2`. Use `rpremote ports` to locate the R2P2 CDC 0 port when a board must be selected explicitly.
@@ -80,7 +81,8 @@ Command-line options override `config/setting.json`. PicoRuby is implemented tod
 | `rpremote build` | Build a custom UF2 with project mrbgems. |
 | `rpremote build clean` | Remove intermediate build files. |
 | `rpremote bootsel` | Ask the running R2P2 firmware to enter BOOTSEL and wait for its USB volume. |
-| `rpremote deploy PATH` | Build and flash firmware, copy `PATH/lib/NAME` to `:/lib/NAME` when present, then run `PATH/main.rb` while preserving its hardware output until the next command. |
+| `rpremote deploy PATH` | Flash existing firmware, copy `PATH/lib/NAME` to `:/lib/NAME` when present, then temporarily run `PATH/main.rb` while preserving its hardware output until the next command. |
+| `rpremote deploy PATH --build` | Build and flash firmware, then perform the same copy and temporary run workflow. |
 | `rpremote dfu app FILE` | Stage a Ruby or version-checked bytecode app through PicoModem DFU. |
 | `rpremote dfu compile FILE` | Compile `.rb` to matching PicoRuby bytecode for DFU. |
 | `rpremote dfu status` | Show the active and candidate DFU slots. |
@@ -111,7 +113,7 @@ UF2 files built with `rpremote build` from the [GitHub repository](https://githu
 ## Operation model
 
 - `run` and `exec` upload Ruby code temporarily, relay output, then remove the temporary remote file. A Ruby exception reported by compatible R2P2 firmware makes the command exit nonzero.
-- `deploy PATH` builds the selected firmware, enters BOOTSEL, flashes it, waits until the R2P2 Shell is ready, copies `PATH/lib/NAME` to `:/lib/NAME` when present, then runs the current contents of `PATH/main.rb`. Its Shell job is retained so hardware output remains active until the next command. It reports successful completion and the output byte count; an R2P2 Ruby exception remains a command failure. If the library directory is absent, the copy step is skipped. It requires PicoRuby 4.x firmware.
+- `deploy PATH` enters BOOTSEL, flashes the existing selected firmware, waits until the R2P2 Shell is ready, copies `PATH/lib/NAME` to `:/lib/NAME` when present, then temporarily runs the current contents of `PATH/main.rb`. `deploy PATH --build` builds that firmware before the same workflow. The Shell job is retained so hardware output remains active until the next command. It reports successful completion and the output byte count; an R2P2 Ruby exception remains a command failure. If the library directory is absent, the copy step is skipped. It requires PicoRuby 4.x firmware.
 - `flash` copies a UF2 to the RP2350 BOOTSEL volume and replaces persistent R2P2 firmware.
 - `dfu app` stages a Ruby source or matching bytecode app in the inactive DFU slot. Restart R2P2 to try it; a successful app must call `DFU.confirm`.
 - `dfu remove` permanently clears both DFU A/B application slots. The application already loaded in RAM continues until you run `rpremote reset`; use both commands before `rpremote run` when boot-app output would be unwanted. It does not remove other `/home` files or R2P2 firmware.

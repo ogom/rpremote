@@ -32,10 +32,11 @@ rpremote run main.rb
 
 `setup`はRaspberry Pi公式のリセット用`nuke_universal.uf2`も`firmware/`へダウンロードします。
 
-再利用するRubyコードを`lib/NAME`へ置くプロジェクトでは、`deploy`がファームウェアをビルドして書き込み、そのディレクトリをR2P2へコピーしてからエントリーファイルを実行します。
+再利用するRubyコードを`lib/NAME`へ置くプロジェクトでは、`deploy`が既存ファームウェアを書き込み、そのディレクトリをR2P2へコピーしてからエントリーファイルを一時実行します。`--build`を付けると、同じ処理の前にファームウェアをビルドします。
 
 ```sh
 rpremote deploy path/to/project
+rpremote deploy path/to/project --build
 ```
 
 既定では`firmware/picoruby-4.0.3/`にソースを準備し、`firmware/picoruby-4.0.3-pico2.uf2`を生成します。対象ボードを明示する必要がある場合は、`rpremote ports`でR2P2のCDC 0ポートを確認してください。
@@ -80,7 +81,8 @@ rpremote flash --language picoruby --language-version 3.4.2 --board pico2 --moun
 | `rpremote build` | mrbgemを含むカスタムUF2をビルドします。 |
 | `rpremote build clean` | 中間ビルドファイルを削除します。 |
 | `rpremote bootsel` | 実行中のR2P2へBOOTSEL移行を要求し、USBボリュームの出現を待ちます。 |
-| `rpremote deploy PATH` | ファームウェアをビルドして書き込み、存在する場合は`PATH/lib/NAME`を`:/lib/NAME`へコピーしてから`PATH/main.rb`を実行します。ハードウェア出力は次のコマンドまで維持されます。 |
+| `rpremote deploy PATH` | 既存ファームウェアを書き込み、存在する場合は`PATH/lib/NAME`を`:/lib/NAME`へコピーしてから`PATH/main.rb`を一時実行します。ハードウェア出力は次のコマンドまで維持されます。 |
+| `rpremote deploy PATH --build` | ファームウェアをビルドして書き込んだ後、同じコピーと一時実行を行います。 |
 | `rpremote dfu app FILE` | PicoModem DFUでRubyまたは版を照合したバイトコードのアプリを更新します。 |
 | `rpremote dfu compile FILE` | DFU用にPicoRuby版と一致する`.mrb`を生成します。 |
 | `rpremote dfu status` | DFUのアクティブおよび起動候補スロットを表示します。 |
@@ -110,7 +112,7 @@ rpremote dfu app --help
 ## 操作モデル
 
 - `run`と`exec`はRubyコードを一時的に転送・実行して出力を表示し、一時リモートファイルを削除します。対応するR2P2ファームウェアがRuby例外を報告した場合は、非0で終了します。
-- `deploy PATH`はファームウェアをビルドし、BOOTSELへ移行して書き込んだ後、R2P2 Shellの起動完了を待ちます。存在する場合は`PATH/lib/NAME`を`:/lib/NAME`へコピーし、実行直前に読み込んだ`PATH/main.rb`を実行します。Shellジョブを保持するため、ハードウェア出力は次のコマンドまで維持されます。正常終了と出力バイト数を表示し、R2P2のRuby例外はコマンド失敗として扱います。ライブラリディレクトリがない場合、コピー処理はスキップします。PicoRuby 4系のファームウェアが必要です。
+- `deploy PATH`はBOOTSELへ移行して既存の選択済みファームウェアを書き込んだ後、R2P2 Shellの起動完了を待ちます。存在する場合は`PATH/lib/NAME`を`:/lib/NAME`へコピーし、実行直前に読み込んだ`PATH/main.rb`を一時実行します。`deploy PATH --build`は同じ処理の前にファームウェアをビルドします。Shellジョブを保持するため、ハードウェア出力は次のコマンドまで維持されます。正常終了と出力バイト数を表示し、R2P2のRuby例外はコマンド失敗として扱います。ライブラリディレクトリがない場合、コピー処理はスキップします。PicoRuby 4系のファームウェアが必要です。
 - `flash`はUF2をRP2350 BOOTSELボリュームへコピーし、永続的なR2P2ファームウェアを置き換えます。
 - `dfu app`はRubyソースまたは対応するバイトコードのアプリを非アクティブDFUスロットへ登録します。R2P2を再起動して試行し、正常に起動したアプリは`DFU.confirm`を呼び出します。
 - `dfu remove`はDFUのA/B両アプリスロットを完全に空にします。RAM上ですでに動作しているアプリは`rpremote reset`を実行するまで継続するため、起動アプリのログを混ぜずに`rpremote run`を使う場合は両方のコマンドを実行します。その他の`/home`ファイルとR2P2ファームウェアは削除しません。

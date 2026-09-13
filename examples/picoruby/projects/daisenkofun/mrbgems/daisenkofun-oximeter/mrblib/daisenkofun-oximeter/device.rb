@@ -22,9 +22,9 @@ module Daisenkofun
         @open = true
         @closed = false
         self
-      rescue
+      rescue => error
         close
-        raise
+        raise error
       end
 
       def close

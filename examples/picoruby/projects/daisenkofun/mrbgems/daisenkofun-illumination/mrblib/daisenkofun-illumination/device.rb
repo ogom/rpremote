@@ -20,9 +20,9 @@ module Daisenkofun
         begin
           @strip.brightness = Config::BRIGHTNESS_PERCENT
           @display = Display.new(@strip)
-        rescue
+        rescue => error
           close
-          raise
+          raise error
         end
         self
       end

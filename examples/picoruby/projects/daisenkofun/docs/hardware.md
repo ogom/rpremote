@@ -35,7 +35,7 @@ Confirm the breakout board's accepted input voltage and whether it includes I2C 
 
 ### PWM buzzer
 
-Configure the WS2812, I2C, SPI, and buzzer pins with `Daisenkofun::Application::Config` in [`main.rb`](../main.rb). For audio in `:combined`, connect the PWM buzzer used in education example 03_speaker to GP18 (`buzzer_pin`) and common GND. Default duty is 3%. Change `buzzer_pin` to select another signal pin, or use `nil` for silence.
+Configure the WS2812, I2C, SPI, and buzzer pins with `Daisenkofun::Application::Config` in [`main.rb`](../main.rb). For audio in `:combined`, connect the PWM buzzer used in education example 03_speaker to GP18 (`buzzer_pin`) and common GND. `buzzer_volume` defaults to 3. Change `buzzer_pin` to select another signal pin; use `buzzer_pin: nil` or `buzzer_volume: 0` for silence.
 
 ### Eight status LEDs
 

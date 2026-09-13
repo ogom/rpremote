@@ -67,7 +67,7 @@ module Daisenkofun
               @stopped = true
             end
           end
-          raise
+          raise error
         end
       end
 

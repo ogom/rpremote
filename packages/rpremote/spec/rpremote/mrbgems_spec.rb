@@ -142,6 +142,7 @@ RSpec.describe Rpremote::Mrbgems do
       )
       generated = File.read(overlay.path)
 
+      expect(generated).to start_with("# frozen_string_literal: true\n\n")
       expect(generated).to include("load #{base.inspect}")
       expect(generated).to include("checksum_hash: #{commit.inspect}")
       expect(generated).to include("conf.gem #{local.inspect}")

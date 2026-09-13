@@ -24,6 +24,8 @@ rpremote build --language picoruby --language-version 4.0.3 --board pico2
 require "spi"
 require "ws2812_spi"
 
+BRIGHTNESS = 4
+
 spi = SPI.new(
   unit: :RP2040_SPI0,
   frequency: WS2812SPI::FREQUENCY,
@@ -32,13 +34,15 @@ spi = SPI.new(
   mode: WS2812SPI::MODE
 )
 leds = WS2812SPI.new(spi: spi, count: 8)
-leds.set_rgb(0, 255, 0, 0)
-leds.set_hex(1, 0x00FF00)
+leds.set_rgb(0, BRIGHTNESS, 0, 0)
+leds.set_hex(1, BRIGHTNESS << 8)
 leds.show
 
 # Turn all LEDs off except the final one.
-leds.one(7)
+leds.one(7, (BRIGHTNESS << 16) | (BRIGHTNESS << 8) | BRIGHTNESS)
 ```
+
+This example limits each RGB channel to `4 / 255` to reduce current draw and glare.
 
 Connect the LED DIN signal to the SPI COPI pin, GP3 in this example. GP2 is configured as SPI SCK but is not connected to the LED strip. No chip-select or CIPO connection is used.
 

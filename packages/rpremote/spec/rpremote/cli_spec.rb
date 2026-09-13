@@ -42,7 +42,8 @@ RSpec.describe Rpremote::CLI do
     status = described_class.start(["deploy", "--help"], stdout: stdout, stderr: stderr)
 
     expect(status).to eq(0)
-    expect(stdout.string).to include("Builds the selected custom UF2")
+    expect(stdout.string).to include("flashes the existing selected UF2")
+    expect(stdout.string).to include("With --build, builds the selected custom UF2")
     expect(stdout.string).to include("If PATH/lib/NAME exists, it copies it to :/lib/NAME")
   end
 

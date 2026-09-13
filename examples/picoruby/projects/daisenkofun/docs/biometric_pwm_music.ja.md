@@ -82,6 +82,8 @@ duty_percent = 2.0 + 4.0 × pulse_width_ratio
 
 周波数が同じでもdutyが変わると倍音成分が変わり、ブザーの音色が変化する。脈波幅が取得できない拍では3%を使う。
 
+`Application::Config`の`buzzer_volume`は、この生体dutyへ適用するマスター音量である。実際の出力は`生体duty × buzzer_volume / 3`で求め、矩形波の振幅が最大になる50%を上限とする。設定範囲は0〜100で、既定値`3`は上表の値をそのまま使い、`0`は無音になる。
+
 ### SpO₂の変化
 
 通常のパルス変換と古墳の輪唱では、最初の8回の有効なSpO₂更新の中央値を個人基準とする。以後の値は平滑化し、基準との差が+0.5より大きければ音階を上方向、-0.5より小さければ下方向へ動かす。5秒より古い値は使わない。
@@ -130,6 +132,7 @@ config = Daisenkofun::Application::Config.new(
   mode: :combined,
   duration_ms: 60_000,
   buzzer_pin: 18,
+  buzzer_volume: 3,
   musical_style: :heartbeat_signature
 )
 ```

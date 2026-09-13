@@ -18,6 +18,10 @@ module Daisenkofun
         validate_pin(:i2c_scl_pin, config.i2c_scl_pin)
         validate_pin(:spi_sck_pin, config.spi_sck_pin)
         validate_pin(:spi_copi_pin, config.spi_copi_pin)
+        validate_pin(:buzzer_pin, config.buzzer_pin) if config.buzzer_pin
+        unless numeric?(config.buzzer_volume) && config.buzzer_volume >= 0 && config.buzzer_volume <= 100
+          raise ArgumentError, "buzzer_volume must be between 0 and 100"
+        end
 
         config.illumination? ? validate_illumination(config) : validate_measurement(config)
         config
@@ -27,6 +31,10 @@ module Daisenkofun
 
       def validate_pin(name, pin)
         raise ArgumentError, "#{name} must be a non-negative Integer" unless pin.is_a?(Integer) && pin >= 0
+      end
+
+      def numeric?(value)
+        value.is_a?(Integer) || value.is_a?(Float)
       end
 
       def validate_illumination(config)

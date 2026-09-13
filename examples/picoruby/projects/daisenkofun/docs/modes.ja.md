@@ -8,7 +8,7 @@
 | --- | --- | --- |
 | `:illumination` | セットリストまたは単独のイルミネーションパターンを実行するとき | `setlist_name`または`pattern_key`、`repeat` |
 | `:oximeter` | MAX30102で測定し、8個のLEDで状態を表示するとき | `duration_ms` |
-| `:combined` | 測定、状態LED、拍動に同期するイルミネーション、音楽機能を同時に実行するとき | `duration_ms`、`buzzer_pin`、`musical_style` |
+| `:combined` | 測定、状態LED、拍動に同期するイルミネーション、音楽機能を同時に実行するとき | `duration_ms`、`buzzer_pin`、`buzzer_volume`、`musical_style` |
 
 `setlist_name`と`pattern_key`は同時に指定できません。`duration_ms`は正の整数で、Oximeterモードと複合モードでは`Oximeter::Config::RUN_DURATION_MS`（60秒）が既定値です。
 
@@ -27,9 +27,10 @@
 | `i2c_sda_pin` / `i2c_scl_pin` | `16` / `17` | MAX30102のI2C |
 | `spi_sck_pin` / `spi_copi_pin` | `2` / `3` | `RP2040_SPI0`経由の8個の状態LED |
 | `buzzer_pin` | `18`。`nil`で無音 | 複合モード |
+| `buzzer_volume` | `3`。0〜100のマスター音量、`0`で無音 | 複合モード |
 | `musical_style` | `:heartbeat_signature` | 複合モード |
 
-`mode`は`:illumination`、`:oximeter`、`:combined`のいずれか、`musical_style`は`:pulse_translation`、`:kofun_canon`、`:heartbeat_signature`のいずれかです。WS2812/I2C/SPIの5つのPIN値は0以上の整数である必要があり、ハードウェアを初期化する前に検証されます。
+`mode`は`:illumination`、`:oximeter`、`:combined`のいずれか、`musical_style`は`:pulse_translation`、`:kofun_canon`、`:heartbeat_signature`のいずれかです。`buzzer_volume`は0〜100の数値で、既定値`3`が従来と同じ音量です。WS2812/I2C/SPIの5つのPIN値は0以上の整数である必要があり、ハードウェアを初期化する前に検証されます。
 
 ## イルミネーションモード
 
@@ -82,11 +83,12 @@ config = Daisenkofun::Application::Config.new(
   spi_sck_pin: 2,
   spi_copi_pin: 3,
   buzzer_pin: 18, # nilで音を無効化
+  buzzer_volume: 3, # 0でも音を無効化
   musical_style: :heartbeat_signature # :pulse_translation または :kofun_canon
 )
 ```
 
-拍動を検出すると572個のLEDによる生体イルミネーションと、`buzzer_pin`が`nil`でなければGP18のPWMブザーが動作します。無音と`:pulse_translation`では`Illumination::Biometrics::BeatPulse`、`:kofun_canon`と`:heartbeat_signature`では音声出力と同じPlannerインスタンスを共有する`Illumination::Biometrics::MoatCanon`を使用します。正常に終了すると`DAISENKOFUN mode=combined event=done status=ok`が表示されます。
+拍動を検出すると572個のLEDによる生体イルミネーションと、`buzzer_pin`が`nil`ではなく`buzzer_volume`が0より大きければGP18のPWMブザーが動作します。`buzzer_volume`は脈波から得た2〜6%のdutyを`buzzer_volume / 3`倍するマスター音量で、結果は矩形波の振幅が最大になる50%に制限されます。無音と`:pulse_translation`では`Illumination::Biometrics::BeatPulse`、`:kofun_canon`と`:heartbeat_signature`では音声出力と同じPlannerインスタンスを共有する`Illumination::Biometrics::MoatCanon`を使用します。正常に終了すると`DAISENKOFUN mode=combined event=done status=ok`が表示されます。
 
 `:kofun_canon`は1拍を0%、約33%、約67%に分け、内濠・中濠・外濠を表す3音を順に鳴らします。3つの声には五音音階の0・2・4段の差を付け、前拍から拍間隔が40 ms以上短くなると順方向、40 ms以上長くなると逆方向へ巡回します。SpO₂の個人基準に対する方向は4拍ごとの境界で基本順へ反映します。脈波幅から求めたdutyには濠ごとに+0.4、0、-0.4ポイントの差を加えます。実際の濠部分にはLEDがないため、濠を挟む輪郭LEDを対応する音と同時に点灯します。
 

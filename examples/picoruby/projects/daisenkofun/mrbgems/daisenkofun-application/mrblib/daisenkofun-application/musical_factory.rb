@@ -19,8 +19,10 @@ module Daisenkofun
       end
 
       def build(config)
-        return silent_result unless config.buzzer_pin
-        return pulse_result(config.buzzer_pin) if config.musical_style == :pulse_translation
+        return silent_result unless config.buzzer_pin && config.buzzer_volume > 0
+        if config.musical_style == :pulse_translation
+          return pulse_result(config.buzzer_pin, config.buzzer_volume)
+        end
 
         canon_result(config)
       end
@@ -31,8 +33,10 @@ module Daisenkofun
         Result.new(planner: nil, output: Daisenkofun::Musical::Outputs::Null.new, pattern: nil)
       end
 
-      def pulse_result(pin)
-        output = Daisenkofun::Musical::Outputs::PWM.new(pin: pin, clock: @clock, logger: @logger)
+      def pulse_result(pin, volume)
+        output = Daisenkofun::Musical::Outputs::PWM.new(
+          pin: pin, volume: volume, clock: @clock, logger: @logger
+        )
         Result.new(planner: nil, output: output, pattern: nil)
       end
 
@@ -42,7 +46,10 @@ module Daisenkofun
           planner = Daisenkofun::Musical::Planners::HeartbeatSignature.new(canon_planner: planner)
         end
         pattern = Daisenkofun::Illumination::Biometrics::MoatCanon.new(cue_source: planner)
-        output = Daisenkofun::Musical::Outputs::KofunCanon.new(pin: config.buzzer_pin, clock: @clock, logger: @logger, planner: planner)
+        output = Daisenkofun::Musical::Outputs::KofunCanon.new(
+          pin: config.buzzer_pin, volume: config.buzzer_volume,
+          clock: @clock, logger: @logger, planner: planner
+        )
         Result.new(planner: planner, output: output, pattern: pattern)
       end
     end

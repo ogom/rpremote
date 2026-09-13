@@ -10,7 +10,7 @@ module Rpremote
              "[--firmware FILE] [--cache DIR] [--mrbgems FILE|--no-mrbgems]",
       build_clean: "rpremote build clean",
       bootsel: "rpremote bootsel [--reset-flash-memory] [--mount DIR] [--port PORT] [--baud RATE] [--timeout SEC]",
-      deploy: "rpremote deploy PATH [--language LANGUAGE] [--language-version VERSION] [--board BOARD] " \
+      deploy: "rpremote deploy PATH [--build] [--language LANGUAGE] [--language-version VERSION] [--board BOARD] " \
               "[--firmware FILE] [--cache DIR] [--mrbgems FILE|--no-mrbgems] [--mount DIR] " \
               "[--port PORT] [--baud RATE] [--timeout SEC]",
       dfu_app: "rpremote dfu app FILE [--type ruby|rite] [--port PORT] [--baud RATE] [--timeout SEC]",
@@ -73,6 +73,7 @@ module Rpremote
 
       Options:
         --force           download the PicoRuby source again during setup
+        --build           build the selected firmware before deploy flashes it
         --language-version VERSION
                           use R2P2/PicoRuby 4.0.3 or 3.4.2 (default: 4.0.3)
         --cache DIR       use another project cache directory
@@ -152,7 +153,8 @@ module Rpremote
       <<~HELP
         Usage: #{COMMAND_USAGE.fetch(:deploy)}
 
-        Builds the selected custom UF2, enters BOOTSEL when needed, flashes the firmware, and waits for the R2P2 Shell to become ready.
+        Enters BOOTSEL when needed, flashes the existing selected UF2, and waits for the R2P2 Shell to become ready.
+        With --build, builds the selected custom UF2 before entering BOOTSEL and flashing it.
         If PATH/lib/NAME exists, it copies it to :/lib/NAME, where NAME is the final component of PATH. It then runs PATH/main.rb and preserves its Shell job, so hardware output remains active until the next command.
         The stages run in order and stop at the first failure. Flashing replaces persistent board firmware.
         deploy requires PicoRuby 4.x firmware (currently 4.0.3).

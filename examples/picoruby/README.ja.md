@@ -27,6 +27,8 @@
 [大仙古墳プロジェクト](projects/daisenkofun/README.ja.md)では、大仙古墳模型に配置した572個のWS2812Bを制御し、MAX30102から心拍数とSpO₂を推定して、生体パルスを同期するPWMブザーの音楽へ変換します。ビルド、ファームウェアの書き込み、実行は`rpremote deploy examples/picoruby/projects/daisenkofun`でまとめて行えます。
 リファクタリングしたruntime、Oximeter、musical、illuminationの各mrbgemは、Pico 2実機上で組み合わせた動作を確認済みです。
 
+[五稜郭プロジェクト](projects/goryokaku/README.ja.md)では、五稜郭模型の380個のWS2812BをMPU6050、タッチスイッチ、PWMブザーと連動させます。旧`my-*` mrbgemをプロジェクトローカルのapplication、illumination、musicalコンポーネントへ移管しています。
+
 ```sh
 rpremote setup
 rpremote mrbgems check

@@ -98,7 +98,7 @@ timeout=20.0
 | `setup`                          | `--language`、`--language-version`、`--cache`、`--force`                                              |
 | `build`                          | `--language`、`--language-version`、`--board`、`--cache`、`--firmware`、`--mrbgems`、`--no-mrbgems` |
 | `build clean`                    | なし。プロジェクトの`build/`だけを削除します。                                                        |
-| `deploy PATH`                    | `--language`、`--language-version`、`--board`、`--cache`、`--firmware`、`--mrbgems`、`--no-mrbgems`、`--mount`、`--port`、`--baud`、`--timeout` |
+| `deploy PATH`                    | `--build`、`--language`、`--language-version`、`--board`、`--cache`、`--firmware`、`--mrbgems`、`--no-mrbgems`、`--mount`、`--port`、`--baud`、`--timeout` |
 | `bootsel`                        | `--mount`、`--port`、`--baud`、`--timeout` |
 | `dfu app FILE`                   | `--type ruby\|rite`、`--port`、`--baud`、`--timeout`                                                  |
 | `dfu compile FILE`               | `--output`、`--language`、`--language-version`、`--cache`                                              |
@@ -111,7 +111,7 @@ timeout=20.0
 | `monitor`、`repl`、`reset`       | `--port`、`--baud`、`--timeout`                                                                       |
 | `fs cp/push/cat/ls/rm/mkdir`     | `--port`、`--baud`、`--timeout`。`fs cp`は`--recursive`にも対応します。                                |
 
-すべてのコマンドの既定タイムアウトは20秒です。`run`と`exec`では実行中のプログラムから出力を受信するとタイムアウトを更新します。`flash`は`build`済みのカスタムUF2を使用し、`deploy`は書き込み前にそのUF2をビルドします。`--firmware`を省略した場合は、どちらも`{cache}/{language}-{language-version}-{board}.uf2`を使用します。
+すべてのコマンドの既定タイムアウトは20秒です。`run`と`exec`では実行中のプログラムから出力を受信するとタイムアウトを更新します。`flash`と`deploy`は`build`済みのカスタムUF2を使用し、`deploy --build`は書き込み前にそのUF2を再ビルドします。`--firmware`を省略した場合は、どちらも`{cache}/{language}-{language-version}-{board}.uf2`を使用します。
 
 ## よく使う設定例
 

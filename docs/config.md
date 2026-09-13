@@ -98,7 +98,7 @@ timeout=20.0
 | `setup` | `--language`, `--language-version`, `--cache`, `--force` |
 | `build` | `--language`, `--language-version`, `--board`, `--cache`, `--firmware`, `--mrbgems`, `--no-mrbgems` |
 | `build clean` | None. Removes only the project `build/` directory. |
-| `deploy PATH` | `--language`, `--language-version`, `--board`, `--cache`, `--firmware`, `--mrbgems`, `--no-mrbgems`, `--mount`, `--port`, `--baud`, `--timeout` |
+| `deploy PATH` | `--build`, `--language`, `--language-version`, `--board`, `--cache`, `--firmware`, `--mrbgems`, `--no-mrbgems`, `--mount`, `--port`, `--baud`, `--timeout` |
 | `bootsel` | `--mount`, `--port`, `--baud`, `--timeout` |
 | `dfu app FILE` | `--type ruby\|rite`, `--port`, `--baud`, `--timeout` |
 | `dfu compile FILE` | `--output`, `--language`, `--language-version`, `--cache` |
@@ -111,7 +111,7 @@ timeout=20.0
 | `monitor`, `repl`, `reset` | `--port`, `--baud`, `--timeout` |
 | `fs cp/push/cat/ls/rm/mkdir` | `--port`, `--baud`, `--timeout`; `fs cp` also accepts `--recursive` |
 
-The default timeout for every command is 20 seconds. For `run` and `exec`, output from the running program resets this timeout. `flash` uses a custom UF2 already created by `build`; `deploy` builds that UF2 before flashing it. When `--firmware` is omitted, both use `{cache}/{language}-{language-version}-{board}.uf2`.
+The default timeout for every command is 20 seconds. For `run` and `exec`, output from the running program resets this timeout. `flash` and `deploy` use a custom UF2 already created by `build`; `deploy --build` rebuilds that UF2 before flashing it. When `--firmware` is omitted, both use `{cache}/{language}-{language-version}-{board}.uf2`.
 
 ## Common configuration examples
 

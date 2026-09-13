@@ -30,7 +30,7 @@ rpremote flash
 rpremote run examples/picoruby/education/06_mpu6050/main.rb
 ```
 
-`deploy PATH`は、このファームウェアのビルド、BOOTSEL移行、書き込みを自動で行います。ボードの再接続後に`PATH/lib/NAME`を`:/lib/NAME`へコピーし、`PATH/main.rb`を一時実行します。
+`deploy PATH --build`は、このファームウェアのビルド、BOOTSEL移行、書き込みを自動で行います。`--build`を付けない`deploy PATH`は既存UF2を書き込みます。ボードの再接続後は、どちらも`PATH/lib/NAME`を`:/lib/NAME`へコピーし、`PATH/main.rb`を一時実行します。
 
 プロジェクト直下の`Mrbgems`は自動検出されます。別の定義ファイルを使う場合は`--mrbgems FILE`、追加gemを使わずにビルドする場合は`--no-mrbgems`を指定します。
 
