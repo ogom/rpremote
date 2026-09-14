@@ -2,9 +2,9 @@
 
 [English](modes.md)
 
-## イルミネーションモード
+## 設定
 
-`:illumination`は、380個のLEDとPWMブザーを使用します。MPU6050とタッチスイッチは初期化しません。
+[`main.rb`](../main.rb)の`Goryokaku::Application::Config`で動作を選びます。
 
 ```ruby
 config = Goryokaku::Application::Config.new(
@@ -12,107 +12,51 @@ config = Goryokaku::Application::Config.new(
   setlist_name: :highlights,
   pattern_key: nil,
   repeat: false,
-  led_pin: 14,
-  led_count: 380,
-  buzzer_pin: 18,
-  buzzer_volume: 1
+  buzzer_volume: 0.02
 )
 ```
 
-`setlist_name`と`pattern_key`は同時に指定できません。両方が`nil`の場合は`:highlights`を使用します。`repeat: true`は選択したセットリストまたはパターンを停止するまで繰り返します。
-
-LED演出の開始と同時に、PWMブザーで「きらきら星」を再生します。曲は`C4 C4 G4 G4 A4 A4 G4 / F4 F4 E4 E4 D4 D4 C4`の14音で、通常音を400 ms、各フレーズ末尾を800 ms、音間を50 msとします。`repeat: false`ではLED演出が先に完了しても曲を最後まで1回再生し、`repeat: true`ではLEDと曲の両方を繰り返します。`buzzer_volume: 0`で曲を無効化できます。終了時と例外時はPWM dutyを0へ戻します。
-
-### セットリスト
-
-| 名前 | 内容 |
+| 設定 | 用途 |
 | --- | --- |
-| `:tests` | 温白色の短い動作確認 |
-| `:highlights` | 星形、半月堡、外周、虹、全景、花火を短く紹介する7演出 |
-| `:story` | 城郭の出現、星空、紅白、桜、満開、花火へ展開する15演出 |
-| `:showcase` | 登録済み21演出をすべて確認する全演出集 |
+| `mode` | `:illumination`、`:musical`、`:combined`から選ぶ |
+| `setlist_name` | `:tests`、`:highlights`、`:story`、`:showcase`から選ぶ |
+| `pattern_key` | setlistの代わりに単独パターンを選ぶ |
+| `repeat` | イルミネーションを停止まで繰り返す |
+| `buzzer_volume` | PWM音量。`0`で無音にする |
+| `musical_axis_signs` | MPU6050の取り付け方向に合わせて各軸を`1`または`-1`にする |
+| `shake_threshold` | 振る奏法の反応しやすさを調整する |
+| `strike_threshold` | 叩く奏法の反応しやすさを調整する |
 
-### 単独パターン
+PINとI2Cの既定値は[ハードウェア](hardware.ja.md)に記載しています。検出値を変更する場合は、弱い動きを拾えることだけでなく、静止時の誤発音がないことも実機で確認してください。
 
-単独パターンでは`setlist_name: nil`にし、次のいずれかを`pattern_key`へ指定します。
+## イルミネーションモード
 
-| キー | 演出 |
-| --- | --- |
-| `:warm_white` | 全体を温白色でフェードイン |
-| `:sakura_breathe` | 五芒星を桜色で呼吸明滅 |
-| `:star_twinkle` | 五芒星をきらめかせる |
-| `:ravelin_pulse` | 半月堡をパルス点灯 |
-| `:outer_comet` | 外周を彗星状に点灯 |
-| `:rainbow` | 五芒星へ虹色の軌跡を流す |
-| `:parallel_left` | 左側の辺を並列点灯 |
-| `:parallel_right` | 右側の辺を並列点灯 |
-| `:full_zones` | 全ゾーンを順番に点灯、呼吸、消灯 |
-| `:fireworks` | 花火演出を3回実行 |
-| `:kouhaku` | 全体を紅白で交互に点滅 |
-| `:twinkle` | 全体へ金色のきらめきを表示 |
-| `:shooting_star` | 全体に金色の流れ星を表示 |
-| `:breathing` | 全体を金色で呼吸明滅 |
-| `:constellation` | 紅白の背景に金色の星を表示 |
-| `:sakura_fubuki` | 全体に桜吹雪を表示 |
-| `:sakura_stream` | 全体に桜色の流れを表示 |
-| `:sakura_gradient` | 全体に桜色の帯を表示 |
-| `:sakura_breathing` | 全体を桜色で呼吸明滅 |
-| `:hanami` | 紅白の背景に桜色の光を表示 |
-| `:mankai` | 全体を複数の桜色で点灯 |
+`:illumination`は、選択したsetlistまたは単独パターンを380個のLEDで表示し、PWMブザーで「きらきら星」を同時に再生します。MPU6050とタッチスイッチは使用しません。
 
-例:
-
-```ruby
-mode: :illumination,
-setlist_name: nil,
-pattern_key: :fireworks,
-repeat: false
-```
-
-各演出の開始時に次の形式でログを出力し、終了時には全LEDを消灯します。
-
-```text
-GORYOKAKU mode=illumination event=pattern index=1/7 key=warm_white wait_ms=35 loops=1
-GORYOKAKU mode=illumination event=led_off
-```
+`setlist_name`と`pattern_key`は同時に指定できません。どちらも省略すると`:highlights`になります。`repeat: true`では光と曲を繰り返し、`buzzer_volume: 0`では光だけを実行します。選択できる演出は[イルミネーション一覧](illuminations.ja.md)を参照してください。
 
 ## ミュージカルモード
 
-`:musical`はタッチ選択を使用せず、MPU6050、PWMブザー、380個のLEDを連動させるタンバリン専用モードです。
+`:musical`はタッチ選択を使わないタンバリン専用モードです。模型をY-UPにして組5を上に向け、姿勢が安定してから演奏します。
 
-```ruby
-mode: :musical,
-setlist_name: nil,
-pattern_key: nil,
-repeat: false
-```
+- 振る奏法：模型面に垂直なZ軸方向へ滑らかに往復します。組5から多色の残光が移動し、「シャンシャン」という音が鳴ります。
+- 叩く奏法：同じZ軸方向へ短く鋭い衝撃を与えます。星形中心から半月堡、外周へ花火状の光が広がり、立ち上がりの強い「シャンシャン」という音が鳴ります。
 
-Y-UPで星形本体の組5を上にして100 ms保持すると演奏可能になります。Z軸加速度が0.2 g以上となる滑らかな往復反転を2回検出する「振る（フル）奏法」では、弱い振りでも4.2〜7.4 kHzの金属的な高音を20 msごとに切り替えて減衰させる「シャンシャン」音とともに、組5から星形5組を多色の残光で走査します。同じZ軸へ鋭い衝撃を与える「叩く奏法」は0.45 g以上のjerkで検出し、4.1〜7.8 kHzの6音を20 msごとに減衰させる、立ち上がりの強い「シャンシャン」音を鳴らします。LEDは`fireworks`を参考に、星形中心から10方向へ多色の光を広げ、半月堡を点滅させた後に外周を大きく発光させます。0.15 g未満まで衝撃が収まるまで再検出せず、微小な静止ノイズによる連続発音を抑えます。
-
-音と光は同じ奏法イベント、開始時刻、強度、継続時間を使用します。Y-UPから離れた場合、終了時、例外時はPWM dutyを0にして全LEDを消灯します。このモードでは`setlist_name`、`pattern_key`、`repeat: true`を指定できません。
+Y-UPから離れると演奏を停止します。このmodeでは`setlist_name`、`pattern_key`、`repeat: true`を指定できません。
 
 ## コンバインドモード
 
-旧`my-penta`のセンサー連動動作は`:combined`で利用できます。
+`:combined`では、姿勢とタッチスイッチでイルミネーションとタンバリンを切り替えます。
 
-```ruby
-mode: :combined,
-setlist_name: :highlights,
-pattern_key: nil,
-repeat: false
-```
+1. 模型をY-UPにしてタッチし、候補を選びます。
+2. 半月堡の色を確認します。イルミネーションは赤、タンバリンは青です。
+3. 選択色を保ったままZ-UPへ動かし、もう一度タッチして決定します。
 
-起動時はモード未選択です。最初のY-UPタッチでイルミネーションが選択され、以後のY-UPタッチでタンバリンと交互に切り替わります。モードは次の手順で選択・決定します。
+候補を選ぶ前のZ-UPタッチと、Y-UP／Z-UP以外のタッチは無視されます。
 
-1. IMUをY-UPにしてタッチスイッチを押し、選択候補を切り替える。
-2. 半月堡の色を確認する。イルミネーション候補は赤、タンバリン候補は青で表示する。
-3. IMUをZ-UPにしてタッチスイッチを押し、表示中の候補を確定する。
-
-選択表示はZ-UPへ姿勢を変えても保持され、Z-UPでのタッチによって初めて実行モードへ反映されます。候補未選択時のZ-UPタッチと、Y-UP／Z-UP以外でのタッチは無視します。
-
-| 状態 | 動作 |
+| 決定したmode | 動作 |
 | --- | --- |
-| イルミネーションモード | Z-UPで全体を暖白色、Y-UP／X-UPで星郭を桜色に表示する。確定時は「きらきら星」と`setlist_name`を1回実行し、動きでは発音しない |
-| タンバリンモード | Y-UPへ戻して演奏する。振る奏法は組5から多色の残光を走査し、叩く奏法は星形中心から半月堡・外周へ広がる花火状の光をシャンシャン音と同期する |
+| イルミネーション | 選択したsetlistと「きらきら星」を1回再生し、現在姿勢の表示へ戻る |
+| タンバリン | Y-UPへ戻すと、振る／叩く奏法を音と光で演奏できる |
 
-イルミネーションモードを確定するたびに、「きらきら星」とセットリストを先頭から実行し、両方の完了後は現在の姿勢に応じた表示へ戻ります。実行中は再生が完了するまで入力処理を待機します。タンバリンモードを確定すると選択表示を含むLEDを消灯します。`setlist_name`を省略した場合は`:highlights`を使用します。このモードでは`pattern_key`と`repeat: true`を指定できません。
+待機中は姿勢変化とタッチ操作がログに表示され、約5秒ごとの`event=alive`で動作を確認できます。
