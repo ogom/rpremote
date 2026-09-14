@@ -2,6 +2,8 @@
 
 [日本語](illuminations.ja.md)
 
+This catalog helps operators choose an effect by showing the configuration key, what appears on the model, and the contents of each setlist.
+
 ## Catalog
 
 | Key | Title | Description |
@@ -41,6 +43,43 @@
 
 ## Execution settings
 
+### Choose an effect
+
+Select a setlist or one effect through `Daisenkofun::Application::Config` in [`main.rb`](../main.rb). This configuration plays the short `:tests` check once:
+
+```ruby
+mode: :illumination,
+setlist_name: :tests,
+pattern_key: nil,
+repeat: false,
+duration_ms: nil
+```
+
+To view one effect, set `setlist_name: nil` and assign a key from the catalog to `pattern_key`:
+
+```ruby
+mode: :illumination,
+setlist_name: nil,
+pattern_key: :sunrise,
+repeat: false,
+duration_ms: nil
+```
+
+Do not set `setlist_name` and `pattern_key` together. If both are `nil`, `:highlights` is selected. With `repeat: true`, the selected content repeats until stopped.
+
+### Setlist contents
+
+| Setlist | Best for | Keys in playback order |
+| --- | --- | --- |
+| `:tests` | A short lighting check after wiring | `structure_guide` |
+| `:highlights` | A short tour of the structure, signature natural light, three moats, and fireworks | `structure_guide` → `divine_light` → `launch_fireworks` → `sunrise` → `dappled_light` → `triple_moat_mirror` → `water_ripples` |
+| `:story` | A presentation from sunrise through daylight, blossoms, sunset, the night sky, attached kofun, and fireworks | `structure_guide` → `sunrise` → `dappled_light` → `cherry_blossom` → `triple_moat_mirror` → `water_ripples` → `sakai_sunset` → `moonlight` → `starry_kofun` → `peekaboo` → `heartbeat` → `jewel_box` → `aurora` → `symmetric_forepart_chase` → `two_banks_clockwise` → `rainbow_comet` → `divine_light` → `attached_kofun_lights` → `launch_fireworks` |
+| `:showcase` | Viewing a broad collection of colors and movement | The 30 effects from `moonlight` through `launch_fireworks` in the catalog, excluding `water_ripples` |
+
+`water_ripples` repeats three times in `:highlights` and `:story` so the ripple is easy to see.
+
+### Playback timing and shutdown
+
 Each setlist entry has the form `[key, wait_ms, loops]`. The wait time and number of repetitions can differ by setlist, even for the same pattern.
 
 ```ruby
@@ -56,4 +95,4 @@ Each setlist entry has the form `[key, wait_ms, loops]`. The wait time and numbe
 | `:story` | 19 | `STORY_FRAME_MS` (5 ms) |
 | `:showcase` | 30 | `SHOWCASE_FRAME_MS` (2 ms) |
 
-`:tests` contains only `structure_guide`. Only `water_ripples` in `:highlights` and `:story` uses `loops` set to `3`; all other setlist entries use `1`. `play_pattern` uses the selected pattern's default `wait_ms` and `loops` settings from `PATTERNS`.
+`play_pattern` uses the selected pattern's default `wait_ms` and `loops` settings from `PATTERNS`. After one playback finishes, or when execution is interrupted, every LED is cleared.

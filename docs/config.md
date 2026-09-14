@@ -91,9 +91,29 @@ timeout=20.0
 | `-h`, `--help` | Show commands and options. |
 | `-V`, `--version` | Show the rpremote version. |
 
-## Find command-specific options
+## Options by command
 
-The options accepted by each command are part of the executable CLI contract. Read the current syntax, defaults, and effects from command help instead of copying an option matrix into project documentation.
+Use this table when comparing configuration and execution choices. Current syntax, defaults, and effects for an individual command are also available from `rpremote <command> --help`.
+
+| Command | Main available options |
+| ------- | ---------------------- |
+| `setup` | `--language`, `--language-version`, `--cache`, `--force` |
+| `build` | `--language`, `--language-version`, `--board`, `--cache`, `--firmware`, `--mrbgems`, `--no-mrbgems` |
+| `build clean` | None; removes only the project's `build/` directory |
+| `bootsel` | `--reset-flash-memory`, `--mount`, `--port`, `--baud`, `--timeout` |
+| `deploy PATH` | `--build`, `--language`, `--language-version`, `--board`, `--cache`, `--firmware`, `--mrbgems`, `--no-mrbgems`, `--mount`, `--port`, `--baud`, `--timeout` |
+| `dfu app FILE` | `--type ruby\|rite`, `--port`, `--baud`, `--timeout` |
+| `dfu compile FILE` | `--output`, `--language`, `--language-version`, `--cache` |
+| `dfu status` / `dfu remove` | `--port`, `--baud`, `--timeout` |
+| `mrbgems check/list/lock/update` | `--file`, `--lockfile` |
+| `flash` | `--language`, `--language-version`, `--board`, `--cache`, `--firmware`, `--mount`, `--port`, `--timeout` |
+| `config show` | `--language`, `--language-version`, `--board`, `--cache`, `--firmware`, `--mrbgems`, `--no-mrbgems`, `--mount`, `--port`, `--baud`, `--timeout` |
+| `ports` | None |
+| `run FILE` | `--port`, `--baud`, `--timeout`, `--reset-on-timeout`, `--language` |
+| `exec CODE` | `--port`, `--baud`, `--timeout`, `--language` |
+| `monitor` / `repl` / `reset` | `--port`, `--baud`, `--timeout` |
+| `fs cp` | `--recursive`, `--port`, `--baud`, `--timeout` |
+| `fs push/cat/ls/rm/mkdir` | `--port`, `--baud`, `--timeout` |
 
 ```sh
 rpremote deploy --help

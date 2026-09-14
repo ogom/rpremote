@@ -40,6 +40,30 @@ rpremote run examples/picoruby/projects/oximeter --timeout 120
 
 The application runs for 60 seconds, then shuts down the MAX30102 and turns off the LEDs.
 
+## Change settings
+
+The main operator-adjustable values are in [`lib/oximeter/config.rb`](lib/oximeter/config.rb).
+
+| Setting | Default | When to change it |
+| ------- | ------: | ----------------- |
+| `RUN_DURATION_MS` | `60_000` | Lengthen or shorten the measurement run |
+| `I2C_SDA_PIN` / `I2C_SCL_PIN` | `16` / `17` | Change MAX30102 wiring |
+| `SPI_SCK_PIN` / `SPI_COPI_PIN` | `2` / `3` | Change status-LED SPI wiring |
+| `LED_BRIGHTNESS` | `12` | Adjust status-LED brightness |
+| `FINGER_THRESHOLD` | `20_000` | Tune finger detection for the sensor being used |
+| `MIN_BEAT_INTERVAL_MS` / `MAX_BEAT_INTERVAL_MS` | `350` / `1_500` | Change the accepted beat-interval range |
+| `RESULT_SAMPLES` | `8` | Change how many accepted beats are averaged before a result |
+| `SPO2_GREEN_LIMIT` | `97.0` | Change the presentation boundary between green and red results |
+
+After changing `lib/oximeter`, transfer the library again without rebuilding firmware:
+
+```sh
+rpremote fs push examples/picoruby/projects/oximeter/lib/oximeter :/lib/oximeter
+rpremote run examples/picoruby/projects/oximeter --timeout 120
+```
+
+After tuning a threshold, verify both finger detection and the return to the waiting state after the finger is removed.
+
 ## Measurement procedure
 
 1. Run the application and wait for a dim white point on the LEDs.
@@ -61,11 +85,34 @@ Removing the finger resets the measurement and returns to the waiting state. If 
 
 The 97% value selects a display color in this sample. It is not a medical decision threshold.
 
-The principal log categories are `OXIMETER_WAIT` (waiting), `OXIMETER_FINGER` (finger arrival or removal), `OXIMETER_BEAT` (beat or buffering), `OXIMETER_DATA` (estimate), `OXIMETER_DONE` (completion), and `OXIMETER_ERROR`/`OXIMETER_WARN` (failure).
+## Read the log
+
+| Log | Meaning and check |
+| --- | ----------------- |
+| `OXIMETER_START,address=0x57,duration_ms=...` | The MAX30102 was found and measurement started; check the I2C address and duration |
+| `OXIMETER_WAIT,...` | The application is waiting for a finger; `red` and `ir` are raw readings |
+| `OXIMETER_FINGER,...,DETECTED,...` | A finger was detected and a new measurement began |
+| `OXIMETER_FINGER,...,REMOVED,...` | The finger was removed and the partial measurement was reset |
+| `OXIMETER_BEAT,...,BUFFERING,...` | Signal samples needed for the SpO₂ estimate are still being collected |
+| `OXIMETER_BEAT,...,SKIPPED,...` | A candidate beat interval was outside the accepted range |
+| `OXIMETER_DATA,...,MEASURING` | An intermediate estimate; keep the finger still |
+| `OXIMETER_DATA,...,RESULT` | A result after the required accepted beats |
+| `OXIMETER_DONE,bpm=...,spo2=...` | Final values when the run duration ended |
+| `OXIMETER_ERROR,...` / `OXIMETER_WARN,...` | Sensor initialization or shutdown encountered a problem |
 
 ```text
 OXIMETER_DATA,timestamp_ms,red,ir,bpm,spo2,MEASURING|RESULT
 ```
+
+| Field | Meaning |
+| ----- | ------- |
+| `timestamp_ms` | Elapsed time since board startup, in milliseconds |
+| `red` / `ir` | Raw red-light and infrared readings from the MAX30102 |
+| `bpm` | Estimated beats per minute |
+| `spo2` | Estimated SpO₂ percentage |
+| `MEASURING` / `RESULT` | Intermediate estimate / result after the required beats |
+
+A few `SKIPPED` lines do not stop measurement. If they repeat and no `RESULT` appears, adjust finger position, pressure, or ambient light.
 
 ## Estimation method and limitations
 

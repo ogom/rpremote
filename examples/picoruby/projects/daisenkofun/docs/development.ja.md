@@ -24,6 +24,25 @@ rpremote run examples/picoruby/projects/daisenkofun --timeout 120
 
 設定項目は[動作モードと設定](modes.ja.md)を参照してください。正常終了では`event=done status=ok`が表示されます。
 
+## 一時実行と再起動後の自動実行
+
+`rpremote run`と`deploy`による`main.rb`の実行は一時的です。動作確認にはこの方法を使い、Pico 2を再起動した後も大仙古墳アプリを自動実行したい場合だけDFU起動アプリへ登録します。
+
+```sh
+rpremote dfu app examples/picoruby/projects/daisenkofun/main.rb
+rpremote dfu status
+rpremote reset
+```
+
+起動に成功するとアプリケーションが`DFU.confirm`を呼び、候補スロットが確定します。DFUへ登録する前に、必要な5つのmrbgemを含むファームウェアが書き込まれていることを確認してください。mrbgemを変更した場合は、DFUアプリの更新だけでなくファームウェアの再ビルドと書き込みも必要です。
+
+起動アプリを削除する場合は次を実行します。`dfu remove`はA/B両スロットを削除し、元に戻せません。
+
+```sh
+rpremote dfu remove
+rpremote reset
+```
+
 ## コンポーネントを短く確認する
 
 組み込み済みの単独パターンなどは`rpremote exec`で確認できます。
@@ -52,6 +71,23 @@ mrbgem内のPicotestは、PicoRuby／mruby/c互換性を確認する代表ケー
 - 電源・配線変更: ハンクアップ、発熱、LED乱れ、I2Cエラーがないこと
 
 ホストテストでは電源、PWM音量、LEDの実時間表示、センサー品質を検証できません。
+
+## ログの読み方
+
+| ログ | 意味と確認すること |
+| ---- | ------------------ |
+| `mode=... event=start` | 指定したmodeで起動した |
+| `component=oximeter event=measurement_start` | MAX30102を初期化し、測定を開始した |
+| `event=finger_detected` / `event=finger_removed` | 指の検出／取り外しを認識した |
+| `event=measurement_updated ... state=result` | 心拍数とSpO₂の推定結果を更新した |
+| `component=kofun_canon event=note ...` | 予定したPWM音と濠LEDのキューを実行した |
+| `component=musical event=verification status=ok` | 演奏数と開始遅延が実行時の確認条件を満たした |
+| `event=led_off`または`component=illumination event=stop` | 終了処理でイルミネーションを消灯した |
+| `event=done status=ok` | 正常に終了した |
+| `event=done status=error error=...` | cleanup後に失敗した。エラーclassとmessageを確認する |
+| `event=fifo_backlog` / `event=loop_warning` | センサー処理の滞留／イベントループの遅延を検出した |
+
+`status=ok`だけで物理的な音量、LEDの色、同期精度、センサー品質までは確認できません。ログと模型上の動作を対応付けてください。
 
 ## ログを保存する
 

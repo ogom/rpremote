@@ -45,4 +45,12 @@ RSpec.describe "Oximeter documentation" do
     expect(japanese).to include("docs/pub_sub.ja.md", "docs/tick.ja.md")
     expect(english).to include("docs/pub_sub.md", "docs/tick.md")
   end
+
+  it "keeps operator settings and log interpretation in both READMEs" do
+    japanese = File.read(File.join(OXIMETER_ROOT, "README.ja.md"))
+    english = File.read(File.join(OXIMETER_ROOT, "README.md"))
+
+    expect(japanese).to include("## 設定を変更する", "## ログの読み方", "FINGER_THRESHOLD", "OXIMETER_BEAT")
+    expect(english).to include("## Change settings", "## Read the log", "FINGER_THRESHOLD", "OXIMETER_BEAT")
+  end
 end

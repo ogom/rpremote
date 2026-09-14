@@ -107,6 +107,8 @@ Keep both languages equivalent in commands, tables, safety information, and expe
 
 When a project adopts local mrbgems because of device-side compilation, memory lifetime, or runtime-loading constraints, preserve a concise human-facing design note. Include the alternatives, why embedding was selected, its build/deploy consequences, tradeoffs, and reasons to reconsider it. Put exact require rules and other enforceable invariants in tests as a complement to that explanation, not as its replacement, and link the note from the README or development guide.
 
+Keep every illumination key and a human-readable description of its visual effect in the illumination catalog. Specs may enforce registry membership, class mappings, defaults, and ordering, but they complement rather than replace the catalog people use to select an effect.
+
 ## Executable project specifications
 
 - Use host RSpec for project contracts that MRI can inspect safely: defaults, bounds, mappings, composition, ordering, and failure handling.

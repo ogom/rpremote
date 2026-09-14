@@ -44,4 +44,32 @@ RSpec.describe "Daisen Kofun documentation" do
     expect(File.read(File.join(DAISENKOFUN_ROOT, "README.ja.md"))).to include("医療機器ではありません")
     expect(File.read(File.join(DAISENKOFUN_ROOT, "README.md"))).to include("not a medical device")
   end
+
+  it "documents every illumination key with a title and visible effect in both languages" do
+    registered_keys = Daisenkofun::Illumination::Setlist::PATTERNS.map do |entry|
+      entry[Daisenkofun::Illumination::Setlist::KEY].to_s
+    end
+
+    %w[illuminations.ja.md illuminations.md].each do |filename|
+      text = File.read(File.join(DAISENKOFUN_ROOT, "docs", filename))
+      rows = text.scan(/^\|\s*`([^`]+)`\s*\|\s*([^|]+?)\s*\|\s*([^|]+?)\s*\|$/).to_h do |key, title, effect|
+        [key, [title.strip, effect.strip]]
+      end
+
+      expect(rows.keys).to include(*registered_keys)
+      expect(registered_keys.map { |key| rows.fetch(key) }.flatten).to all(satisfy { |value| !value.empty? })
+    end
+  end
+
+  it "keeps biometric interpretation, persistent startup, and runtime logs available to operators" do
+    japanese_music = File.read(File.join(DAISENKOFUN_ROOT, "docs", "biometric_pwm_music.ja.md"))
+    english_music = File.read(File.join(DAISENKOFUN_ROOT, "docs", "biometric_pwm_music.md"))
+    japanese_workflow = File.read(File.join(DAISENKOFUN_ROOT, "docs", "development.ja.md"))
+    english_workflow = File.read(File.join(DAISENKOFUN_ROOT, "docs", "development.md"))
+
+    expect(japanese_music).to include("拍間隔と音高", "SpO₂と音の上下", "脈波の幅と音色", "event=verification")
+    expect(english_music).to include("Beat interval and pitch", "SpO₂ and pitch direction", "Pulse width and timbre", "event=verification")
+    expect(japanese_workflow).to include("再起動後の自動実行", "rpremote dfu app", "## ログの読み方")
+    expect(english_workflow).to include("startup after reset", "rpremote dfu app", "## Read the log")
+  end
 end

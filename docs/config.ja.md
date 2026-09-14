@@ -91,9 +91,29 @@ timeout=20.0
 | `-h`、`--help`    | コマンド一覧とオプションを表示します。                |
 | `-V`、`--version` | rpremote自身のバージョンを表示します。                |
 
-## コマンド固有のオプションを確認する
+## コマンド別オプション
 
-各コマンドが受け付けるオプションは、実行可能なCLI契約です。プロジェクト資料へオプション表を複製せず、現在の構文、既定値、影響はコマンドヘルプで確認します。
+設定や実行方法を比較するときは、次の表を使用してください。個別コマンドの現在の構文、既定値、影響は`rpremote <command> --help`でも確認できます。
+
+| コマンド | 使用できる主なオプション |
+| -------- | ------------------------ |
+| `setup` | `--language`、`--language-version`、`--cache`、`--force` |
+| `build` | `--language`、`--language-version`、`--board`、`--cache`、`--firmware`、`--mrbgems`、`--no-mrbgems` |
+| `build clean` | なし。プロジェクトの`build/`だけを削除する |
+| `bootsel` | `--reset-flash-memory`、`--mount`、`--port`、`--baud`、`--timeout` |
+| `deploy PATH` | `--build`、`--language`、`--language-version`、`--board`、`--cache`、`--firmware`、`--mrbgems`、`--no-mrbgems`、`--mount`、`--port`、`--baud`、`--timeout` |
+| `dfu app FILE` | `--type ruby\|rite`、`--port`、`--baud`、`--timeout` |
+| `dfu compile FILE` | `--output`、`--language`、`--language-version`、`--cache` |
+| `dfu status` / `dfu remove` | `--port`、`--baud`、`--timeout` |
+| `mrbgems check/list/lock/update` | `--file`、`--lockfile` |
+| `flash` | `--language`、`--language-version`、`--board`、`--cache`、`--firmware`、`--mount`、`--port`、`--timeout` |
+| `config show` | `--language`、`--language-version`、`--board`、`--cache`、`--firmware`、`--mrbgems`、`--no-mrbgems`、`--mount`、`--port`、`--baud`、`--timeout` |
+| `ports` | なし |
+| `run FILE` | `--port`、`--baud`、`--timeout`、`--reset-on-timeout`、`--language` |
+| `exec CODE` | `--port`、`--baud`、`--timeout`、`--language` |
+| `monitor` / `repl` / `reset` | `--port`、`--baud`、`--timeout` |
+| `fs cp` | `--recursive`、`--port`、`--baud`、`--timeout` |
+| `fs push/cat/ls/rm/mkdir` | `--port`、`--baud`、`--timeout` |
 
 ```sh
 rpremote deploy --help

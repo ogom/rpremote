@@ -23,7 +23,7 @@ rpremote deploy examples/picoruby/projects/daisenkofun --build
 - [開発手順](docs/development.ja.md) — ビルド、実行、テスト、実機確認
 - [mrbgemを使う理由](docs/mrbgem_migration.ja.md) — 実行時ロードとの比較と設計判断
 - [生体パルスと音楽](docs/biometric_pwm_music.ja.md) — 心拍、SpO₂、音、光の関係
-- [イルミネーション一覧](docs/illuminations.ja.md) — パターンとsetlist
+- [イルミネーション一覧](docs/illuminations.ja.md) — 全キー、模型上で見える演出、setlistの再生順と選び方
 - [LED配置](docs/led_layout.ja.md) — 572個のLEDアドレス
 - [構造確認資料](docs/structure.ja.md) — 模型で扱う大仙古墳の要素
 

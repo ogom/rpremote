@@ -24,6 +24,25 @@ rpremote run examples/picoruby/projects/daisenkofun --timeout 120
 
 See [operating modes and settings](modes.md) for configuration. A successful finite run prints `event=done status=ok`.
 
+## Temporary execution and startup after reset
+
+`main.rb` execution through `rpremote run` or `deploy` is temporary. Use it for verification. Register a DFU startup application only when the Daisen Kofun application should start automatically after the Pico 2 resets:
+
+```sh
+rpremote dfu app examples/picoruby/projects/daisenkofun/main.rb
+rpremote dfu status
+rpremote reset
+```
+
+After a successful start, the application calls `DFU.confirm` to confirm the candidate slot. Before registering it, verify that firmware containing all five required mrbgems is installed. Changing an mrbgem requires a firmware rebuild and flash in addition to updating the DFU application.
+
+To remove the startup application, run the following commands. `dfu remove` permanently clears both A/B application slots.
+
+```sh
+rpremote dfu remove
+rpremote reset
+```
+
 ## Check one component
 
 Use `rpremote exec` for a short check of an embedded component or pattern:
@@ -52,6 +71,23 @@ Check the areas affected by the change:
 - power or wiring: no hangs, overheating, LED corruption, or I2C errors
 
 Host tests cannot verify power delivery, perceived PWM volume, real-time LED output, or sensor quality.
+
+## Read the log
+
+| Log | Meaning and check |
+| --- | ----------------- |
+| `mode=... event=start` | The selected mode started |
+| `component=oximeter event=measurement_start` | The MAX30102 was initialized and measurement began |
+| `event=finger_detected` / `event=finger_removed` | Finger arrival/removal was recognized |
+| `event=measurement_updated ... state=result` | Heart-rate and SpO₂ estimates were updated |
+| `component=kofun_canon event=note ...` | A scheduled PWM and moat-LED cue ran |
+| `component=musical event=verification status=ok` | Cue count and start delay met the runtime checks |
+| `event=led_off` or `component=illumination event=stop` | Cleanup cleared the illumination |
+| `event=done status=ok` | The run completed normally |
+| `event=done status=error error=...` | The run failed after cleanup; inspect the error class and message |
+| `event=fifo_backlog` / `event=loop_warning` | Sensor work backed up / an event-loop delay was detected |
+
+`status=ok` alone does not prove physical loudness, LED color, synchronization accuracy, or sensor quality. Correlate the log with the model's behavior.
 
 ## Save logs
 

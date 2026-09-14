@@ -2,9 +2,11 @@
 
 [English](illuminations.md)
 
+この資料は、使用者が見たい演出を選べるように、指定するキー、模型上で見える演出、setlistの内容をまとめています。
+
 ## 一覧
 
-| キー                       | タイトル               | 解説                                                                     |
+| キー                       | タイトル               | 演出                                                                     |
 | -------------------------- | ---------------------- | ------------------------------------------------------------------------ |
 | `structure_guide`          | 大仙古墳の構造ガイド   | 3段の墳丘、2つの堤、3つの濠を中心側から順に案内します。                  |
 | `moonlight`                | 月光                   | 外側から中心へ伝わる青い月光と、付属墳の反射を表現します。               |
@@ -41,6 +43,43 @@
 
 ## 実行設定
 
+### 演出を選ぶ
+
+[`main.rb`](../main.rb)の`Daisenkofun::Application::Config`で、setlistまたは単独演出を選びます。次の設定は短い確認用の`:tests`を1回再生します。
+
+```ruby
+mode: :illumination,
+setlist_name: :tests,
+pattern_key: nil,
+repeat: false,
+duration_ms: nil
+```
+
+単独演出を見るときは`setlist_name: nil`にして、一覧のキーを`pattern_key`へ指定します。
+
+```ruby
+mode: :illumination,
+setlist_name: nil,
+pattern_key: :sunrise,
+repeat: false,
+duration_ms: nil
+```
+
+`setlist_name`と`pattern_key`は同時に指定できません。どちらも`nil`の場合は`:highlights`を再生します。`repeat: true`は停止されるまで選択した内容を繰り返します。
+
+### setlistの内容
+
+| setlist | 向いている使い方 | 再生するキー（左から順） |
+| --- | --- | --- |
+| `:tests` | 配線後の短い点灯確認 | `structure_guide` |
+| `:highlights` | 構造、代表的な自然光、三重濠、花火を短く見る | `structure_guide` → `divine_light` → `launch_fireworks` → `sunrise` → `dappled_light` → `triple_moat_mirror` → `water_ripples` |
+| `:story` | 夜明けから昼、桜、夕暮れ、夜空、付属墳、花火までを物語として鑑賞する | `structure_guide` → `sunrise` → `dappled_light` → `cherry_blossom` → `triple_moat_mirror` → `water_ripples` → `sakai_sunset` → `moonlight` → `starry_kofun` → `peekaboo` → `heartbeat` → `jewel_box` → `aurora` → `symmetric_forepart_chase` → `two_banks_clockwise` → `rainbow_comet` → `divine_light` → `attached_kofun_lights` → `launch_fireworks` |
+| `:showcase` | 多様な色と動きをまとめて確認する | 一覧の`moonlight`から`launch_fireworks`までのうち、`water_ripples`を除く30演出 |
+
+`:highlights`と`:story`の`water_ripples`は、波紋を見やすくするため3回繰り返します。
+
+### 再生時間と終了
+
 各セットリストのエントリは`[key, wait_ms, loops]`で定義します。同じパターンでも、セットリストごとに待ち時間と繰り返し回数を変更できます。
 
 ```ruby
@@ -56,4 +95,4 @@
 | `:story`      |         19 | `STORY_FRAME_MS`（5 ms）                         |
 | `:showcase`   |         30 | `SHOWCASE_FRAME_MS`（2 ms）                      |
 
-`:tests`は`structure_guide`だけを含みます。`:highlights`と`:story`の`water_ripples`だけは`loops`を3にし、それ以外のセットリストエントリは`loops`を1にしています。`play_pattern`の`wait_ms`と`loops`は、選択したパターンの`PATTERNS`にある既定値に従います。
+`play_pattern`の`wait_ms`と`loops`は、選択したパターンの`PATTERNS`にある既定値に従います。1回の再生が終わるか実行を中断すると、全LEDを消灯します。

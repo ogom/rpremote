@@ -45,15 +45,37 @@ config = Daisenkofun::Application::Config.new(
 
 ## イルミネーションモード
 
-短い動作確認には`setlist_name: :tests`と`repeat: false`を使います。単独パターンは`setlist_name: nil`にして`pattern_key`を指定します。利用できるパターンは[イルミネーション一覧](illuminations.ja.md)を参照してください。
+`:illumination`は、MAX30102と8個の状態LEDを使用せず、572個のLEDで選択した演出を再生します。短い動作確認には次の設定を使います。
+
+```ruby
+mode: :illumination,
+setlist_name: :tests,
+pattern_key: nil,
+repeat: false,
+duration_ms: nil
+```
+
+単独演出は`setlist_name: nil`にして`pattern_key`を指定します。`repeat: false`では1回再生して消灯し、`repeat: true`では中断するまで繰り返します。利用できる全キー、見える演出、setlistの再生順は[イルミネーション一覧](illuminations.ja.md)を参照してください。
 
 ## Oximeterモード
+
+```ruby
+mode: :oximeter,
+duration_ms: 60_000
+```
 
 状態LEDが待機表示になったらMAX30102へ指先を軽く当てます。指を動かさず、`event=measurement_updated`または`event=measurement_completed`を確認してください。指を離すと測定値はリセットされます。
 
 > 推定した心拍数とSpO₂は演出用です。医療判断には使用しないでください。
 
 ## 複合モード
+
+```ruby
+mode: :combined,
+duration_ms: 60_000,
+buzzer_volume: 3,
+musical_style: :heartbeat_signature
+```
 
 心拍を検出すると、選択した`musical_style`に応じて音と濠の輪郭LEDが動きます。
 

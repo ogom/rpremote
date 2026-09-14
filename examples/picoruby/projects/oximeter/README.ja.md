@@ -40,6 +40,30 @@ rpremote run examples/picoruby/projects/oximeter --timeout 120
 
 アプリは60秒間動作し、終了時にMAX30102をシャットダウンしてLEDを消灯します。
 
+## 設定を変更する
+
+利用者が調整する主な値は[`lib/oximeter/config.rb`](lib/oximeter/config.rb)にあります。
+
+| 設定 | 既定値 | 変更する場面 |
+| ---- | -----: | ------------ |
+| `RUN_DURATION_MS` | `60_000` | 測定時間を長く／短くする |
+| `I2C_SDA_PIN` / `I2C_SCL_PIN` | `16` / `17` | MAX30102の配線を変える |
+| `SPI_SCK_PIN` / `SPI_COPI_PIN` | `2` / `3` | 状態LEDのSPI配線を変える |
+| `LED_BRIGHTNESS` | `12` | 状態LEDの明るさを調整する |
+| `FINGER_THRESHOLD` | `20_000` | 使用するセンサーで指を検出しにくい場合に調整する |
+| `MIN_BEAT_INTERVAL_MS` / `MAX_BEAT_INTERVAL_MS` | `350` / `1_500` | 拍動として受け付ける間隔を変更する |
+| `RESULT_SAMPLES` | `8` | 結果表示までに平均する有効拍動数を変更する |
+| `SPO2_GREEN_LIMIT` | `97.0` | 結果表示を緑／赤に分ける演出上の境界を変更する |
+
+`lib/oximeter`を変更した場合は、ファームウェアを再ビルドせずライブラリを転送し直せます。
+
+```sh
+rpremote fs push examples/picoruby/projects/oximeter/lib/oximeter :/lib/oximeter
+rpremote run examples/picoruby/projects/oximeter --timeout 120
+```
+
+しきい値を変更した場合は、指を置いた状態だけでなく、指を離したときに待機状態へ戻ることも確認してください。
+
 ## 測定方法
 
 1. 実行し、LEDに暗い白色の点が表示されるまで待ちます。
@@ -61,11 +85,34 @@ rpremote run examples/picoruby/projects/oximeter --timeout 120
 
 97%はこのサンプルの表示色を選ぶための値であり、医療上の判断基準ではありません。
 
-主なログは、`OXIMETER_WAIT`（指待ち）、`OXIMETER_FINGER`（指の検出・除去）、`OXIMETER_BEAT`（拍動または収集中）、`OXIMETER_DATA`（推定値）、`OXIMETER_DONE`（終了）、`OXIMETER_ERROR`／`OXIMETER_WARN`（異常）です。
+## ログの読み方
+
+| ログ | 意味と確認すること |
+| ---- | ------------------ |
+| `OXIMETER_START,address=0x57,duration_ms=...` | MAX30102を検出して測定を開始した。I2Cアドレスと実行時間を確認する |
+| `OXIMETER_WAIT,...` | 指を待っている。`red`と`ir`はセンサーの生値 |
+| `OXIMETER_FINGER,...,DETECTED,...` | 指を検出し、新しい測定を開始した |
+| `OXIMETER_FINGER,...,REMOVED,...` | 指が離れたため、途中の測定結果をリセットした |
+| `OXIMETER_BEAT,...,BUFFERING,...` | SpO₂推定に必要な信号サンプルを収集中 |
+| `OXIMETER_BEAT,...,SKIPPED,...` | 拍動候補の間隔が有効範囲外だったため除外した |
+| `OXIMETER_DATA,...,MEASURING` | 推定途中。指を動かさず測定を続ける |
+| `OXIMETER_DATA,...,RESULT` | 必要な有効拍動数に達した測定結果 |
+| `OXIMETER_DONE,bpm=...,spo2=...` | 実行時間が終了した時点の最終値 |
+| `OXIMETER_ERROR,...` / `OXIMETER_WARN,...` | センサー初期化または終了処理で問題が発生した |
 
 ```text
 OXIMETER_DATA,timestamp_ms,red,ir,bpm,spo2,MEASURING|RESULT
 ```
+
+| フィールド | 意味 |
+| ---------- | ---- |
+| `timestamp_ms` | ボード起動後の経過時間（ms） |
+| `red` / `ir` | MAX30102が取得した赤色光／赤外光の生値 |
+| `bpm` | 1分あたりの推定拍動数 |
+| `spo2` | 推定SpO₂（%） |
+| `MEASURING` / `RESULT` | 測定途中／必要な拍動数へ到達した結果 |
+
+`SKIPPED`が数回表示されても測定は継続します。繰り返されて`RESULT`にならない場合は、指の位置、押し当てる強さ、周囲光を調整してください。
 
 ## 推定方法と限界
 

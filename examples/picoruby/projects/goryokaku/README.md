@@ -21,7 +21,7 @@ The current [`main.rb`](main.rb) runs the `:highlights` setlist in `:illuminatio
 
 - [Hardware and safety](docs/hardware.md) — power, wiring, amplifier, and MPU6050 orientation
 - [Operating modes and settings](docs/modes.md) — three modes, touch selection, and tambourine performance
-- [Illumination catalog](docs/illuminations.md) — 21 patterns and setlists
+- [Illumination catalog](docs/illuminations.md) — 21 keys, visible effects, setlist order, and selection steps
 - [LED layout](docs/led_layout.md) — 380 addresses and wiring direction
 - [Structure reference](docs/structure.md) — Goryokaku structure and model mapping
 - [Development workflow](docs/development.md) — build, run, tests, and device checks

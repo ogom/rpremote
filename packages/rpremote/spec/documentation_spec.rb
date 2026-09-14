@@ -65,6 +65,14 @@ RSpec.describe "Keeping rpremote documentation navigable and safe" do
     end
   end
 
+  it "keeps a bilingual command-option matrix for comparing workflows" do
+    english = documentation_root.join("config.md").read
+    japanese = documentation_root.join("config.ja.md").read
+
+    expect(english).to include("## Options by command", "`deploy PATH`", "`--reset-on-timeout`", "`dfu status` / `dfu remove`")
+    expect(japanese).to include("## コマンド別オプション", "`deploy PATH`", "`--reset-on-timeout`", "`dfu status` / `dfu remove`")
+  end
+
   it "keeps irreversible flash, DFU, and remote deletion warnings visible" do
     english_readme = package_root.join("README.md").read
     japanese_readme = package_root.join("README.ja.md").read

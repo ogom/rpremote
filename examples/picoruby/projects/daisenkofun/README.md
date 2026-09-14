@@ -23,7 +23,7 @@ The current [`main.rb`](main.rb) runs for 60 seconds in `:combined` mode. Place 
 - [Development workflow](docs/development.md) — build, run, tests, and device checks
 - [Why the project uses mrbgems](docs/mrbgem_migration.md) — design decision and comparison with runtime loading
 - [Biometric pulse and music](docs/biometric_pwm_music.md) — relationships among heartbeat, SpO₂, sound, and light
-- [Illumination catalog](docs/illuminations.md) — patterns and setlists
+- [Illumination catalog](docs/illuminations.md) — every key, visible effect, setlist order, and selection steps
 - [LED layout](docs/led_layout.md) — the 572-LED address map
 - [Structure reference](docs/structure.md) — Daisen Kofun features represented by the model
 

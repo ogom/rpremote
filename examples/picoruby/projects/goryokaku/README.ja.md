@@ -21,7 +21,7 @@ rpremote deploy --build examples/picoruby/projects/goryokaku --timeout 120
 
 - [ハードウェアと安全上の注意](docs/hardware.ja.md) — 電源、配線、アンプ、MPU6050の向き
 - [動作モードと設定](docs/modes.ja.md) — 3つのmode、タッチ選択、タンバリン演奏
-- [イルミネーション一覧](docs/illuminations.ja.md) — 21パターンとsetlist
+- [イルミネーション一覧](docs/illuminations.ja.md) — 21個のキー、模型上で見える演出、setlistの再生順と選び方
 - [LED配置](docs/led_layout.ja.md) — 380個のアドレスと配線方向
 - [構造確認資料](docs/structure.ja.md) — 五稜郭の構造と模型への対応
 - [開発手順](docs/development.ja.md) — ビルド、実行、テスト、実機確認

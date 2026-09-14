@@ -1,8 +1,10 @@
 # PicoRubyイルミネーション
 
+この資料は、使用者が見たい演出を選べるように、指定するキー、模型上で見える演出、setlistの内容をまとめています。
+
 ## 一覧
 
-| キー | タイトル | 解説 |
+| キー | タイトル | 演出 |
 | ---- | -------- | ---- |
 | `warm_white` | 五稜星の灯 | 星形本体を温白色で静かにフェードインします。 |
 | `sakura_breathe` | 桜の呼吸 | 星形本体を桜色で呼吸するように明滅させます。 |
@@ -28,6 +30,41 @@
 
 ## 実行設定
 
+### 演出を選ぶ
+
+[`main.rb`](../main.rb)の`Goryokaku::Application::Config`で、setlistまたは単独演出を選びます。次の設定は`:highlights`を1回再生します。
+
+```ruby
+mode: :illumination,
+setlist_name: :highlights,
+pattern_key: nil,
+repeat: false
+```
+
+単独演出を見るときは`setlist_name: nil`にして、一覧のキーを`pattern_key`へ指定します。
+
+```ruby
+mode: :illumination,
+setlist_name: nil,
+pattern_key: :fireworks,
+repeat: false
+```
+
+`setlist_name`と`pattern_key`は同時に指定できません。どちらも`nil`の場合は`:highlights`を再生します。`repeat: true`は停止されるまで光と曲を繰り返します。
+
+### setlistの内容
+
+| setlist | 向いている使い方 | 再生するキー（左から順） |
+| --- | --- | --- |
+| `:tests` | 配線後の短い点灯確認 | `warm_white` |
+| `:highlights` | 星形、半月堡、外周と代表演出を短く見る | `warm_white` → `sakura_breathe` → `ravelin_pulse` → `outer_comet` → `rainbow` → `full_zones` → `fireworks` |
+| `:story` | 城郭の灯から星空、紅白、桜、満開、花火への流れを鑑賞する | `warm_white` → `star_twinkle` → `ravelin_pulse` → `outer_comet` → `rainbow` → `kouhaku` → `shooting_star` → `constellation` → `sakura_fubuki` → `sakura_stream` → `sakura_gradient` → `sakura_breathing` → `hanami` → `mankai` → `fireworks` |
+| `:showcase` | 登録済みの21演出をすべて確認する | `warm_white` → `sakura_breathe` → `star_twinkle` → `ravelin_pulse` → `outer_comet` → `rainbow` → `parallel_left` → `parallel_right` → `full_zones` → `kouhaku` → `twinkle` → `shooting_star` → `breathing` → `constellation` → `sakura_fubuki` → `sakura_stream` → `sakura_gradient` → `sakura_breathing` → `hanami` → `mankai` → `fireworks` |
+
+`fireworks`は各setlistで3回繰り返し、`:showcase`の`outer_comet`は2周します。
+
+### 再生時間と終了
+
 各セットリストのエントリは`[key, wait_ms, loops]`で定義します。同じパターンでも、セットリストごとに待ち時間と繰り返し回数を変更できます。
 
 ```ruby
@@ -43,6 +80,6 @@
 | `:story` | 15 | 35 ms |
 | `:showcase` | 21 | 35 ms |
 
-`:tests`は`warm_white`だけを含みます。`:highlights`は3ゾーンと代表演出を短く紹介します。`:story`は温白色の城郭から星空、紅白、桜、満開、花火へ展開します。`:showcase`は21パターンをすべて収録します。各セットリストの`fireworks`は`loops`を3、`:showcase`の`outer_comet`は`loops`を2にし、それ以外は`loops`を1にしています。
-
 `:illumination`でセットリストまたは単独パターンを開始すると、PWMブザーの「きらきら星」も同時に始まります。`repeat: false`では曲を1回最後まで再生し、`repeat: true`では曲も繰り返します。`buzzer_volume: 0`を指定すると発音しません。
+
+1回の再生が終わるか実行を中断すると、ブザーを停止して全LEDを消灯します。
