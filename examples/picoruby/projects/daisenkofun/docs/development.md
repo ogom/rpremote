@@ -37,7 +37,7 @@ rpremote exec 'require "daisenkofun-illumination"; Daisenkofun::Illumination::Pl
 RSpec verifies internal contracts such as configuration, event order, musical transformation, LED layout, mrbgem loading, and documentation links.
 
 ```sh
-rake spec:daisenkofun
+rake spec:examples:picoruby:daisenkofun
 ```
 
 The Picotest files under each mrbgem retain representative PicoRuby and mruby/c compatibility checks. They do not replace RSpec or physical-device checks.

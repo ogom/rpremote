@@ -32,7 +32,7 @@ rpremote exec 'require "goryokaku-illumination"; Goryokaku::Illumination::Player
 RSpecは設定、イベント順、モード選択、タンバリン変換、LED配置、mrbgemロード、文書リンクを検証します。
 
 ```sh
-rake spec:goryokaku
+rake spec:examples:picoruby:goryokaku
 ```
 
 mrbgem内のPicotestはPicoRuby／mruby/c互換の代表ケースです。RSpecと実機確認の代替ではありません。

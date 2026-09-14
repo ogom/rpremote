@@ -37,7 +37,7 @@ rpremote exec 'require "daisenkofun-illumination"; Daisenkofun::Illumination::Pl
 RSpecは、設定、イベント順、音楽変換、LED配置、mrbgemロード、文書リンクなどの内部契約を検証します。
 
 ```sh
-rake spec:daisenkofun
+rake spec:examples:picoruby:daisenkofun
 ```
 
 mrbgem内のPicotestは、PicoRuby／mruby/c互換性を確認する代表ケースです。RSpecと実機確認の代替ではありません。

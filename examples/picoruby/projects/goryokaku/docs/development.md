@@ -32,7 +32,7 @@ A successful run reports `event=done status=ok`. A failure reports `status=error
 RSpec verifies configuration, event order, mode selection, tambourine transformation, LED layout, mrbgem loading, and documentation links:
 
 ```sh
-rake spec:goryokaku
+rake spec:examples:picoruby:goryokaku
 ```
 
 Picotest files inside each mrbgem retain representative PicoRuby and mruby/c compatibility checks. They do not replace RSpec or physical-device checks.
