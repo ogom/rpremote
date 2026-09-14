@@ -2,7 +2,9 @@
 
 require "tmpdir"
 
-RSpec.describe Rpremote::Config do
+RSpec.describe "Resolving rpremote configuration" do
+  let(:described_class) { Rpremote::Config }
+
   it "loads only options supported by the selected command" do
     Dir.mktmpdir do |cwd|
       path = File.join(cwd, "settings.json")

@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
-RSpec.describe Rpremote::Resetter do
+RSpec.describe "Resetting R2P2" do
+  let(:described_class) { Rpremote::Resetter }
   let(:port) { Object.new }
   let(:serial) { class_double(Rpremote::Serial) }
   let(:command_shell) { instance_double(Rpremote::Shell, synchronize!: nil, send_command: nil) }

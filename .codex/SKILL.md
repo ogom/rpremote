@@ -37,5 +37,6 @@ Use the RubyGem or repository-workspace version of `rpremote` to develop PicoRub
 
 - Match verification to the changed layer: run the CLI suite for CLI changes, local mrbgem checks and a firmware build for dependency changes, and hardware commands only when hardware validation is requested.
 - In the CLI source repository, run `bundle exec rake` from `packages/rpremote` and `bundle exec rbs -I sig validate` after CLI signature changes. Use `release:check` only for a requested pre-release check.
+- Treat the `packages/rpremote` RSpec documentation output as a reviewed, human-facing artifact. Use feature-oriented headings while preserving explicit file and class mappings for code discovery.
 - For device failures, start with `rpremote ports`, then retry with an explicit CDC 0 `--port`. Check that no other process owns the port.
 - Inspect `run` and `exec` output for Ruby exceptions; do not use the process exit code alone as proof that the device program succeeded.

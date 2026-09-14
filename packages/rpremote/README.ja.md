@@ -1,4 +1,4 @@
-# rpremote CLIリファレンス
+# rpremote
 
 [English](README.md)
 
@@ -73,54 +73,36 @@ rpremote flash --language picoruby --language-version 3.4.2 --board pico2 --moun
 
 コマンドラインオプションは`config/setting.json`より優先されます。現在実装されているのはPicoRubyです。将来のMicroPythonと追加Picoボード対応に備え、`language`と`board`はインターフェースに残しています。
 
-## コマンド
+## 作業を選ぶ
 
-| コマンド | 説明 |
-| --- | --- |
-| `rpremote setup` | 設定を作成し、言語ソースを準備します。 |
-| `rpremote build` | mrbgemを含むカスタムUF2をビルドします。 |
-| `rpremote build clean` | 中間ビルドファイルを削除します。 |
-| `rpremote bootsel` | 実行中のR2P2へBOOTSEL移行を要求し、USBボリュームの出現を待ちます。 |
-| `rpremote deploy PATH` | 既存ファームウェアを書き込み、存在する場合は`PATH/lib/NAME`を`:/lib/NAME`へコピーしてから`PATH/main.rb`を一時実行します。ハードウェア出力は次のコマンドまで維持されます。 |
-| `rpremote deploy PATH --build` | ファームウェアをビルドして書き込んだ後、同じコピーと一時実行を行います。 |
-| `rpremote dfu app FILE` | PicoModem DFUでRubyまたは版を照合したバイトコードのアプリを更新します。 |
-| `rpremote dfu compile FILE` | DFU用にPicoRuby版と一致する`.mrb`を生成します。 |
-| `rpremote dfu status` | DFUのアクティブおよび起動候補スロットを表示します。 |
-| `rpremote dfu remove` | DFU起動アプリを両スロットから削除します。実行中のアプリを停止するには別途リセットします。 |
-| `rpremote mrbgems …` | mrbgemを検査、表示、固定、更新します。 |
-| `rpremote flash` | 選択したUF2をBOOTSEL経由で書き込みます。 |
-| `rpremote bootsel --reset-flash-memory` | BOOTSELへ移行し、Pico 2の外部フラッシュメモリ全体を消去します。 |
-| `rpremote config show` | 設定ファイルとコマンドラインオプションを反映した実効設定を表示します。 |
-| `rpremote ports` | R2P2シリアルポートを表示します。 |
-| `rpremote run FILE` | Rubyファイルを転送して実行します。ディレクトリ指定時は`main.rb`を実行し、出力をリアルタイム表示します。タイムアウトは無出力の継続時間として扱い、Ruby例外時は非0で終了します。`--reset-on-timeout`を指定すると実行タイムアウト後にR2P2をリセットします。 |
-| `rpremote exec CODE` | 短いRubyコードを実行します。Ruby例外時は非0で終了します。 |
-| `rpremote monitor` / `repl` | 対話型シリアルセッションを開きます。 |
-| `rpremote reset` | R2P2を再起動して再接続まで待ちます。 |
-| `rpremote fs cp/push/cat/ls/rm/mkdir` | R2P2ファイルシステムを操作します。 |
+- `setup`でプロジェクトを準備し、`config show`で実効設定を確認します。最初のファームウェア導入には`build`と`flash`を使います。
+- プロジェクト開発では`deploy PATH`を使います。選択したファームウェアを書き込み、存在する場合は`PATH/lib/NAME`をコピーして`PATH/main.rb`を実行します。先にファームウェアを再ビルドする場合は`--build`を付けます。
+- Rubyを一時実行する場合は`run`または`exec`、対話型シリアル接続には`monitor`または`repl`を使います。`monitor`と`repl`は`Ctrl-]`で終了します。
+- R2P2上へファイルを保持する場合は`fs`、再起動後も実行するA/B起動アプリには`dfu`を使います。
 
-コマンド一覧は`rpremote --help`で確認できます。コマンド固有の構文、既定値、影響は`rpremote <command> --help`で確認できます。
+完全なコマンド一覧は`rpremote --help`で確認します。現在の構文、既定値、処理順、影響についてはコマンドヘルプが実行可能なリファレンスです。
 
 ```sh
-rpremote flash --help
+rpremote deploy --help
 rpremote dfu app --help
+rpremote fs cp --help
 ```
 
-`monitor`と`repl`は`Ctrl-]`で終了します。
+### 安全上の境界
 
-`run`と`exec`の例外終了コードには、Ruby例外ステータスに対応したR2P2ファームウェアが必要です。[GitHubリポジトリ](https://github.com/ogom/rpremote)のPicoRubyソースから`rpremote build`で生成したUF2が対応しています。
-
-## 操作モデル
-
-- `run`と`exec`はRubyコードを一時的に転送・実行して出力を表示し、一時リモートファイルを削除します。対応するR2P2ファームウェアがRuby例外を報告した場合は、非0で終了します。
-- `deploy PATH`はBOOTSELへ移行して既存の選択済みファームウェアを書き込んだ後、R2P2 Shellの起動完了を待ちます。存在する場合は`PATH/lib/NAME`を`:/lib/NAME`へコピーし、実行直前に読み込んだ`PATH/main.rb`を一時実行します。`deploy PATH --build`は同じ処理の前にファームウェアをビルドします。Shellジョブを保持するため、ハードウェア出力は次のコマンドまで維持されます。正常終了と出力バイト数を表示し、R2P2のRuby例外はコマンド失敗として扱います。ライブラリディレクトリがない場合、コピー処理はスキップします。PicoRuby 4系のファームウェアが必要です。
-- `flash`はUF2をRP2350 BOOTSELボリュームへコピーし、永続的なR2P2ファームウェアを置き換えます。
-- `dfu app`はRubyソースまたは対応するバイトコードのアプリを非アクティブDFUスロットへ登録します。R2P2を再起動して試行し、正常に起動したアプリは`DFU.confirm`を呼び出します。
-- `dfu remove`はDFUのA/B両アプリスロットを完全に空にします。RAM上ですでに動作しているアプリは`rpremote reset`を実行するまで継続するため、起動アプリのログを混ぜずに`rpremote run`を使う場合は両方のコマンドを実行します。その他の`/home`ファイルとR2P2ファームウェアは削除しません。
-- リモートパスには`:/REMOTE/PATH`を使います。`fs cp`はローカルパスとリモートパスの間で転送します。`fs push LOCAL_DIR :/REMOTE_DIR`は`fs cp --recursive`の別名で、不足しているリモートディレクトリを作成し、ローカルディレクトリの内容を一括転送します。リモートにだけ存在するファイルは削除しません。`fs rm`は指定したリモートパスを完全に削除します。
+- `flash`は永続的なR2P2ファームウェアを置き換えます。`bootsel --reset-flash-memory`はPico 2の外部フラッシュ全体を消去するため、実行後にR2P2を再度書き込む必要があります。
+- `dfu remove`はDFUのA/B両アプリスロットを完全に空にします。RAM上ですでに動作しているアプリを停止するには、別途リセットします。
+- `fs rm`は指定したリモートパスを完全に削除します。再帰転送ではボード上だけに存在するファイルを削除しません。
+- `run`と`exec`は一時リモートファイルを削除します。Ruby例外時の非0終了には対応するR2P2ファームウェアが必要で、このリポジトリからビルドしたUF2は対応しています。
 
 ## ドキュメントとサンプル
 
-[GitHubリポジトリ](https://github.com/ogom/rpremote)に、英語・日本語のガイド、設定リファレンス、Mrbgems.lockの解説、カスタムファームウェア手順、電子工作サンプルがあります。
+- [作業に応じてコマンドを選ぶ](https://github.com/ogom/rpremote/blob/main/docs/command.ja.md)
+- [プロジェクトを設定する](https://github.com/ogom/rpremote/blob/main/docs/config.ja.md)
+- [カスタムファームウェアをビルドする](https://github.com/ogom/rpremote/blob/main/docs/firmware.ja.md)
+- [MrbgemsとMrbgems.lockを管理する](https://github.com/ogom/rpremote/blob/main/docs/mrbgems.ja.md)
+- [PicoModem DFUで起動アプリを更新する](https://github.com/ogom/rpremote/blob/main/docs/dfu.ja.md)
+- [電子工作サンプルを見る](https://github.com/ogom/rpremote/tree/main/examples)
 
 ## 関連プロジェクト
 

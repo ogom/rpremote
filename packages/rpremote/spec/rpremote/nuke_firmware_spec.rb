@@ -3,7 +3,9 @@
 require "tmpdir"
 require "rpremote/nuke_firmware"
 
-RSpec.describe Rpremote::NukeFirmware do
+RSpec.describe "Preparing the universal flash-reset firmware" do
+  let(:described_class) { Rpremote::NukeFirmware }
+
   it "downloads the official universal nuke UF2 into firmware" do
     Dir.mktmpdir do |directory|
       firmware = described_class.new(

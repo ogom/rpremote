@@ -1,4 +1,4 @@
-# rpremote CLI reference
+# rpremote
 
 [日本語](README.ja.md)
 
@@ -73,55 +73,36 @@ rpremote flash --language picoruby --language-version 3.4.2 --board pico2 --moun
 
 Command-line options override `config/setting.json`. PicoRuby is implemented today; `language` and `board` are retained for planned MicroPython and additional Pico board support.
 
-## Commands
+## Choose a workflow
 
-| Command | Description |
-| --- | --- |
-| `rpremote setup` | Create configuration and prepare language sources. |
-| `rpremote build` | Build a custom UF2 with project mrbgems. |
-| `rpremote build clean` | Remove intermediate build files. |
-| `rpremote bootsel` | Ask the running R2P2 firmware to enter BOOTSEL and wait for its USB volume. |
-| `rpremote deploy PATH` | Flash existing firmware, copy `PATH/lib/NAME` to `:/lib/NAME` when present, then temporarily run `PATH/main.rb` while preserving its hardware output until the next command. |
-| `rpremote deploy PATH --build` | Build and flash firmware, then perform the same copy and temporary run workflow. |
-| `rpremote dfu app FILE` | Stage a Ruby or version-checked bytecode app through PicoModem DFU. |
-| `rpremote dfu compile FILE` | Compile `.rb` to matching PicoRuby bytecode for DFU. |
-| `rpremote dfu status` | Show the active and candidate DFU slots. |
-| `rpremote dfu remove` | Remove both DFU boot applications; reset separately to stop one already running. |
-| `rpremote mrbgems …` | Check, list, lock, or update mrbgems. |
-| `rpremote flash` | Flash the selected UF2 through BOOTSEL. |
-| `rpremote bootsel --reset-flash-memory` | Enter BOOTSEL and erase all Pico 2 external flash memory. |
-| `rpremote config show` | Show the effective configuration after file and command-line options are resolved. |
-| `rpremote ports` | List detected R2P2 serial ports. |
-| `rpremote run FILE` | Upload and run a Ruby file, or `main.rb` when FILE is a directory, with real-time output; exit nonzero on a Ruby exception. The timeout measures idle time without output. Use `--reset-on-timeout` to reset R2P2 after a run timeout. |
-| `rpremote exec CODE` | Run short Ruby code and exit nonzero on a Ruby exception. |
-| `rpremote monitor` / `repl` | Open an interactive serial session. |
-| `rpremote reset` | Reboot R2P2 and wait for reconnection. |
-| `rpremote fs cp/push/cat/ls/rm/mkdir` | Operate on the R2P2 filesystem. |
+- Prepare a project with `setup`, inspect resolved settings with `config show`, then use `build` and `flash` for the first firmware installation.
+- Use `deploy PATH` during project development. It flashes the selected firmware, copies `PATH/lib/NAME` when present, and runs `PATH/main.rb`; add `--build` when the firmware must be rebuilt first.
+- Use `run` or `exec` for temporary Ruby execution, and `monitor` or `repl` for an interactive serial session. `monitor` and `repl` exit with `Ctrl-]`.
+- Use `fs` commands for persistent R2P2 files, and use `dfu` commands when an A/B boot application must survive a restart.
 
-Run `rpremote --help` for the complete command list. Run `rpremote <command> --help` for command-specific syntax, defaults, and effects.
+Run `rpremote --help` for the complete command list. Command help is the executable reference for current syntax, defaults, processing order, and effects.
 
 ```sh
-rpremote flash --help
+rpremote deploy --help
 rpremote dfu app --help
+rpremote fs cp --help
 ```
 
-`monitor` and `repl` exit with `Ctrl-]`.
+### Safety boundaries
 
-Ruby-exception exit statuses for `run` and `exec` require R2P2 firmware with Ruby exception status support.
-UF2 files built with `rpremote build` from the [GitHub repository](https://github.com/ogom/rpremote) include that support.
-
-## Operation model
-
-- `run` and `exec` upload Ruby code temporarily, relay output, then remove the temporary remote file. A Ruby exception reported by compatible R2P2 firmware makes the command exit nonzero.
-- `deploy PATH` enters BOOTSEL, flashes the existing selected firmware, waits until the R2P2 Shell is ready, copies `PATH/lib/NAME` to `:/lib/NAME` when present, then temporarily runs the current contents of `PATH/main.rb`. `deploy PATH --build` builds that firmware before the same workflow. The Shell job is retained so hardware output remains active until the next command. It reports successful completion and the output byte count; an R2P2 Ruby exception remains a command failure. If the library directory is absent, the copy step is skipped. It requires PicoRuby 4.x firmware.
-- `flash` copies a UF2 to the RP2350 BOOTSEL volume and replaces persistent R2P2 firmware.
-- `dfu app` stages a Ruby source or matching bytecode app in the inactive DFU slot. Restart R2P2 to try it; a successful app must call `DFU.confirm`.
-- `dfu remove` permanently clears both DFU A/B application slots. The application already loaded in RAM continues until you run `rpremote reset`; use both commands before `rpremote run` when boot-app output would be unwanted. It does not remove other `/home` files or R2P2 firmware.
-- Remote paths use `:/REMOTE/PATH`. `fs cp` transfers between one local and one remote path. `fs push LOCAL_DIR :/REMOTE_DIR` is an alias of `fs cp --recursive`; it creates missing remote directories and uploads the local directory contents. It does not delete remote files. `fs rm` permanently deletes the selected remote path.
+- `flash` replaces persistent R2P2 firmware. `bootsel --reset-flash-memory` erases all Pico 2 external flash and requires R2P2 to be flashed again.
+- `dfu remove` permanently clears both DFU A/B application slots. Reset separately to stop an application already running in RAM.
+- `fs rm` permanently deletes the selected remote path. Recursive uploads do not delete files that exist only on the board.
+- `run` and `exec` remove their temporary remote file. Their nonzero Ruby-exception status requires compatible R2P2 firmware; UF2 files built from this repository include that support.
 
 ## Documentation and examples
 
-The [GitHub repository](https://github.com/ogom/rpremote) contains the full English and Japanese guides, configuration reference, Mrbgems.lock reference, custom firmware guide, and electronic-craft examples.
+- [Choose commands by workflow](https://github.com/ogom/rpremote/blob/main/docs/command.md)
+- [Configure a project](https://github.com/ogom/rpremote/blob/main/docs/config.md)
+- [Build custom firmware](https://github.com/ogom/rpremote/blob/main/docs/firmware.md)
+- [Manage Mrbgems and Mrbgems.lock](https://github.com/ogom/rpremote/blob/main/docs/mrbgems.md)
+- [Update a boot application with PicoModem DFU](https://github.com/ogom/rpremote/blob/main/docs/dfu.md)
+- [Browse electronic-craft examples](https://github.com/ogom/rpremote/tree/main/examples)
 
 ## Related projects
 

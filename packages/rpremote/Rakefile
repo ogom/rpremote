@@ -3,7 +3,43 @@
 require "bundler/gem_tasks"
 require "rspec/core/rake_task"
 
-RSpec::Core::RakeTask.new(:spec)
+SPEC_DOCUMENTATION_ORDER = %w[
+  spec/rpremote_spec.rb
+  spec/rpremote/cli_spec.rb
+  spec/rpremote/help_spec.rb
+  spec/rpremote/config_spec.rb
+  spec/rpremote/language_source_spec.rb
+  spec/rpremote/target_spec.rb
+  spec/rpremote/mrbgems_spec.rb
+  spec/rpremote/picoruby_source_patch_spec.rb
+  spec/rpremote/builder_spec.rb
+  spec/rpremote/build_command_spec.rb
+  spec/rpremote/nuke_firmware_spec.rb
+  spec/rpremote/bootsel_command_spec.rb
+  spec/rpremote/flasher_spec.rb
+  spec/rpremote/deploy_command_spec.rb
+  spec/rpremote/remote_path_spec.rb
+  spec/rpremote/checksum_spec.rb
+  spec/rpremote/picomodem_spec.rb
+  spec/rpremote/runner_spec.rb
+  spec/rpremote/shell_spec.rb
+  spec/rpremote/device_spec.rb
+  spec/rpremote/terminal_spec.rb
+  spec/rpremote/resetter_spec.rb
+  spec/rpremote/dfu_compiler_spec.rb
+  spec/rpremote/dfu_command_spec.rb
+  spec/documentation_spec.rb
+].freeze
+
+desc "Run the human-readable rpremote executable specification"
+RSpec::Core::RakeTask.new(:spec) do |task|
+  task.verbose = false
+  unless ENV["SPEC"]
+    discovered_specs = Dir["spec/**/*_spec.rb"]
+    task.pattern = []
+    task.rspec_opts = SPEC_DOCUMENTATION_ORDER + (discovered_specs - SPEC_DOCUMENTATION_ORDER)
+  end
+end
 
 require "rubocop/rake_task"
 

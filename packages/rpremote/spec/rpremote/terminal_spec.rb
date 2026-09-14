@@ -40,7 +40,9 @@ class TerminalScriptedIO
   end
 end
 
-RSpec.describe Rpremote::Terminal do
+RSpec.describe "Using the interactive serial terminal" do
+  let(:described_class) { Rpremote::Terminal }
+
   it "relays serial output and keyboard input until Ctrl-]" do
     serial = TerminalScriptedIO.new("device output\n")
     input = TerminalScriptedIO.new("puts 1\r", "more\x1dignored".b)

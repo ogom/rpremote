@@ -4,9 +4,10 @@ require "fileutils"
 require "rpremote/deploy_command"
 require "tmpdir"
 
-RSpec.describe Rpremote::DeployCommand do
+RSpec.describe "Deploying a PicoRuby project" do
   attr_reader :directory
 
+  let(:described_class) { Rpremote::DeployCommand }
   let(:output) { StringIO.new }
   let(:error) { StringIO.new }
   let(:builder) { instance_double(Rpremote::Builder) }

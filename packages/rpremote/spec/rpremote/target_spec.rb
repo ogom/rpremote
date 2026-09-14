@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
-RSpec.describe Rpremote::Target do
+RSpec.describe "Resolving PicoRuby source and firmware targets" do
+  let(:described_class) { Rpremote::Target }
+
   it "derives source and firmware paths from one target" do
     target = described_class.new(language_version: "3.4.2", cache_dir: "tmp")
 

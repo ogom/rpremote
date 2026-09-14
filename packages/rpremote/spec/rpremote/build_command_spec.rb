@@ -2,7 +2,9 @@
 
 require "rpremote/build_command"
 
-RSpec.describe Rpremote::BuildCommand do
+RSpec.describe "Selecting the custom firmware build destination" do
+  let(:described_class) { Rpremote::BuildCommand }
+
   it "uses --firmware as the custom UF2 destination" do
     builder = instance_double(Rpremote::Builder, build: nil)
 

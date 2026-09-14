@@ -2,7 +2,9 @@
 
 require "tmpdir"
 
-RSpec.describe Rpremote::PicoRubySourcePatch do
+RSpec.describe "Applying rpremote compatibility patches to PicoRuby" do
+  let(:described_class) { Rpremote::PicoRubySourcePatch }
+
   it "leaves a source tree unchanged when the bundled patch is already applied" do
     Dir.mktmpdir do |source|
       job = File.join(source, described_class::JOB_PATH)

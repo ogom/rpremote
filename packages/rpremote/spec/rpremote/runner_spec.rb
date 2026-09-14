@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
-RSpec.describe Rpremote::Runner do
+RSpec.describe "Running Ruby code on R2P2" do
+  let(:described_class) { Rpremote::Runner }
   let(:io) { Object.new }
   let(:modem) { instance_double(Rpremote::PicoModem) }
   let(:modem_class) { class_double(Rpremote::PicoModem, new: modem) }

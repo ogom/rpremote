@@ -91,27 +91,17 @@ timeout=20.0
 | `-h`, `--help` | Show commands and options. |
 | `-V`, `--version` | Show the rpremote version. |
 
-## Options by command
+## Find command-specific options
 
-| Command | Options |
-| --- | --- |
-| `setup` | `--language`, `--language-version`, `--cache`, `--force` |
-| `build` | `--language`, `--language-version`, `--board`, `--cache`, `--firmware`, `--mrbgems`, `--no-mrbgems` |
-| `build clean` | None. Removes only the project `build/` directory. |
-| `deploy PATH` | `--build`, `--language`, `--language-version`, `--board`, `--cache`, `--firmware`, `--mrbgems`, `--no-mrbgems`, `--mount`, `--port`, `--baud`, `--timeout` |
-| `bootsel` | `--mount`, `--port`, `--baud`, `--timeout` |
-| `dfu app FILE` | `--type ruby\|rite`, `--port`, `--baud`, `--timeout` |
-| `dfu compile FILE` | `--output`, `--language`, `--language-version`, `--cache` |
-| `dfu status` | `--port`, `--baud`, `--timeout` |
-| `mrbgems check/list/lock/update` | `--file`, `--lockfile` |
-| `flash` | `--language`, `--language-version`, `--board`, `--cache`, `--firmware`, `--mount`, `--port`, `--timeout` |
-| `config show` | `--language`, `--language-version`, `--board`, `--cache`, `--firmware`, `--mrbgems`, `--no-mrbgems`, `--mount`, `--port`, `--baud`, `--timeout` |
-| `ports` | None. |
-| `run`, `exec` | `--port`, `--baud`, `--timeout`, `--language` |
-| `monitor`, `repl`, `reset` | `--port`, `--baud`, `--timeout` |
-| `fs cp/push/cat/ls/rm/mkdir` | `--port`, `--baud`, `--timeout`; `fs cp` also accepts `--recursive` |
+The options accepted by each command are part of the executable CLI contract. Read the current syntax, defaults, and effects from command help instead of copying an option matrix into project documentation.
 
-The default timeout for every command is 20 seconds. For `run` and `exec`, output from the running program resets this timeout. `flash` and `deploy` use a custom UF2 already created by `build`; `deploy --build` rebuilds that UF2 before flashing it. When `--firmware` is omitted, both use `{cache}/{language}-{language-version}-{board}.uf2`.
+```sh
+rpremote deploy --help
+rpremote dfu app --help
+rpremote fs cp --help
+```
+
+`run` and `exec` treat the timeout as the maximum interval without program output. `flash` and `deploy` use the selected custom UF2, while `deploy --build` rebuilds it before flashing.
 
 ## Common configuration examples
 

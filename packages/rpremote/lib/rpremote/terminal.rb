@@ -75,8 +75,6 @@ module Rpremote
       true
     end
 
-    # input.raw disables the terminal's usual LF-to-CRLF output conversion.
-    # Preserve device CRLF while making a bare LF start at the left margin.
     def normalize_line_endings(data)
       normalized = +"".b
       data.each_byte do |byte|

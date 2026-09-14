@@ -3,7 +3,9 @@
 require "rpremote/builder"
 require "tmpdir"
 
-RSpec.describe Rpremote::Builder do
+RSpec.describe "Building custom PicoRuby firmware" do
+  let(:described_class) { Rpremote::Builder }
+
   it "runs the repository firmware build script" do
     calls = []
     runner = lambda do |*arguments, **keywords|
@@ -98,8 +100,9 @@ RSpec.describe Rpremote::Builder do
     end
   end
 
-  it "passes the generated Mrbgems overlay to the firmware build" do
+  it "reports the locked mrbgems and passes their generated overlay to the firmware build" do
     calls = []
+    output = StringIO.new
     runner = lambda do |*arguments, **keywords|
       calls << [arguments, keywords]
       true
@@ -124,7 +127,7 @@ RSpec.describe Rpremote::Builder do
         ""
       )
 
-      described_class.new(root: directory, runner: runner, mrbgems_class: mrbgems_class).build
+      described_class.new(root: directory, runner: runner, mrbgems_class: mrbgems_class).build(output: output)
     end
 
     environment = calls.fetch(0).first.first
@@ -133,5 +136,6 @@ RSpec.describe Rpremote::Builder do
       "RPREMOTE_MRBGEMS_FINGERPRINT" => "abc123def456",
       "RPREMOTE_CONFIG_NAME" => "r2p2-femtoruby-pico2"
     )
+    expect(output.string).to eq("using Mrbgems: /project/Mrbgems\nusing Mrbgems.lock: /project/Mrbgems.lock\n")
   end
 end

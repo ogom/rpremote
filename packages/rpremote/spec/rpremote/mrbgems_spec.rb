@@ -3,7 +3,8 @@
 require "rpremote/mrbgems"
 require "tmpdir"
 
-RSpec.describe Rpremote::Mrbgems do
+RSpec.describe "Resolving project mrbgems" do
+  let(:described_class) { Rpremote::Mrbgems }
   let(:commit) { "a" * 40 }
 
   def create_local_gem(root, name = "my-led")

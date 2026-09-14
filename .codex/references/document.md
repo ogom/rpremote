@@ -23,6 +23,15 @@
 - Treat line-count reduction as a diagnostic metric, not a completion target. A smaller document set is only better when users retain the context needed to operate the project safely and understand consequential design choices.
 - When feedback changes a cleanup decision, update the plan, documentation index, paired-language file, and automated documentation checks together so they no longer encode the rejected assumption.
 
+## Executable specifications
+
+- Before removing exact defaults, bounds, mappings, ordering, or failure behavior from prose, establish the corresponding executable expectation.
+- For `packages/rpremote`, treat `bundle exec rake spec` documentation output as a human-facing artifact. Organize top-level groups by feature or workflow, express conditions in context names, and describe observable outcomes in example names.
+- Keep formatter output in a stable reader-oriented order and suppress incidental command or debug output from successful examples.
+- Human-readable group names do not need to repeat implementation class names. Preserve code discovery with a specific `*_spec.rb` filename, an explicit require, and a nearby binding to the target class or module. Avoid vague names such as `misc_spec.rb` and groups that combine unrelated features.
+- Make every description correspond to a direct expectation. Avoid descriptions such as "works correctly" that cannot identify the protected behavior.
+- Documentation integrity specs should protect important relative links, language-pair structure, guide navigation, safety guidance, and release or legal files. Do not lock whole prose passages when a smaller invariant is sufficient.
+
 ### Japanese
 
 - Use polite `です・ます` style in prose. Express required and unsafe actions explicitly with `〜してください` or `〜しないでください`.

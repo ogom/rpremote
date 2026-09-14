@@ -91,27 +91,17 @@ timeout=20.0
 | `-h`、`--help`    | コマンド一覧とオプションを表示します。                |
 | `-V`、`--version` | rpremote自身のバージョンを表示します。                |
 
-## コマンドごとのオプション
+## コマンド固有のオプションを確認する
 
-| コマンド                         | オプション                                                                                            |
-| -------------------------------- | ----------------------------------------------------------------------------------------------------- |
-| `setup`                          | `--language`、`--language-version`、`--cache`、`--force`                                              |
-| `build`                          | `--language`、`--language-version`、`--board`、`--cache`、`--firmware`、`--mrbgems`、`--no-mrbgems` |
-| `build clean`                    | なし。プロジェクトの`build/`だけを削除します。                                                        |
-| `deploy PATH`                    | `--build`、`--language`、`--language-version`、`--board`、`--cache`、`--firmware`、`--mrbgems`、`--no-mrbgems`、`--mount`、`--port`、`--baud`、`--timeout` |
-| `bootsel`                        | `--mount`、`--port`、`--baud`、`--timeout` |
-| `dfu app FILE`                   | `--type ruby\|rite`、`--port`、`--baud`、`--timeout`                                                  |
-| `dfu compile FILE`               | `--output`、`--language`、`--language-version`、`--cache`                                              |
-| `dfu status`                     | `--port`、`--baud`、`--timeout`                                                                         |
-| `mrbgems check/list/lock/update` | `--file`、`--lockfile`                                                                                |
-| `flash`                          | `--language`、`--language-version`、`--board`、`--cache`、`--firmware`、`--mount`、`--port`、`--timeout` |
-| `config show`                    | `--language`、`--language-version`、`--board`、`--cache`、`--firmware`、`--mrbgems`、`--no-mrbgems`、`--mount`、`--port`、`--baud`、`--timeout` |
-| `ports`                          | なし                                                                                                  |
-| `run`、`exec`                    | `--port`、`--baud`、`--timeout`、`--language`                                                         |
-| `monitor`、`repl`、`reset`       | `--port`、`--baud`、`--timeout`                                                                       |
-| `fs cp/push/cat/ls/rm/mkdir`     | `--port`、`--baud`、`--timeout`。`fs cp`は`--recursive`にも対応します。                                |
+各コマンドが受け付けるオプションは、実行可能なCLI契約です。プロジェクト資料へオプション表を複製せず、現在の構文、既定値、影響はコマンドヘルプで確認します。
 
-すべてのコマンドの既定タイムアウトは20秒です。`run`と`exec`では実行中のプログラムから出力を受信するとタイムアウトを更新します。`flash`と`deploy`は`build`済みのカスタムUF2を使用し、`deploy --build`は書き込み前にそのUF2を再ビルドします。`--firmware`を省略した場合は、どちらも`{cache}/{language}-{language-version}-{board}.uf2`を使用します。
+```sh
+rpremote deploy --help
+rpremote dfu app --help
+rpremote fs cp --help
+```
+
+`run`と`exec`のタイムアウトは、プログラムから出力がない状態の最大継続時間です。`flash`と`deploy`は選択されたカスタムUF2を使用し、`deploy --build`は書き込み前に再ビルドします。
 
 ## よく使う設定例
 
