@@ -13,6 +13,26 @@
 - Keep paired Japanese and English documents equivalent in heading order, commands, tables, code examples, and safety information. Translate for equivalent reader outcomes rather than word-for-word correspondence.
 - When changing documentation, check Markdown links, heading hierarchy, table rendering, paired-document structure, and the standard terminology and punctuation searches.
 
+## Documentation cleanup and preservation
+
+- Classify information by purpose before shortening it: operating guidance, safety, design rationale, executable contract, or temporary investigation record. Do not classify material only from its filename, age, or level of technical detail.
+- Keep design rationale in human-facing documentation. A document that explains the problem, alternatives considered, selected approach, tradeoffs, and conditions for reconsideration remains useful even when it originated during a migration or debugging effort.
+- Move measurable behavior, boundaries, ordering, and mappings to tests, but do not use tests as a replacement for explaining why an architecture was chosen. Tests preserve what the system does; documentation preserves the human decision behind it.
+- Keep operator lookup information in human-facing documentation, including effect catalogs, adjustable defaults and tuning consequences, log interpretation, temporary versus persistent execution, and physical verification procedures. Tests and command help may protect or supplement this information, but must not be its only source.
+- Remove raw logs, stale paths, temporary names, and step-by-step investigation history when they no longer help a reader make a current decision. Condense them into evidence for the conclusion instead of deleting the conclusion with them.
+- Before deleting an entire tracked document, inspect its current content, inbound links, neighboring guides, and Git history. State what unique human purpose it serves. If that purpose is plausible or ambiguous, reorganize the document and improve its navigation rather than deleting it.
+- Treat line-count reduction as a diagnostic metric, not a completion target. A smaller document set is only better when users retain the context needed to operate the project safely and understand consequential design choices.
+- When feedback changes a cleanup decision, update the plan, documentation index, paired-language file, and automated documentation checks together so they no longer encode the rejected assumption.
+
+## Executable specifications
+
+- Before removing exact defaults, bounds, mappings, ordering, or failure behavior from prose, establish the corresponding executable expectation.
+- For `packages/rpremote`, treat `bundle exec rake spec` documentation output as a human-facing artifact. Organize top-level groups by feature or workflow, express conditions in context names, and describe observable outcomes in example names.
+- Keep formatter output in a stable reader-oriented order and suppress incidental command or debug output from successful examples.
+- Human-readable group names do not need to repeat implementation class names. Preserve code discovery with a specific `*_spec.rb` filename, an explicit require, and a nearby binding to the target class or module. Avoid vague names such as `misc_spec.rb` and groups that combine unrelated features.
+- Make every description correspond to a direct expectation. Avoid descriptions such as "works correctly" that cannot identify the protected behavior.
+- Documentation integrity specs should protect important relative links, language-pair structure, guide navigation, safety guidance, and release or legal files. Do not lock whole prose passages when a smaller invariant is sufficient.
+
 ### Japanese
 
 - Use polite `です・ます` style in prose. Express required and unsafe actions explicitly with `〜してください` or `〜しないでください`.

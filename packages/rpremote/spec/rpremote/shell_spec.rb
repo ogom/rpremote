@@ -31,7 +31,9 @@ class ShellScriptedIO
   end
 end
 
-RSpec.describe Rpremote::Shell do
+RSpec.describe "Executing commands through the R2P2 Shell" do
+  let(:described_class) { Rpremote::Shell }
+
   def shell_response(command, output)
     described_class::ECHO_START + command + described_class::ERASE_LINE +
       "\e[0J\e[1F\e[1B\e[20C\e[?25h\n".b + output.b +
@@ -135,7 +137,7 @@ RSpec.describe Rpremote::Shell do
     expect(io.written).to be_empty
   end
 
-  describe ".quote_argument" do
+  describe "when quoting a command argument" do
     it "quotes spaces and shell metacharacters as one argument" do
       expect(described_class.quote_argument("/home/a b;file.rb")).to eq("'/home/a b;file.rb'")
     end

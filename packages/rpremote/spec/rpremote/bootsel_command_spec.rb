@@ -2,7 +2,8 @@
 
 require "rpremote/bootsel_command"
 
-RSpec.describe Rpremote::BootselCommand do
+RSpec.describe "Preparing Raspberry Pi Pico 2 for firmware replacement" do
+  let(:described_class) { Rpremote::BootselCommand }
   let(:output) { StringIO.new }
   let(:device) { class_double(Rpremote::Device, main_port: "/dev/cu.usbmodem101") }
   let(:serial) { class_double(Rpremote::Serial) }

@@ -3,7 +3,6 @@
 module Daisenkofun
   module Musical
     module Planners
-      # Builds three sequential moat voices from one measured heartbeat.
       class KofunCanon
       MOATS = [:inner, :middle, :outer]
       SCALE_OFFSETS = { inner: 0, middle: 2, outer: 4 }

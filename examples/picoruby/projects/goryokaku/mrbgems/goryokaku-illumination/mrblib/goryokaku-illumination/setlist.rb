@@ -65,7 +65,6 @@ module Goryokaku
         [:fireworks, SHOWCASE_FRAME_MS, 3]
       ]
 
-      # [key, class, default_wait_ms, default_loops]
       PATTERNS = [
         [:warm_white, Patterns::WarmWhite, 35, 1],
         [:sakura_breathe, Patterns::SakuraBreathe, 35, 1],

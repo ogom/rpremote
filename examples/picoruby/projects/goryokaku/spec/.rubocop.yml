@@ -1,0 +1,9 @@
+inherit_from: ../../../../../packages/rpremote/.rubocop.yml
+
+Metrics/BlockLength:
+  Exclude:
+    - "**/*_spec.rb"
+
+Style/OneClassPerFile:
+  Exclude:
+    - "spec_helper.rb"

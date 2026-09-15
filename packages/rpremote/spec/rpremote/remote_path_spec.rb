@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
-RSpec.describe Rpremote::RemotePath do
+RSpec.describe "Validating remote filesystem paths" do
+  let(:described_class) { Rpremote::RemotePath }
+
   it "recognizes and unwraps a remote path" do
     expect(described_class.remote?(":/home/app.rb")).to be(true)
     expect(described_class.unwrap(":/home/app.rb")).to eq("/home/app.rb")

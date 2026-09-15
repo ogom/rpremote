@@ -11,7 +11,6 @@ module Rpremote
 
     class Error < Rpremote::Error; end
 
-    # The command intentionally keeps the deployment stages visible in execution order.
     # rubocop:disable Metrics/AbcSize, Metrics/MethodLength
     def self.run(args, defaults:, output: $stdout, error: $stderr, services: {})
       options = parse_options(args, defaults)

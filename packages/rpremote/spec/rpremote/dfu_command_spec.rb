@@ -3,7 +3,9 @@
 require "tmpdir"
 require "stringio"
 
-RSpec.describe Rpremote::DfuCommand do
+RSpec.describe "Managing the PicoModem DFU application" do
+  let(:described_class) { Rpremote::DfuCommand }
+
   it "rejects RITE bytecode that does not match the connected R2P2" do
     Dir.mktmpdir do |directory|
       source = File.join(directory, "app.mrb")

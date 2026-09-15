@@ -23,7 +23,7 @@
     {
       "type": "path",
       "source": "examples/picoruby/projects/daisenkofun/mrbgems/daisenkofun-illumination",
-      "sha256": "8c259f4e428bcc6e48dc1c353f7ab828a99fd053891e9ac1f0d7414692a5f117",
+      "sha256": "ccb0855c38b8dfd5484dd38854bdae2cedcae6af90e5c8006c379351b128e3b7",
       "auto_require": false
     },
     {
@@ -35,7 +35,7 @@
     {
       "type": "path",
       "source": "examples/picoruby/projects/daisenkofun/mrbgems/daisenkofun-musical",
-      "sha256": "864f885b0bc0a9d6bdd2a403cfb58a846c049aa89fb42a070e217dee3b7cbc89",
+      "sha256": "124aa1581f7153656b35f7f122d3a89f439d8eda3fa45e7699b209295c09433e",
       "auto_require": false
     },
     {
@@ -47,7 +47,7 @@
     {
       "type": "path",
       "source": "examples/picoruby/projects/daisenkofun/mrbgems/daisenkofun-application",
-      "sha256": "1c1afa7fb51977e1c0e631b5eea49377930ecb54d4e8b91111ade3d0a2abad24",
+      "sha256": "8cc5c5b6ae4aca6afe1a46de4d47044f584cba3ae89421e68eb78a5f09f40ff5",
       "auto_require": false
     }
   ]

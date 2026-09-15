@@ -22,7 +22,9 @@ class PicoModemScriptedIO
   def flush; end
 end
 
-RSpec.describe Rpremote::PicoModem do
+RSpec.describe "Transferring files and DFU applications with PicoModem" do
+  let(:described_class) { Rpremote::PicoModem }
+
   def frame(command, payload = +"".b)
     body = [command].pack("C") + payload
     [described_class::STX, body.bytesize].pack("Cn") + body +

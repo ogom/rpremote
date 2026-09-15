@@ -14,7 +14,6 @@ module Daisenkofun
       STORY_FRAME_MS = 5
       SHOWCASE_FRAME_MS = 2
 
-      # [key, wait_ms, loops]
       TESTS = [[:structure_guide, TESTS_FRAME_MS, 1]]
 
       HIGHLIGHTS = [
@@ -81,7 +80,6 @@ module Daisenkofun
         [:launch_fireworks, SHOWCASE_FRAME_MS, 1]
       ]
 
-      # [key, class, default_wait_ms, default_loops]
       PATTERNS = [
         [:attached_kofun_lights, Patterns::AttachedKofunLights, 125, 3],
         [:aurora, Patterns::Aurora, 95, 2],

@@ -4,7 +4,9 @@ require "fileutils"
 require "stringio"
 require "tmpdir"
 
-RSpec.describe Rpremote::DfuCompiler do
+RSpec.describe "Compiling a Ruby application for PicoModem DFU" do
+  let(:described_class) { Rpremote::DfuCompiler }
+
   it "uses the compiler in the selected PicoRuby source and reports its RITE version" do
     Dir.mktmpdir do |directory|
       source_dir = File.join(directory, "firmware", "picoruby-3.4.5")

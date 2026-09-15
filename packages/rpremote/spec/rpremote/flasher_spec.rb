@@ -2,7 +2,9 @@
 
 require "tmpdir"
 
-RSpec.describe Rpremote::Flasher do
+RSpec.describe "Flashing firmware onto Raspberry Pi Pico 2" do
+  let(:described_class) { Rpremote::Flasher }
+
   def create_bootsel(root, name: "RP2350", info: "Board-ID: RP2350\n")
     mount = File.join(root, name)
     Dir.mkdir(mount)
@@ -84,7 +86,7 @@ RSpec.describe Rpremote::Flasher do
     end
   end
 
-  it "returns nil when a configured BOOTSEL volume is not mounted" do
+  it "does not mistake a missing configured BOOTSEL volume for an automatic mount" do
     Dir.mktmpdir do |root|
       missing = File.join(root, "RP2350")
 

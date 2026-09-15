@@ -1,7 +1,9 @@
 # frozen_string_literal: true
 
-RSpec.describe Rpremote::Device do
-  describe ".main_port" do
+RSpec.describe "Selecting an R2P2 serial device" do
+  let(:described_class) { Rpremote::Device }
+
+  describe "when selecting the main serial port" do
     it "selects CDC 0 from a three-port R2P2 device" do
       ports = %w[
         /dev/cu.usbmodem1101

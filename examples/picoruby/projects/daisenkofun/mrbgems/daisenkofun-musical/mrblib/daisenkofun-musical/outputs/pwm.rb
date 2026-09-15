@@ -3,7 +3,6 @@
 module Daisenkofun
   module Musical
     module Outputs
-      # Single-voice, nonblocking call and response. Hardware is acquired at start.
       class PWM
       REFERENCE_VOLUME = 3.0
       MAX_AUDIBLE_DUTY = 50.0

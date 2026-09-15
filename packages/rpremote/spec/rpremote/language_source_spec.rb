@@ -2,7 +2,9 @@
 
 require "tmpdir"
 
-RSpec.describe Rpremote::LanguageSource do
+RSpec.describe "Preparing a versioned PicoRuby source" do
+  let(:described_class) { Rpremote::LanguageSource }
+
   it "downloads and extracts a versioned PicoRuby source archive" do
     Dir.mktmpdir do |root|
       extracted = nil

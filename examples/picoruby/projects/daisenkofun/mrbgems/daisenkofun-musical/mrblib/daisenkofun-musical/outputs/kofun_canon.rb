@@ -3,7 +3,6 @@
 module Daisenkofun
   module Musical
     module Outputs
-      # Plays one non-overlapping PWM voice for each of the three moat cues.
       class KofunCanon
       REFERENCE_VOLUME = 3.0
       MAX_AUDIBLE_DUTY = 50.0

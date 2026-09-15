@@ -105,6 +105,17 @@ Write paired `README.md` and `README.ja.md` files around the user's path to a wo
 
 Keep both languages equivalent in commands, tables, safety information, and expected behavior. Explain what each deployment command changes on the device and what the user should observe after execution.
 
+When a project adopts local mrbgems because of device-side compilation, memory lifetime, or runtime-loading constraints, preserve a concise human-facing design note. Include the alternatives, why embedding was selected, its build/deploy consequences, tradeoffs, and reasons to reconsider it. Put exact require rules and other enforceable invariants in tests as a complement to that explanation, not as its replacement, and link the note from the README or development guide.
+
+Keep every illumination key and a human-readable description of its visual effect in the illumination catalog. Specs may enforce registry membership, class mappings, defaults, and ordering, but they complement rather than replace the catalog people use to select an effect.
+
+## Executable project specifications
+
+- Use host RSpec for project contracts that MRI can inspect safely: defaults, bounds, mappings, composition, ordering, and failure handling.
+- Use Picotest for representative behavior that must be proven under the PicoRuby/mruby/c runtime. Do not duplicate every host expectation there.
+- Reserve hardware validation for electrical and physical behavior such as sensors, sound, LEDs, timing, and gesture thresholds. A successful host test, firmware build, or upload does not prove hardware behavior.
+- Give spec files and tested functions precise names, and retain an explicit mapping to the production file, class, or module even when the top-level group is written as a human-readable feature name.
+
 ## Verification
 
 Before handing off a project:

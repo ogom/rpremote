@@ -1,13 +1,15 @@
 # frozen_string_literal: true
 
-RSpec.describe Rpremote::Checksum do
-  describe ".crc16" do
+RSpec.describe "Verifying transfer checksums" do
+  let(:described_class) { Rpremote::Checksum }
+
+  describe "CRC-16/CCITT-FALSE frames" do
     it "matches the CRC-16/CCITT-FALSE check value" do
       expect(described_class.crc16("123456789")).to eq(0x29B1)
     end
   end
 
-  describe ".crc32" do
+  describe "CRC-32 file transfers" do
     it "matches the standard CRC32 check value" do
       expect(described_class.crc32("123456789")).to eq(0xCBF43926)
     end

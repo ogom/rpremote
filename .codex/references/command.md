@@ -114,7 +114,14 @@ Run from `packages/rpremote` in the source repository.
 
 ```sh
 bundle install
+bundle exec rake spec
 bundle exec rake
 bundle exec rbs -I sig validate
 bundle exec ruby exe/rpremote --help
 ```
+
+Treat `bundle exec rake spec` with the documentation formatter as part of the
+package interface. Its groups should follow a stable workflow order, describe
+conditions and observable outcomes in user language, and contain no incidental
+test output. When adding a command or guide, update the formatter order and the
+relevant help or documentation integrity specs.

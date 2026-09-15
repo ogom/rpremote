@@ -3,7 +3,6 @@
 module Daisenkofun
   module Musical
     module Translators
-      # Maps one normalized optical pulse width to PWM ON time in percent.
       class Timbre
       MIN_DUTY = 2.0
       MAX_DUTY = 6.0

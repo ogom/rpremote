@@ -2,7 +2,6 @@
 
 module Daisenkofun
   module Musical
-    # Queues sensor state updates; PWM users may opt into immediate beat output.
     class Subscriber
       def initialize(output: Outputs::Null.new, logger: nil, immediate_beat: false)
         @output = output

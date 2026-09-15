@@ -93,25 +93,35 @@ timeout=20.0
 
 ## Options by command
 
-| Command | Options |
-| --- | --- |
+Use this table when comparing configuration and execution choices. Current syntax, defaults, and effects for an individual command are also available from `rpremote <command> --help`.
+
+| Command | Main available options |
+| ------- | ---------------------- |
 | `setup` | `--language`, `--language-version`, `--cache`, `--force` |
 | `build` | `--language`, `--language-version`, `--board`, `--cache`, `--firmware`, `--mrbgems`, `--no-mrbgems` |
-| `build clean` | None. Removes only the project `build/` directory. |
+| `build clean` | None; removes only the project's `build/` directory |
+| `bootsel` | `--reset-flash-memory`, `--mount`, `--port`, `--baud`, `--timeout` |
 | `deploy PATH` | `--build`, `--language`, `--language-version`, `--board`, `--cache`, `--firmware`, `--mrbgems`, `--no-mrbgems`, `--mount`, `--port`, `--baud`, `--timeout` |
-| `bootsel` | `--mount`, `--port`, `--baud`, `--timeout` |
 | `dfu app FILE` | `--type ruby\|rite`, `--port`, `--baud`, `--timeout` |
 | `dfu compile FILE` | `--output`, `--language`, `--language-version`, `--cache` |
-| `dfu status` | `--port`, `--baud`, `--timeout` |
+| `dfu status` / `dfu remove` | `--port`, `--baud`, `--timeout` |
 | `mrbgems check/list/lock/update` | `--file`, `--lockfile` |
 | `flash` | `--language`, `--language-version`, `--board`, `--cache`, `--firmware`, `--mount`, `--port`, `--timeout` |
 | `config show` | `--language`, `--language-version`, `--board`, `--cache`, `--firmware`, `--mrbgems`, `--no-mrbgems`, `--mount`, `--port`, `--baud`, `--timeout` |
-| `ports` | None. |
-| `run`, `exec` | `--port`, `--baud`, `--timeout`, `--language` |
-| `monitor`, `repl`, `reset` | `--port`, `--baud`, `--timeout` |
-| `fs cp/push/cat/ls/rm/mkdir` | `--port`, `--baud`, `--timeout`; `fs cp` also accepts `--recursive` |
+| `ports` | None |
+| `run FILE` | `--port`, `--baud`, `--timeout`, `--reset-on-timeout`, `--language` |
+| `exec CODE` | `--port`, `--baud`, `--timeout`, `--language` |
+| `monitor` / `repl` / `reset` | `--port`, `--baud`, `--timeout` |
+| `fs cp` | `--recursive`, `--port`, `--baud`, `--timeout` |
+| `fs push/cat/ls/rm/mkdir` | `--port`, `--baud`, `--timeout` |
 
-The default timeout for every command is 20 seconds. For `run` and `exec`, output from the running program resets this timeout. `flash` and `deploy` use a custom UF2 already created by `build`; `deploy --build` rebuilds that UF2 before flashing it. When `--firmware` is omitted, both use `{cache}/{language}-{language-version}-{board}.uf2`.
+```sh
+rpremote deploy --help
+rpremote dfu app --help
+rpremote fs cp --help
+```
+
+`run` and `exec` treat the timeout as the maximum interval without program output. `flash` and `deploy` use the selected custom UF2, while `deploy --build` rebuilds it before flashing.
 
 ## Common configuration examples
 

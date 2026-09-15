@@ -2,47 +2,92 @@
 
 [English](development.md)
 
-リポジトリルートで作業します。配線前に[ハードウェアと安全上の注意](hardware.ja.md)を確認してください。
+[ハードウェアと安全上の注意](hardware.ja.md)に従って配線し、リポジトリルートで作業します。
 
-## 単独パターンとモードの確認
+## ビルドして配置する
 
-組み込み済みの単独パターンは再ビルドせず確認できます。
+ルートの`Mrbgems`で5つのGoryokaku mrbgemだけをプロジェクト固有gemとして有効にします。mrbgem、`mrbgem.rake`、`Mrbgems`を変更した場合は、lockを更新してファームウェアを再ビルドします。
+
+```sh
+rpremote mrbgems lock
+rpremote deploy --build examples/picoruby/projects/goryokaku --timeout 120
+```
+
+`main.rb`のmode、PIN、音量だけを変更した場合は、組み込み済みファームウェアへ一時実行できます。
+
+```sh
+rpremote run examples/picoruby/projects/goryokaku --timeout 120
+```
+
+## 一時実行と再起動後の自動実行
+
+`rpremote run`と`deploy`による`main.rb`の実行は一時的です。動作確認にはこの方法を使い、Pico 2を再起動した後も五稜郭アプリを自動実行したい場合だけDFU起動アプリへ登録します。
+
+```sh
+rpremote dfu app examples/picoruby/projects/goryokaku/main.rb
+rpremote dfu status
+rpremote reset
+```
+
+起動に成功するとアプリケーションが`DFU.confirm`を呼び、候補スロットが確定します。DFUへ登録する前に、必要な5つのmrbgemを含むファームウェアが書き込まれていることを確認してください。mrbgemを変更した場合は、DFUアプリの更新だけでなくファームウェアの再ビルドと書き込みも必要です。
+
+起動アプリを削除する場合は次を実行します。`dfu remove`はA/B両スロットを削除し、元に戻せません。
+
+```sh
+rpremote dfu remove
+rpremote reset
+```
+
+## 単独パターンを確認する
 
 ```sh
 rpremote exec 'require "goryokaku-illumination"; Goryokaku::Illumination::Player.new.play_pattern(:warm_white)' --timeout 120
 ```
 
-設定、DFU確認、構成、終了処理を含むアプリケーション全体は次で確認します。
+正常終了では`event=done status=ok`、異常終了ではcleanup後に`status=error`が表示されます。
+
+## ホスト仕様を実行する
+
+RSpecは設定、イベント順、モード選択、タンバリン変換、LED配置、mrbgemロード、文書リンクを検証します。
 
 ```sh
-rpremote run examples/picoruby/projects/goryokaku/main.rb --timeout 120
+rake spec:examples:picoruby:goryokaku
 ```
 
-正常終了時は`event=done status=ok`、異常終了時はcleanup後に`status=error`を出力して例外を再送出します。
+mrbgem内のPicotestはPicoRuby／mruby/c互換の代表ケースです。RSpecと実機確認の代替ではありません。
 
-## mrbgem変更後
+## 実機確認
+
+- `:illumination`：指定した演出と曲、繰り返し、終了時の消音・消灯
+- `:musical`：Y-UPの安定、弱い振り、短い打撃、静止時の誤発音、音と光の同期
+- `:combined`：Y-UPでの赤／青選択、Z-UPでの決定、姿勢表示への復帰
+- ハードウェア：最大輝度時の電流・温度、I2C、PWM音量、MPU6050の取り付け方向
+
+ホストテストでは、物理的な色、電源容量、音量、センサー感度、実時間の同期を検証できません。
+
+## ログの読み方
+
+| ログ | 意味と確認すること |
+| ---- | ------------------ |
+| `mode=... event=start` | 指定したmodeで起動した |
+| `event=pattern index=... key=...` | setlist内で開始した演出と進行位置 |
+| `event=led_off` | 終了処理で全LEDを消灯した |
+| `event=orientation mode=y_up|z_up|x_up|unknown` | MPU6050から認識した現在姿勢 |
+| `event=touch action=select mode=...` | Y-UPのタッチで選択候補を切り替えた |
+| `event=touch action=confirm mode=...` | Z-UPのタッチで表示中の候補を決定した |
+| `event=touch action=ignored ...` | 候補未選択、または対象外の姿勢だったためタッチを無視した |
+| `event=alive` | 複合モードのイベントループが動作している |
+| `event=done status=ok` | 正常に終了した |
+| `event=done status=error` | cleanup後に失敗した。直前の例外を確認する |
+
+`status=ok`だけで物理的な色、音量、動作感度、同期までは確認できません。ログと模型上の動作を対応付けてください。
+
+## ログを保存する
 
 ```sh
-rpremote mrbgems check
-rpremote mrbgems lock
-rpremote build
-rpremote flash
+mkdir -p tmp/goryokaku-run
+rpremote run examples/picoruby/projects/goryokaku --timeout 120 2>&1 \
+  | tee tmp/goryokaku-run/output.log
 ```
 
-`main.rb`だけを変更した場合は`rpremote run`だけで反映できます。起動アプリを更新する場合は`rpremote dfu app examples/picoruby/projects/goryokaku/main.rb`を実行します。
-
-## リリース確認
-
-- 21パターンのフレーム数、チェックサム、範囲外アクセスがホストテストと一致する。
-- `:tests`、`:highlights`、`:story`、`:showcase`が完走し、終了時に消灯する。
-- `:illumination`ではLED演出と「きらきら星」が同時に始まり、通常は曲を1回完奏し、終了時と例外時にPWM dutyが0になる。
-- 起動時は未選択で、最初のY-UPタッチがイルミネーション候補になる。
-- Y-UPでタッチするたびに候補が切り替わり、半月堡がイルミネーション候補では赤、タンバリン候補では青になる。
-- Z-UPへ動かしても選択色が保持され、Z-UPでタッチした時だけ候補が確定する。
-- Y-UP／Z-UP以外の姿勢ではタッチが無視される。
-- タンバリン確定後は選択表示が消灯し、Y-UPでZ軸方向へ滑らかに振ると組5から多色の残光を走査、Z軸へ鋭い衝撃を与えると星形中心から半月堡・外周へ広がる花火状の光をシャンシャン音と同期する。
-- イルミネーション中は現在姿勢を表示し、確定後は`setlist_name`を先頭から1回実行して姿勢表示へ戻り、動きでは発音しない。
-- `:musical`ではタッチ選択を使わず、Y-UP安定後に振る／叩く奏法の音とLEDが連動する。
-- 例外と`Ctrl-C`でLEDが消灯し、PWM dutyが0になる。
-- LEDは大容量の外部5 V電源を使い、Pico 2とGNDを共通化する。
-- 最大輝度と電流を実機で確認する。
+異常時は`event=error`と、LED、音、姿勢に異常が見えた時刻を対応付けます。

@@ -2,107 +2,57 @@
 
 [日本語](tick.ja.md)
 
-This document explains how the run loop in `main.rb` calls `StatusLed::Presenter#tick(timestamp_ms)` to advance the time-dependent LED display one step at a time. See [Pub/Sub in the Oximeter sample](pub_sub.md) for state-change delivery through `publish` and the overall Pub/Sub design.
+Measurement events report “what happened.” LED animation also needs to update “what should be visible now” while no event occurs. `StatusLed::Presenter#tick(timestamp_ms)` provides that time-driven step.
 
-## `publish` versus `tick`
+## Difference from `publish`
 
-| Call | Meaning | Receiver method |
-| --- | --- | --- |
-| `dispatcher.publish(event, payload)` | Announces a state change such as finger detection or a beat. | `call(event, payload)` |
-| `presenter.tick(timestamp_ms)` | Supplies the current time and advances LED animation by one step. | `tick(timestamp_ms)` |
+| Call | Role |
+| ---- | ---- |
+| `dispatcher.publish(event, payload)` | Synchronously announces a state change such as finger detection or a beat |
+| `presenter.tick(timestamp_ms)` | Supplies the current time and advances at most one display frame when needed |
 
-`tick` does not read the sensor or create measurement events. `Dispatcher`, which only delivers events, has no `tick` method. Explicitly calling time-driven components keeps the event contract separate from scheduling.
+`tick` does not read the sensor or generate measurement events. The dispatcher does not advance time. See [Pub/Sub design](pub_sub.md) for event delivery.
 
 ## Call flow
 
-[`main.rb`](../main.rb) processes the samples in the MAX30102 FIFO and then calls the presenter's `tick` once per main-loop iteration.
-
-```ruby
-while @clock.millis - started_at < @duration_ms
-  available = @sensor.available_samples
-  while available > 0
-    sample = @sensor.read
-    @processor.process_sample(
-      red: sample[:red],
-      ir: sample[:ir],
-      timestamp_ms: @clock.millis
-    )
-    available -= 1
-  end
-  @presenter.tick(@clock.millis)
-  @clock.wait_ms(@poll_interval_ms)
-end
-```
-
 ```text
-Read FIFO samples
+Read the MAX30102 FIFO
         │
         ▼
 Measurement::Processor#process_sample
-        │ publish an event when needed
+        │ publish when needed
         ▼
 StatusLed::Presenter#call ──▶ store display state
         │
-        ▼ explicit tick from the loop
+        ▼ tick from the main loop
 StatusLed::Presenter#tick
         │
         ▼
-StatusLed::Renderer#render ──▶ render when the frame interval has elapsed
+StatusLed::Renderer#render ──▶ transfer only when the frame interval is due
 ```
 
-## LED display use
+After processing FIFO samples, the main loop gives the presenter the same board time. The presenter passes display mode, BPM, SpO2, and the last beat time to the renderer, which decides whether and where to draw.
 
-`StatusLed::Presenter#call` updates this internal state from measurement events:
+## Display intervals
 
-- Display mode: `:no_finger`, `:measuring`, or `:result`
-- Estimated BPM and SpO2
-- Timestamp of the most recently detected beat
+| State | Interval | Display |
+| ----- | -------: | ------- |
+| Waiting for a finger | 120 ms | Dim white point |
+| Measuring | 90 ms | Blue point with a green trail |
+| Result | 40 ms | Green or red point synchronized to BPM and the last beat |
 
-`StatusLed::Presenter#tick` passes that state and `timestamp_ms` to [`StatusLed::Renderer#render`](../lib/oximeter/status_led/renderer.rb).
+The main loop can call `tick` about every 2 ms, but the renderer does not resend WS2812 data until a frame is due. This limits LED transfers without stopping measurement.
 
-```ruby
-def tick(timestamp_ms)
-  @renderer.render(
-    @mode,
-    timestamp_ms,
-    spo2: @spo2,
-    bpm: @bpm,
-    last_beat_at: @last_beat_at
-  )
-  self
-end
-```
+## Implementation boundaries
 
-The renderer returns without drawing until the interval for the current mode has elapsed.
-
-| Mode | Frame interval | Behavior |
-| --- | --- | --- |
-| `:no_finger` | 120 ms | Moves a dim white point. |
-| `:measuring` | 90 ms | Moves a blue point and its trail. |
-| `:result` | 40 ms | Calculates the display position from BPM and the most recent beat time. |
-
-This throttling allows the main loop to call `tick` about every 2 ms while limiting WS2812 transfers to required frames.
-
-## Why `tick` is needed
-
-If LEDs were rendered only when events arrived, animation would stop in a state such as waiting for a finger, where no new event is expected. A beat event by itself also cannot produce movement between that beat and the next one.
-
-Storing “what happened” from events and calculating “what should be displayed now” from `tick` separates:
-
-- The sensor sampling period
-- The frequency of finger and beat events
-- The LED animation frame interval
-
-## Implementation rules
-
-- `tick` must return quickly and must not call `sleep_ms` internally.
-- One `tick` should advance one step rather than run a long loop or draw many frames in a batch.
-- Use the caller-supplied `timestamp_ms` for elapsed-time decisions so components in the same loop share one time base.
-- Exceptions in `tick` propagate to its caller.
+- `tick` returns quickly and does not call `sleep_ms`.
+- One call draws at most the one frame currently needed.
+- Elapsed-time decisions use the caller's `timestamp_ms`.
+- Failures return to the caller, whose cleanup stops the sensor and clears the LEDs.
 - `tick` is synchronous; it is not a thread or interrupt.
 
-## Current standalone-sample constraint
+## Standalone-sample constraint
 
-The standalone Oximeter loop processes every sample currently in the FIFO before calling the presenter's `tick`. A large backlog can therefore extend the LED update interval.
+The current main loop processes every sample already in the FIFO before calling `tick`. A large backlog can therefore delay LED updates.
 
-This follows from the processing order and does not identify the cause of any LED corruption. For concurrent operation, limit the number of sensor samples processed in one loop so that each component receives regular `tick` calls. The Daisenkofun common event loop applies this as `MAX_SAMPLES_PER_TICK`.
+When extending the design for concurrent work, limit samples processed per loop so every component receives regular ticks. This is a consequence of processing order, not a diagnosis of any particular LED failure.
