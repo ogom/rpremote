@@ -3,7 +3,6 @@
 module Rpremote
   class PicoRubySourcePatch
     JOB_PATH = "mrbgems/picoruby-shell/mrblib/job.rb"
-    BOOTSEL_PATH = "mrbgems/picoruby-machine/include/machine.h"
     PWM_PATH = "mrbgems/picoruby-pwm/ports/rp2040/pwm.c"
     PATCH_ALIASES = { "3.4.2" => "3.4.5" }.freeze
 
@@ -21,8 +20,6 @@ module Rpremote
       patch_version = PATCH_ALIASES.fetch(version, version)
       patches(patch_version).each do |patch, prerequisite|
         next unless File.file?(patch) && File.file?(File.join(source, prerequisite))
-        next if prerequisite == BOOTSEL_PATH && File.read(File.join(source, prerequisite)).include?("Machine_bootsel")
-
         next if git_apply?(source, patch, "--reverse", "--check")
 
         raise Error, "cannot apply rpremote patch to PicoRuby #{version}" unless git_apply?(source, patch, "--check")
@@ -36,7 +33,6 @@ module Rpremote
     def patches(patch_version)
       definitions = {
         "ruby-exception-status" => JOB_PATH,
-        "bootsel" => BOOTSEL_PATH,
         "pwm-sleep-clock" => PWM_PATH
       }
       definitions.map do |name, prerequisite|

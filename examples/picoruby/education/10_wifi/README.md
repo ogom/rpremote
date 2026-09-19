@@ -9,8 +9,8 @@ Connects Pico 2 W to Wi-Fi, then blinks the onboard LED three times.
 Custom R2P2 firmware for board `pico2_w` is required. A UF2 built for Pico 2 cannot use Wi-Fi.
 
 ```sh
-rpremote build --language picoruby --language-version 3.4.5 --board pico2_w
-rpremote flash --mount /Volumes/RP2350
+rpremote build
+rpremote flash
 ```
 
 Use a 2.4 GHz WPA2-PSK access point. The country code for Japan is `JP`.

@@ -75,7 +75,7 @@ module Rpremote
         --force           download the PicoRuby source again during setup
         --build           build the selected firmware before deploy flashes it
         --language-version VERSION
-                          use R2P2/PicoRuby 4.0.3 or 3.4.2 (default: 4.0.3)
+                          use a PicoRuby tag or latest (default: latest)
         --cache DIR       use another project cache directory
         --mrbgems FILE    use an explicit Mrbgems definition during build or deploy
         --no-mrbgems      build or deploy without the automatically detected Mrbgems
@@ -126,7 +126,7 @@ module Rpremote
         Usage: #{COMMAND_USAGE.fetch(:setup)}
 
         Creates config/setting.json when it does not exist, then downloads and prepares PicoRuby source and the official Raspberry Pi nuke_universal.uf2 firmware.
-        Options: --language LANGUAGE (picoruby), --language-version VERSION (4.0.3), --cache DIR (firmware), --force.
+        Options: --language LANGUAGE (picoruby), --language-version VERSION (latest), --cache DIR (firmware), --force.
         This changes the project configuration and source cache but does not connect to a board.
       HELP
     end
@@ -157,7 +157,7 @@ module Rpremote
         With --build, builds the selected custom UF2 before entering BOOTSEL and flashing it.
         If PATH/lib/NAME exists, it copies it to :/lib/NAME, where NAME is the final component of PATH. It then runs PATH/main.rb and preserves its Shell job, so hardware output remains active until the next command.
         The stages run in order and stop at the first failure. Flashing replaces persistent board firmware.
-        deploy requires PicoRuby 4.x firmware (currently 4.0.3).
+        deploy requires current PicoRuby 4.x firmware.
         Options combine build, BOOTSEL, flash, library-copy, and run settings. The first install of firmware with automatic BOOTSEL still requires holding BOOTSEL.
       HELP
     end
@@ -242,7 +242,7 @@ module Rpremote
         Usage: #{COMMAND_USAGE.fetch(:flash)}
 
         Copies the selected UF2 to an RP2350 BOOTSEL volume and waits for R2P2 to reconnect. It replaces persistent board firmware.
-        Defaults select pico2, firmware/picoruby-4.0.3-pico2.uf2, an automatic BOOTSEL mount and CDC 0 port, and 20 seconds.
+        Defaults select pico2, firmware/picoruby-latest-pico2.uf2, an automatic BOOTSEL mount and CDC 0 port, and 20 seconds.
       HELP
     end
 

@@ -11,9 +11,9 @@ All keys are validated even when the selected command ignores them. Unknown keys
   "timeout": 20,
   "language": "picoruby",
   "cache": "firmware",
-  "language_version": "4.0.3",
+  "language_version": "latest",
   "board": "pico2",
-  "firmware": "firmware/picoruby-4.0.3-pico2.uf2",
+  "firmware": "firmware/picoruby-latest-pico2.uf2",
   "mount": "/Volumes/RP2350",
   "mrbgems": "Mrbgems"
 }
@@ -22,7 +22,7 @@ All keys are validated even when the selected command ignores them. Unknown keys
 | Key | Type | Default | Commands | CLI option |
 | --- | --- | --- | --- | --- |
 | `language` | non-empty string | `picoruby` | `setup`, `build`, `flash`, `deploy`, `run`, `exec` | `--language` |
-| `language_version` | non-empty string | `4.0.3` | `setup`, `build`, `flash`, `deploy`, `dfu compile` | `--language-version` |
+| `language_version` | non-empty string | `latest` | `setup`, `build`, `flash`, `deploy`, `dfu compile` | `--language-version`; `latest` tracks `master` |
 | `cache` | non-empty string | `firmware` | `setup`, `build`, `flash`, `deploy`, `dfu compile` | `--cache` |
 | `board` | non-empty string | `pico2` | `build`, `flash`, `deploy` | `--board` |
 | `firmware` | non-empty string | `{cache}/{language}-{language_version}-{board}.uf2` | `build`, `flash`, `deploy` | `--firmware` |

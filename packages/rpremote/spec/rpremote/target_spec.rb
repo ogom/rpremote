@@ -10,6 +10,13 @@ RSpec.describe "Resolving PicoRuby source and firmware targets" do
     expect(target.firmware_path).to eq("tmp/picoruby-3.4.2-pico2.uf2")
   end
 
+  it "uses latest for the default target" do
+    target = described_class.new(cache_dir: "tmp")
+
+    expect(target.source_dir(root: "/project")).to eq("/project/tmp/picoruby-latest")
+    expect(target.firmware_path).to eq("tmp/picoruby-latest-pico2.uf2")
+  end
+
   it "uses an explicit firmware path" do
     target = described_class.new(firmware: "dist/custom.uf2")
 

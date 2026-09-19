@@ -20,8 +20,8 @@ Skip this step if you already flashed the same firmware while completing `08_my_
 ```sh
 rpremote mrbgems check
 rpremote mrbgems lock
-rpremote build --language picoruby --language-version 4.0.3 --board pico2
-rpremote flash --mount /Volumes/RP2350
+rpremote build
+rpremote flash
 ```
 
 ## 2. Deploy v1 through DFU

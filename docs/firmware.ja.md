@@ -6,13 +6,13 @@
 
 ## 1. ソースを準備する
 
-リポジトリのルートで、PicoRuby 4.0.3のソースを取得します。
+リポジトリのルートで、最新のPicoRubyソースを取得します。
 
 ```sh
-rpremote setup --language picoruby --language-version 4.0.3 --cache firmware
+rpremote setup
 ```
 
-ソースは`firmware/picoruby-4.0.3/`に展開されます。公式ソースにこれらのサンプルgemは含まれませんが、プロジェクトの`Mrbgems`に公開gemとローカルgemの依存関係が定義されています。
+`master`ブランチのソースは`firmware/picoruby-latest/`に展開されます。公式ソースにこれらのサンプルgemは含まれませんが、プロジェクトの`Mrbgems`に公開gemとローカルgemの依存関係が定義されています。
 
 ### PicoRubySourcePatch
 
@@ -26,7 +26,7 @@ Rubyプログラムの例外時にR2P2が専用ステータスを出力するた
 これはソースパッチの対象を示すものであり、すべてのR2P2版がすべてのボードで正常に起動することを保証するものではありません。
 
 パッチ適用に失敗した場合、キャッシュ済みソースが想定したPicoRubyリリースと異なります。
-`rpremote setup --force --language-version VERSION`でその版のキャッシュを作り直してから、再度ビルドしてください。
+`config/setting.json`の`language_version`を更新するか、`--language-version`で対象バージョンを指定してください。設定ファイルを更新した場合は`rpremote setup --force`でキャッシュを作り直します。一時的に指定する場合は、`setup`と再ビルドの両方に同じ`--language-version VERSION`を指定してください。
 
 ```ruby
 vm :mrubyc
@@ -48,20 +48,20 @@ rpremote mrbgems list
 ## 2. Pico 2用UF2をビルドする
 
 ```sh
-rpremote build --language picoruby --language-version 4.0.3 --board pico2 --firmware firmware/r2p2-picoruby-4.0.3-pico2.uf2
+rpremote build --firmware firmware/r2p2-picoruby-latest-pico2.uf2
 ```
 
 `rpremote build`は`Mrbgems`を自動検出し、PicoRuby公式設定へgemを追加した一時ビルド設定を生成します。
 公式ソースを手作業で編集する必要はありません。R2P2例外ステータス用の`PicoRubySourcePatch`だけはrpremoteが管理して適用します。
 
-完成したUF2は`firmware/r2p2-picoruby-4.0.3-pico2.uf2`に保存されます。中間ファイルは`build/`に作成されます。`--firmware`を省略した場合も、`firmware/picoruby-4.0.3-pico2.uf2`が既定の出力先です。
+完成したUF2は`firmware/r2p2-picoruby-latest-pico2.uf2`に保存されます。中間ファイルは`build/`に作成されます。`--firmware`を省略した場合は、`firmware/picoruby-latest-pico2.uf2`が既定の出力先です。
 
 ## 3. Pico 2へ書き込む
 
 Pico 2のBOOTSELボタンを押しながらUSB接続し、マウント先を指定します。
 
 ```sh
-rpremote flash --firmware firmware/r2p2-picoruby-4.0.3-pico2.uf2 --mount /Volumes/RP2350
+rpremote flash --firmware firmware/r2p2-picoruby-latest-pico2.uf2
 ```
 
 ## 4. サンプルを配線して実行する
@@ -86,9 +86,9 @@ rpremote run examples/picoruby/education/06_mpu6050/main.rb --timeout 15
 mrbgemを変更した後は、ビルド、BOOTSEL移行、書き込み、実行の手順を繰り返します。
 
 ```sh
-rpremote build --firmware firmware/r2p2-picoruby-4.0.3-pico2.uf2
+rpremote build --firmware firmware/r2p2-picoruby-latest-pico2.uf2
 rpremote bootsel
-rpremote flash --firmware firmware/r2p2-picoruby-4.0.3-pico2.uf2
+rpremote flash --firmware firmware/r2p2-picoruby-latest-pico2.uf2
 rpremote run examples/picoruby/education/06_mpu6050/main.rb --timeout 15
 ```
 

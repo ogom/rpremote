@@ -188,6 +188,15 @@ module Rpremote
     def apply: (String source) -> void
   end
 
+  class PicoRubyCompiler
+    CANDIDATES: Array[String]
+
+    class Error < StandardError
+    end
+
+    def self.ensure_legacy_path!: (String root) -> String
+  end
+
   class Builder
     class Error < Rpremote::Error
     end

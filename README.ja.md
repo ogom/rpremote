@@ -32,12 +32,12 @@ rpremote setup
 rpremote build
 ```
 
-既定では`firmware/picoruby-4.0.3/`にソース、`build/`に中間生成物、`firmware/picoruby-4.0.3-pico2.uf2`に完成UF2を保存します。
+既定では最新のPicoRubyソースを`firmware/picoruby-latest/`、中間生成物を`build/`、完成UF2を`firmware/picoruby-latest-pico2.uf2`に保存します。
 
 BOOTSELを押しながらPico 2を接続し、書き込み後にRubyプログラムを実行します。
 
 ```sh
-rpremote flash --mount /Volumes/RP2350
+rpremote flash
 rpremote run examples/picoruby/education/01_blink/main.rb
 ```
 
@@ -81,7 +81,7 @@ rpremote fs rm :/local.txt
 ビルドや書き込みの前に、適用される設定を確認します。このコマンドは、設定ファイル、コマンドライン指定、既定値を解決しますが、ボードへ接続しません。
 
 ```sh
-rpremote config show --board pico2_w
+rpremote config show
 ```
 
 ## DFUアプリを更新する
@@ -125,9 +125,9 @@ rpremote build
 言語、言語バージョン、ボード、キャッシュ、ファームウェアのパスを指定できます。コマンドラインオプションは`config/setting.json`より優先されます。
 
 ```sh
-rpremote setup --language picoruby --language-version 3.4.2
-rpremote build --language picoruby --language-version 3.4.2 --board pico2
-rpremote flash --language picoruby --language-version 3.4.2 --board pico2 --mount /Volumes/RP2350
+rpremote setup
+rpremote build
+rpremote flash
 ```
 
 現在実装されているのはPicoRubyです。将来のMicroPythonと追加ボード対応に備え、`language`と`board`はインターフェースに残しています。

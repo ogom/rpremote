@@ -9,8 +9,8 @@ Pico 2 Wを無線LANへ接続し、接続後にオンボードLEDを3回点滅�
 `board`が`pico2_w`のカスタムR2P2ファームウェアが必要です。Pico 2用のUF2では無線LANは使えません。
 
 ```sh
-rpremote build --language picoruby --language-version 3.4.5 --board pico2_w
-rpremote flash --mount /Volumes/RP2350
+rpremote build
+rpremote flash
 ```
 
 2.4 GHzのWPA2-PSKアクセスポイントを使用してください。国コードは日本では`JP`です。

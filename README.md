@@ -32,12 +32,12 @@ Build the custom UF2. A project-level `Mrbgems` file is detected automatically:
 rpremote build
 ```
 
-The defaults prepare `firmware/picoruby-4.0.3/`, keep intermediate output under `build/`, and create `firmware/picoruby-4.0.3-pico2.uf2`.
+The defaults prepare the latest PicoRuby source in `firmware/picoruby-latest/`, keep intermediate output under `build/`, and create `firmware/picoruby-latest-pico2.uf2`.
 
 Hold BOOTSEL while connecting the Pico 2, then flash and run a Ruby program:
 
 ```sh
-rpremote flash --mount /Volumes/RP2350
+rpremote flash
 rpremote run examples/picoruby/education/01_blink/main.rb
 ```
 
@@ -81,7 +81,7 @@ rpremote fs rm :/local.txt
 Check the settings that will apply before building or flashing. The command resolves file settings, command-line overrides, and defaults without connecting to a board.
 
 ```sh
-rpremote config show --board pico2_w
+rpremote config show
 ```
 
 ## Update a DFU application
@@ -125,9 +125,9 @@ rpremote build
 Language, language version, board, cache, and firmware path can be selected explicitly. Command-line options override `config/setting.json`.
 
 ```sh
-rpremote setup --language picoruby --language-version 3.4.2
-rpremote build --language picoruby --language-version 3.4.2 --board pico2
-rpremote flash --language picoruby --language-version 3.4.2 --board pico2 --mount /Volumes/RP2350
+rpremote setup
+rpremote build
+rpremote flash
 ```
 
 PicoRuby is implemented today. `language` and `board` keep the command-line interface ready for future MicroPython and additional Pico board support.

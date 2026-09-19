@@ -36,6 +36,7 @@ module Rpremote
       unless File.directory?(source_dir) && !force
         FileUtils.rm_rf(source_dir) if force
         extractor.call(archive_path, cache_dir)
+        normalize_extracted_source
       end
       raise ExtractError, "PicoRuby source was not extracted: #{source_dir}" unless File.directory?(source_dir)
 
@@ -45,7 +46,7 @@ module Rpremote
     end
 
     def archive_url
-      "https://github.com/picoruby/picoruby/archive/refs/tags/#{version}.zip"
+      "https://github.com/picoruby/picoruby/archive/refs/#{source_ref}.zip"
     end
 
     def archive_path
@@ -59,6 +60,22 @@ module Rpremote
     private
 
     attr_reader :fetcher, :extractor, :preparer, :patcher
+
+    def source_ref
+      version == "latest" ? "heads/master" : "tags/#{version}"
+    end
+
+    def extracted_source_dir
+      return source_dir unless version == "latest"
+
+      File.join(cache_dir, "picoruby-master")
+    end
+
+    def normalize_extracted_source
+      return if extracted_source_dir == source_dir || !File.directory?(extracted_source_dir)
+
+      FileUtils.mv(extracted_source_dir, source_dir)
+    end
 
     def fetch_archive
       temporary = "#{archive_path}.part"
@@ -88,7 +105,7 @@ module Rpremote
         commands << ["git", "remote", "add", "origin", "https://github.com/picoruby/picoruby.git"]
       end
       commands.push(
-        ["git", "fetch", "--depth", "1", "origin", "refs/tags/#{version}"],
+        ["git", "fetch", "--depth", "1", "origin", source_ref],
         ["git", "checkout", "--force", "FETCH_HEAD"],
         ["git", "submodule", "update", "--init", "--recursive", "--depth", "1"]
       )

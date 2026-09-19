@@ -37,6 +37,8 @@ Use the RubyGem or repository-workspace version of `rpremote` to develop PicoRub
 
 - Match verification to the changed layer: run the CLI suite for CLI changes, local mrbgem checks and a firmware build for dependency changes, and hardware commands only when hardware validation is requested.
 - In the CLI source repository, run `bundle exec rake` from `packages/rpremote` and `bundle exec rbs -I sig validate` after CLI signature changes. Use `release:check` only for a requested pre-release check.
+- The repository root has no `Gemfile`. To run all example-project contracts from the root, set `BUNDLE_GEMFILE=packages/rpremote/Gemfile` and invoke the named `spec:examples:picoruby:*` tasks from the root `Rakefile`.
+- During release preparation, update the package version and both changelogs, then run `bundle lock --local` from `packages/rpremote` to synchronize the path-gem version without reinstalling its executable into the active Ruby environment. Run `bundle exec rake release:check` only after the release metadata is ready; it builds and smoke-tests the gem but does not publish it.
 - Treat the `packages/rpremote` RSpec documentation output as a reviewed, human-facing artifact. Use feature-oriented headings while preserving explicit file and class mappings for code discovery.
 - For device failures, start with `rpremote ports`, then retry with an explicit CDC 0 `--port`. Check that no other process owns the port.
 - Inspect `run` and `exec` output for Ruby exceptions; do not use the process exit code alone as proof that the device program succeeded.

@@ -3,7 +3,7 @@
 module Rpremote
   class Target
     DEFAULT_LANGUAGE = "picoruby"
-    DEFAULT_LANGUAGE_VERSION = "4.0.3"
+    DEFAULT_LANGUAGE_VERSION = "latest"
     DEFAULT_BOARD = "pico2"
     DEFAULT_CACHE_DIR = "firmware"
     IDENTIFIER_PATTERN = /\A[a-zA-Z0-9][a-zA-Z0-9._-]*\z/

@@ -115,7 +115,7 @@ RSpec.describe "Using the rpremote command-line interface" do
 
   describe "Setting up PicoRuby sources and reset firmware" do
     it "sets up the default PicoRuby source" do
-      source_instance = instance_double(Rpremote::LanguageSource, setup: "/project/firmware/picoruby-4.0.3")
+      source_instance = instance_double(Rpremote::LanguageSource, setup: "/project/firmware/picoruby-latest")
       language_source = class_double(Rpremote::LanguageSource, new: source_instance)
       stub_const("Rpremote::LanguageSource", language_source)
       nuke_instance = instance_double(Rpremote::NukeFirmware, setup: "/project/firmware/nuke_universal.uf2")
@@ -136,15 +136,15 @@ RSpec.describe "Using the rpremote command-line interface" do
       expect(status).to eq(0)
       expect(config).to have_received(:setup).with(filename: "config/setting.json")
       expect(language_source).to have_received(:new).with(
-        language: "picoruby", version: "4.0.3", cache_dir: "firmware"
+        language: "picoruby", version: "latest", cache_dir: "firmware"
       )
       expect(source_instance).to have_received(:setup).with(force: true)
       expect(nuke_instance).to have_received(:setup).with(force: true)
       expect(stdout.string).to include("created config")
-      expect(stdout.string).to include("installed picoruby 4.0.3")
+      expect(stdout.string).to include("installed picoruby latest")
     end
 
-    it "sets up PicoRuby 3.4.2 when selected" do
+    it "sets up the selected PicoRuby version" do
       source_instance = instance_double(Rpremote::LanguageSource, setup: "/project/firmware/picoruby-3.4.2")
       language_source = class_double(Rpremote::LanguageSource, new: source_instance)
       stub_const("Rpremote::LanguageSource", language_source)
@@ -325,13 +325,13 @@ RSpec.describe "Using the rpremote command-line interface" do
 
       expect(status).to eq(0)
       expect(flasher_instance).to have_received(:flash).with(
-        File.expand_path("firmware/picoruby-4.0.3-pico2.uf2"),
+        File.expand_path("firmware/picoruby-latest-pico2.uf2"),
         mount: "/Volumes/RP2350",
         port: nil
       )
-      expect(stdout.string).to include("flashing #{File.expand_path("firmware/picoruby-4.0.3-pico2.uf2")} to /Volumes/RP2350; " \
+      expect(stdout.string).to include("flashing #{File.expand_path("firmware/picoruby-latest-pico2.uf2")} to /Volumes/RP2350; " \
                                        "this replaces persistent board firmware")
-      expect(stdout.string).to include("flashed firmware picoruby-4.0.3-pico2.uf2")
+      expect(stdout.string).to include("flashed firmware picoruby-latest-pico2.uf2")
     end
 
     it "requires --firmware instead of a positional UF2 file" do

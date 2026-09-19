@@ -7,6 +7,8 @@ module Rpremote
     SHELL_READY_TIMEOUT = 2.0
     RETRY_INTERVAL = 0.25
     RESET_FLASH_FIRMWARE = File.join("firmware", "nuke_universal.uf2").freeze
+    REMOTE_SCRIPT_PATH = "/home/.rpremote-bootsel.rb"
+    REMOTE_SCRIPT = "require \"bootsel\"\nMachine.enter_bootsel\n".b.freeze
 
     class Error < Rpremote::Error; end
 
@@ -47,7 +49,8 @@ module Rpremote
 
       request_bootsel(
         port: port, baud: baud, deadline: deadline, output: output,
-        serial: serial, device: device, shell: shell, sleeper: sleeper, clock: clock
+        serial: serial, device: device, shell: shell, modem: services.fetch(:modem) { PicoModem },
+        sleeper: sleeper, clock: clock
       )
 
       remaining = deadline - clock.call
@@ -66,6 +69,7 @@ module Rpremote
       serial = context.fetch(:serial)
       device = context.fetch(:device)
       shell = context.fetch(:shell)
+      modem = context.fetch(:modem) { PicoModem }
       sleeper = context.fetch(:sleeper)
       clock = context.fetch(:clock)
       announced = false
@@ -84,11 +88,9 @@ module Rpremote
 
           remote_shell = shell.new(connection, timeout: [remaining, SHELL_READY_TIMEOUT].min)
           remote_shell.synchronize!
-          unless remote_shell.execute("type bootsel").include?("bootsel is")
-            raise Error, "connected R2P2 firmware does not support BOOTSEL reset; flash a current rpremote UF2 once while holding BOOTSEL"
-          end
-
-          remote_shell.send_command("bootsel")
+          modem.new(connection, timeout: remaining).upload(REMOTE_SCRIPT_PATH, REMOTE_SCRIPT)
+          remote_shell.synchronize!
+          remote_shell.send_command("./#{File.basename(REMOTE_SCRIPT_PATH)}")
           requested = true
         end
         break if requested

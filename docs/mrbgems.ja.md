@@ -10,7 +10,7 @@ R2P2のRuby例外ステータス用`PicoRubySourcePatch`だけは管理された
 PicoRubyのソースを準備し、定義を検査してlockファイルを作成します。
 
 ```sh
-rpremote setup --language picoruby --language-version 4.0.3 --cache firmware
+rpremote setup
 rpremote mrbgems check
 rpremote mrbgems lock
 ```
@@ -18,7 +18,7 @@ rpremote mrbgems lock
 続けてカスタムファームウェアをビルドします。
 
 ```sh
-rpremote build --language picoruby --language-version 4.0.3 --board pico2 --firmware firmware/r2p2-picoruby-4.0.3-pico2.uf2
+rpremote build --firmware firmware/r2p2-picoruby-latest-pico2.uf2
 ```
 
 mrbgemを変更した後は、カスタムファームウェアを再ビルド・書き込みしてからサンプルを実行します。

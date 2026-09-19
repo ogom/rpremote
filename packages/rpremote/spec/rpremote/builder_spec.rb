@@ -16,19 +16,19 @@ RSpec.describe "Building custom PicoRuby firmware" do
     error = StringIO.new
 
     Dir.mktmpdir do |root|
-      source = File.join(root, "firmware", "picoruby-4.0.3")
+      source = File.join(root, "firmware", "picoruby-latest")
       FileUtils.mkdir_p(source)
       described_class.new(root: root, runner: runner).build(
         mrbgems: false, output: output, error: error
       )
 
       arguments, keywords = calls.fetch(0)
-      expect(arguments).to eq([{ "RPREMOTE_LANGUAGE_VERSION" => "4.0.3",
+      expect(arguments).to eq([{ "RPREMOTE_LANGUAGE_VERSION" => "latest",
                                  "RPREMOTE_LANGUAGE" => "picoruby",
                                  "RPREMOTE_BOARD" => "pico2",
                                  "RPREMOTE_ROOT" => root,
                                  "PICORUBY_DIR" => source,
-                                 "RPREMOTE_FIRMWARE" => File.join(root, "firmware/picoruby-4.0.3-pico2.uf2") },
+                                 "RPREMOTE_FIRMWARE" => File.join(root, "firmware/picoruby-latest-pico2.uf2") },
                                RbConfig.ruby,
                                File.expand_path("../../tasks/firmware_build.rb", __dir__)])
       expect(keywords).to include(chdir: root, out: output, err: error)
@@ -70,11 +70,11 @@ RSpec.describe "Building custom PicoRuby firmware" do
     end
 
     Dir.mktmpdir do |root|
-      source = File.join(root, "firmware", "picoruby-4.0.3")
+      source = File.join(root, "firmware", "picoruby-latest")
       FileUtils.mkdir_p(source)
       described_class.new(root: root, runner: runner, source_patcher: source_patcher).build(mrbgems: false)
 
-      expect(events).to eq([[:patch, source, "4.0.3"], [:build]])
+      expect(events).to eq([[:patch, source, "latest"], [:build]])
     end
   end
 
@@ -119,7 +119,7 @@ RSpec.describe "Building custom PicoRuby firmware" do
     mrbgems_class = class_double(Rpremote::Mrbgems, new: manager)
 
     Dir.mktmpdir do |directory|
-      source = File.join(directory, "firmware", "picoruby-4.0.3")
+      source = File.join(directory, "firmware", "picoruby-latest")
       FileUtils.mkdir_p(File.join(source, "build_config"))
       File.write(File.join(directory, "Mrbgems"), "")
       File.write(

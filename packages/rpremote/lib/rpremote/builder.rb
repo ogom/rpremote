@@ -97,7 +97,7 @@ module Rpremote
     def mrbgems_config_language(vm_name, language, version)
       return language unless vm_name
 
-      modern = Gem::Version.new(version) >= Gem::Version.new("4.0.0")
+      modern = version == "latest" || Gem::Version.new(version) >= Gem::Version.new("4.0.0")
       return modern ? "femtoruby" : "picoruby" if vm_name == :mrubyc
 
       modern ? "picoruby" : "microruby"

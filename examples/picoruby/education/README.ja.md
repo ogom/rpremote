@@ -16,8 +16,8 @@ WS2812を使う前に、リポジトリに含まれるカスタムファーム�
 ```sh
 rpremote mrbgems check
 rpremote mrbgems lock
-rpremote build --language picoruby --language-version 4.0.3 --board pico2
-rpremote flash --mount /Volumes/RP2350
+rpremote build
+rpremote flash
 ```
 
 ファームウェアを書き込んだ後、接続を確認します。

@@ -15,7 +15,7 @@ gem path: "examples/picoruby/mrbgems/ws2812_spi"
 
 ```sh
 rpremote mrbgems lock
-rpremote build --language picoruby --language-version 4.0.3 --board pico2
+rpremote build
 ```
 
 ## 使い方
