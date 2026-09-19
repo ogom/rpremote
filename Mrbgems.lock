@@ -10,6 +10,12 @@
     },
     {
       "type": "path",
+      "source": "examples/picoruby/mrbgems/bootsel",
+      "sha256": "dbc51f14f38a346e58d6c95da42f74f6af7f5849594a24e6eda5ad66432b3381",
+      "require_name": "bootsel"
+    },
+    {
+      "type": "path",
       "source": "examples/picoruby/mrbgems/max30102",
       "sha256": "24678422932f9d8033a765d7e8fdb137c9241706a5b3ce45478617240a705944",
       "require_name": "max30102"

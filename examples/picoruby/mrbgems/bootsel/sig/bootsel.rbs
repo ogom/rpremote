@@ -1,0 +1,5 @@
+module Machine
+  def self.enter_bootsel: () -> bot
+
+  private def self._enter_bootsel: () -> bot
+end

@@ -3,6 +3,7 @@
 vm :mrubyc
 
 gem github: "ogom/picoruby-ws2812-plus", branch: "develop"
+gem path: "examples/picoruby/mrbgems/bootsel"
 # gem path: "examples/picoruby/mrbgems/mpu6050"
 # gem path: "examples/picoruby/mrbgems/bmi270"
 gem path: "examples/picoruby/mrbgems/max30102"
