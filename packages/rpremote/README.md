@@ -26,7 +26,7 @@ Run these commands in a project directory:
 ```sh
 rpremote setup
 rpremote build
-rpremote flash --mount /Volumes/RP2350
+rpremote flash
 rpremote run main.rb
 ```
 
@@ -39,7 +39,7 @@ rpremote deploy path/to/project
 rpremote deploy path/to/project --build
 ```
 
-The defaults prepare `firmware/picoruby-4.0.3/` and create `firmware/picoruby-4.0.3-pico2.uf2`. Use `rpremote ports` to locate the R2P2 CDC 0 port when a board must be selected explicitly.
+The defaults prepare `firmware/picoruby-latest/` and create `firmware/picoruby-latest-pico2.uf2`. Use `rpremote ports` to locate the R2P2 CDC 0 port when a board must be selected explicitly.
 
 ## Add mrbgems
 
@@ -66,9 +66,9 @@ Set `auto_require: false` for a gem that should remain embedded in firmware with
 ## Select a target
 
 ```sh
-rpremote setup --language picoruby --language-version 3.4.2
-rpremote build --language picoruby --language-version 3.4.2 --board pico2
-rpremote flash --language picoruby --language-version 3.4.2 --board pico2 --mount /Volumes/RP2350
+rpremote setup
+rpremote build
+rpremote flash
 ```
 
 Command-line options override `config/setting.json`. PicoRuby is implemented today; `language` and `board` are retained for planned MicroPython and additional Pico board support.

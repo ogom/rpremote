@@ -44,12 +44,12 @@ RSpec.describe "Deploying a PicoRuby project" do
 
   it "builds, flashes, copies the project library, and runs its entry file in order" do
     connection_options = {
-      language: "picoruby", language_version: "4.0.3", board: "pico2_w",
+      language: "picoruby", language_version: "latest", board: "pico2_w",
       cache_dir: "firmware", firmware: "firmware/custom.uf2", mrbgems: "Mrbgems.dev",
       mount: "/Volumes/RP2350", port: result.port, baud: 9_600, timeout: 4.0
     }
     expect(builder).to receive(:build).ordered.with(
-      language: "picoruby", language_version: "4.0.3", board: "pico2_w",
+      language: "picoruby", language_version: "latest", board: "pico2_w",
       cache_dir: "firmware", firmware: "firmware/custom.uf2", mrbgems: "Mrbgems.dev",
       output: output, error: error
     ) { File.write(source, "puts 'deployed'\n") }

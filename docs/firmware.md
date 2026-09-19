@@ -6,13 +6,13 @@ See [Mrbgems and Mrbgems.lock](mrbgems.md) for the `Mrbgems` and `Mrbgems.lock` 
 
 ## 1. Prepare the source
 
-From the repository root, fetch PicoRuby 4.0.3.
+From the repository root, fetch the latest PicoRuby source.
 
 ```sh
-rpremote setup --language picoruby --language-version 4.0.3 --cache firmware
+rpremote setup
 ```
 
-The source is extracted to `firmware/picoruby-4.0.3/`. The official source does not include these example gems; the project `Mrbgems` declares the public and local dependencies instead.
+The `master` branch source is extracted to `firmware/picoruby-latest/`. The official source does not include these example gems; the project `Mrbgems` declares the public and local dependencies instead.
 
 ### PicoRubySourcePatch
 
@@ -27,7 +27,7 @@ Bundled patches target PicoRuby 4.0.3 and 3.4.5; PicoRuby 3.4.2 uses the compati
 These are source-patch targets, not a guarantee that every R2P2 version starts successfully on every board.
 
 If patch application fails, the cached source differs from the expected PicoRuby release.
-Recreate that version's cache with `rpremote setup --force --language-version VERSION`, then build again.
+Update `language_version` in `config/setting.json` or select the target version with `--language-version`. After updating the configuration file, recreate the cache with `rpremote setup --force`. For a temporary override, pass the same `--language-version VERSION` to both `setup` and the subsequent build.
 
 ```ruby
 vm :mrubyc
@@ -49,20 +49,20 @@ The pinned commit is recorded in `Mrbgems.lock`. Run `rpremote mrbgems update` o
 ## 2. Build a UF2 for Pico 2
 
 ```sh
-rpremote build --language picoruby --language-version 4.0.3 --board pico2 --firmware firmware/r2p2-picoruby-4.0.3-pico2.uf2
+rpremote build --firmware firmware/r2p2-picoruby-latest-pico2.uf2
 ```
 
 `rpremote build` auto-detects `Mrbgems` and generates a temporary build configuration that adds the gem to the official PicoRuby configuration.
 There is no need to edit the official source manually; `PicoRubySourcePatch` is the managed exception for R2P2 exception-status support.
 
-The completed UF2 is saved to `firmware/r2p2-picoruby-4.0.3-pico2.uf2` and intermediate files are created under `build/`. If `--firmware` is omitted, `firmware/picoruby-4.0.3-pico2.uf2` is also the default output path.
+The completed UF2 is saved to `firmware/r2p2-picoruby-latest-pico2.uf2` and intermediate files are created under `build/`. If `--firmware` is omitted, `firmware/picoruby-latest-pico2.uf2` is the default output path.
 
 ## 3. Flash Pico 2
 
 Hold the Pico 2 BOOTSEL button while connecting USB, then specify the mounted volume.
 
 ```sh
-rpremote flash --firmware firmware/r2p2-picoruby-4.0.3-pico2.uf2 --mount /Volumes/RP2350
+rpremote flash --firmware firmware/r2p2-picoruby-latest-pico2.uf2
 ```
 
 ## 4. Wire and run the examples
@@ -87,9 +87,9 @@ rpremote run examples/picoruby/education/06_mpu6050/main.rb --timeout 15
 After changing an mrbgem, repeat the build, BOOTSEL, flash, and run steps:
 
 ```sh
-rpremote build --firmware firmware/r2p2-picoruby-4.0.3-pico2.uf2
+rpremote build --firmware firmware/r2p2-picoruby-latest-pico2.uf2
 rpremote bootsel
-rpremote flash --firmware firmware/r2p2-picoruby-4.0.3-pico2.uf2
+rpremote flash --firmware firmware/r2p2-picoruby-latest-pico2.uf2
 rpremote run examples/picoruby/education/06_mpu6050/main.rb --timeout 15
 ```
 

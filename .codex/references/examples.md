@@ -16,10 +16,10 @@ gem path: "../mrbgems/my-device"
 The local path is relative to `Mrbgems` and must contain `mrbgem.rake`.
 
 ```sh
-rpremote setup --language picoruby --language-version 4.0.3
+rpremote setup
 rpremote mrbgems check
 rpremote mrbgems lock
-rpremote build --board pico2
+rpremote build
 ```
 
 Commit `Mrbgems` and `Mrbgems.lock` together. Ordinary builds reuse the locked GitHub commit and local-content hash. Use `mrbgems update` only for an intended dependency update.
@@ -44,9 +44,9 @@ rpremote fs ls :/home --port /dev/cu.usbmodem101
 Use the correct completed UF2 and an RP2350 volume:
 
 ```sh
-rpremote build --language-version 4.0.3 --board pico2 --firmware firmware/r2p2-picoruby-4.0.3-pico2.uf2
+rpremote build
 rpremote bootsel
-rpremote flash --firmware firmware/r2p2-picoruby-4.0.3-pico2.uf2 --mount /Volumes/RP2350
+rpremote flash
 ```
 
 For the first R2P2 installation, use the physical BOOTSEL button instead of `rpremote bootsel`. If auto-detection fails, inspect `INFO_UF2.TXT`. Do not flash a Pico/Pico W RP2040 volume with a Pico 2/Pico 2 W RP2350 image.
@@ -56,7 +56,7 @@ To erase external flash deliberately, use the recovery image prepared by `setup`
 ```sh
 rpremote bootsel --reset-flash-memory
 # Wait until the RP2350 BOOTSEL drive appears again.
-rpremote flash --firmware firmware/r2p2-picoruby-4.0.3-pico2.uf2
+rpremote flash
 ```
 
 ## Temporary and persistent applications
@@ -110,7 +110,7 @@ PicoRuby 3.x bytecode starts with `RITE0300`; PicoRuby 4.x starts with `RITE0400
 
 ```sh
 rpremote exec 'p PICORUBY_VERSION'
-rpremote dfu compile examples/picoruby/education/07_dfu/main.rb --language-version 4.0.3 --output build/dfu/app.mrb
+rpremote dfu compile examples/picoruby/education/07_dfu/main.rb --language-version VERSION --output build/dfu/app.mrb
 rpremote dfu app build/dfu/app.mrb
 ```
 

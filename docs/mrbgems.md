@@ -10,7 +10,7 @@ The managed `PicoRubySourcePatch` for R2P2 Ruby exception statuses is the only s
 Prepare the PicoRuby source, validate the definition, and create the lock file.
 
 ```sh
-rpremote setup --language picoruby --language-version 4.0.3 --cache firmware
+rpremote setup
 rpremote mrbgems check
 rpremote mrbgems lock
 ```
@@ -18,7 +18,7 @@ rpremote mrbgems lock
 Then build the custom firmware.
 
 ```sh
-rpremote build --language picoruby --language-version 4.0.3 --board pico2 --firmware firmware/r2p2-picoruby-4.0.3-pico2.uf2
+rpremote build --firmware firmware/r2p2-picoruby-latest-pico2.uf2
 ```
 
 After changing an mrbgem, rebuild and flash the custom firmware before running an example:

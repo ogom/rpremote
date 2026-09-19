@@ -10,8 +10,8 @@ Custom R2P2 firmware containing `ws2812-plus` is required. Build and flash it wi
 
 ```sh
 rpremote mrbgems check
-rpremote build --language picoruby --language-version 4.0.3 --board pico2
-rpremote flash --mount /Volumes/RP2350
+rpremote build
+rpremote flash
 ```
 
 ## Wiring

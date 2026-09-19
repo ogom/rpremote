@@ -9,8 +9,8 @@ The firmware running on the board must include the local `picoruby-bootsel` mrbg
 ```sh
 rpremote mrbgems check
 rpremote mrbgems lock
-rpremote build --language picoruby --language-version 4.0.3 --board pico2
-rpremote flash --mount /Volumes/RP2350
+rpremote build
+rpremote flash
 ```
 
 The physical button is required for the first installation and for recovery when R2P2 is unavailable.
@@ -30,7 +30,7 @@ BOOTSEL ready: /Volumes/RP2350
 Then flash the intended UF2:
 
 ```sh
-rpremote flash --firmware firmware/picoruby-4.0.3-pico2.uf2 --mount /Volumes/RP2350
+rpremote flash --firmware firmware/picoruby-latest-pico2.uf2
 ```
 
 No PicoRuby source patch or built-in R2P2 `/bin/bootsel` command is used.

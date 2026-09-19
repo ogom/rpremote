@@ -2,6 +2,7 @@
 # frozen_string_literal: true
 
 require "fileutils"
+require_relative "../lib/rpremote/picoruby_compiler"
 
 REPOSITORY_ROOT = File.expand_path(ENV.fetch("RPREMOTE_ROOT", File.expand_path("../..", __dir__)))
 DEFAULT_BOARD = "pico2"
@@ -14,7 +15,7 @@ def command!(*command, chdir:, env: {})
 end
 
 language = ENV.fetch("RPREMOTE_LANGUAGE", "picoruby")
-target_version = ENV.fetch("RPREMOTE_LANGUAGE_VERSION", "4.0.3")
+target_version = ENV.fetch("RPREMOTE_LANGUAGE_VERSION", "latest")
 board = ENV.fetch("RPREMOTE_BOARD", DEFAULT_BOARD)
 abort "Unsupported language: #{language}" unless language == "picoruby"
 abort "Unsupported board: #{board}" unless SUPPORTED_BOARDS.include?(board)
@@ -43,7 +44,8 @@ command!("rake", "r2p2:setup", chdir: picoruby_root) unless File.directory?(pico
 version_header = File.join(picoruby_root, "include/version.h")
 version = File.read(version_header)[/#define PICORUBY_VERSION "(.+?)"/, 1]
 abort "Could not determine PicoRuby version from #{version_header}" unless version
-abort "PicoRuby source is #{version}, but #{target_version} was requested." unless version == target_version
+abort "PicoRuby source is #{version}, but #{target_version} was requested." \
+  unless target_version == "latest" || version == target_version
 
 cache_file = File.join(output_dir, "CMakeCache.txt")
 if File.file?(cache_file) && !File.read(cache_file).include?("CMAKE_HOME_DIRECTORY:INTERNAL=#{cmake_source_dir}")
@@ -64,6 +66,12 @@ if fingerprint && File.directory?(mruby_build_dir)
   FileUtils.rm_rf(mruby_build_dir)
 end
 command!("rake", chdir: picoruby_root, env: build_env)
+begin
+  compiler = Rpremote::PicoRubyCompiler.ensure_legacy_path!(picoruby_root)
+  puts "Using PicoRuby compiler: #{compiler}"
+rescue Rpremote::PicoRubyCompiler::Error => e
+  abort e.message
+end
 
 cmake_definitions = [
   "-D", "PICORUBY_ROOT=#{picoruby_root}",

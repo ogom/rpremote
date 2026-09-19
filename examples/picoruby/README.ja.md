@@ -34,7 +34,7 @@ rpremote setup
 rpremote mrbgems check
 rpremote mrbgems lock
 rpremote build
-rpremote flash --mount /Volumes/RP2350
+rpremote flash
 rpremote run examples/picoruby/education/01_blink/main.rb --timeout 15
 ```
 

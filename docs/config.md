@@ -25,9 +25,9 @@ The file is a JSON object. Keys use snake_case; their corresponding CLI options 
   "timeout": 20,
   "language": "picoruby",
   "cache": "firmware",
-  "language_version": "4.0.3",
+  "language_version": "latest",
   "board": "pico2",
-  "firmware": "firmware/picoruby-4.0.3-pico2.uf2",
+  "firmware": "firmware/picoruby-latest-pico2.uf2",
   "mount": "/Volumes/RP2350",
   "mrbgems": "Mrbgems"
 }
@@ -48,17 +48,17 @@ All keys are validated even when the current command does not use them. Unknown 
 `rpremote config show` resolves the configuration file, defaults, and command-line options without connecting to a board or changing project state. It prints the selected language, language version, board, cache, firmware path, mrbgems setting, mount, port, baud rate, and timeout.
 
 ```sh
-rpremote config show --config config/pico2.json --board pico2_w
+rpremote config show --config config/pico2.json
 ```
 
 For example, `--no-mrbgems` disables automatic Mrbgems detection. `{version}` in `cache` expands to the selected language version, and the default firmware path expands from the resolved cache, language, language version, and board.
 
 ```text
 language=picoruby
-language_version=4.0.3
+language_version=latest
 board=pico2_w
 cache=firmware
-firmware=firmware/picoruby-4.0.3-pico2_w.uf2
+firmware=firmware/picoruby-latest-pico2_w.uf2
 mrbgems=false
 mount=auto
 port=auto
@@ -68,20 +68,20 @@ timeout=20.0
 
 ## Configuration keys
 
-| Key | Corresponding option | Default | Purpose |
-| --- | --- | --- | --- |
-| `language` | `--language` | `picoruby` | Language for `setup`, `build`, `deploy`, `flash`, and run commands (currently only `picoruby`). |
-| `language_version` | `--language-version` | `4.0.3` | PicoRuby/R2P2 version used by `setup`, `build`, `deploy`, and `flash`. |
-| `cache` | `--cache` | `firmware` | Stores PicoRuby sources and custom UF2 files. `{version}` expands to the language version. |
-| `board` | `--board` | `pico2` | Board for `build`, `deploy`, and `flash` (`pico2`, `pico2_w`). |
-| `firmware` | `--firmware` | `{cache}/{language}-{language_version}-{board}.uf2` | Build output and UF2 used by `deploy` or `flash`. |
-| `mrbgems` | `--mrbgems` | Auto-detected | Mrbgems definition for `build` or `deploy`; set to `false` to disable it. |
-| `mount` | `--mount` | Auto-detected | RP2350 BOOTSEL volume used by `bootsel`, `deploy`, or `flash`. |
-| `port` | `--port` | Automatically selected CDC 0 | R2P2 serial port. |
-| `baud` | `--baud` | `115200` | Serial communication speed. |
-| `timeout` | `--timeout` | Per command | Connection and communication timeout in seconds. During `run` and `exec`, this is the maximum interval without output. |
+`config/setting.json` is the normal place to select the target. Keep `language`, `language_version`, `board`, and `mount` there rather than passing them on every command.
 
-`language_version` uses `--language-version`, rather than `--version`, so it is not confused with `rpremote --version`.
+| Key | Default | Purpose |
+| --- | --- | --- |
+| `language` | `picoruby` | Language for firmware and run commands (currently only `picoruby`). |
+| `language_version` | `latest` | PicoRuby/R2P2 version used for firmware operations. `latest` tracks the `master` branch. |
+| `cache` | `firmware` | Stores PicoRuby sources and custom UF2 files. `{version}` expands to the language version. |
+| `board` | `pico2` | Board for firmware operations (`pico2`, `pico2_w`). |
+| `firmware` | `{cache}/{language}-{language_version}-{board}.uf2` | Build output and UF2 used by `deploy` or `flash`. |
+| `mrbgems` | Auto-detected | Mrbgems definition for `build` or `deploy`; set to `false` to disable it. |
+| `mount` | Auto-detected | RP2350 BOOTSEL volume used by `bootsel`, `deploy`, or `flash`. |
+| `port` | Automatically selected CDC 0 | R2P2 serial port. |
+| `baud` | `115200` | Serial communication speed. |
+| `timeout` | Per command | Connection and communication timeout in seconds. During `run` and `exec`, this is the maximum interval without output. |
 
 ## Common options
 
@@ -131,9 +131,9 @@ This example pins the Pico 2 port and build output.
 {
   "port": "/dev/cu.usbmodem101",
   "cache": "firmware",
-  "language_version": "4.0.3",
+  "language_version": "latest",
   "board": "pico2",
-  "firmware": "firmware/r2p2-picoruby-4.0.3-pico2.uf2"
+  "firmware": "firmware/r2p2-picoruby-latest-pico2.uf2"
 }
 ```
 
@@ -142,13 +142,8 @@ With `firmware` set, both build and flash can omit their output option.
 ```sh
 rpremote setup
 rpremote build
-rpremote flash --mount /Volumes/RP2350
+rpremote flash
 rpremote run examples/picoruby/education/01_blink/main.rb
 ```
 
-To change only the PicoRuby version once, override it on the command line without changing the configuration file.
-
-```sh
-rpremote setup --language-version 3.4.2
-rpremote build --language-version 3.4.2 --firmware firmware/r2p2-picoruby-3.4.2-pico2.uf2
-```
+The PicoRuby version can be changed with `language_version` in `config/setting.json` or the `--language-version` option. After updating the configuration file, run `rpremote setup --force` before building. For a temporary override, pass the same `--language-version VERSION` to both `setup` and `build`.

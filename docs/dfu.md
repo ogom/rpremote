@@ -119,10 +119,10 @@ For a `.mrb` file, the type is automatically `RITE`. rpremote reads `PICORUBY_VE
 
 ```sh
 # Create RITE0300 for PicoRuby 3.4.5 R2P2.
-rpremote dfu compile examples/picoruby/education/07_dfu/app_v1.rb --language-version 3.4.5 --output build/dfu/app.mrb
+rpremote dfu compile examples/picoruby/education/07_dfu/app_v1.rb --output build/dfu/app.mrb
 rpremote dfu app build/dfu/app.mrb
 # PicoRuby 4.0.3 creates RITE0400.
-rpremote dfu compile examples/picoruby/education/07_dfu/app_v1.rb --language-version 4.0.3
+rpremote dfu compile examples/picoruby/education/07_dfu/app_v1.rb
 ```
 
 Without `--output`, the `.mrb` is created beside its input file. Use `--cache` to select the directory containing PicoRuby sources.

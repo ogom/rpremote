@@ -16,45 +16,39 @@
     },
     {
       "type": "path",
+      "source": "examples/picoruby/mrbgems/mpu6050",
+      "sha256": "de7c1ebfccc864e92b9e0d776a8c3d141b69b5677644d50adf4c35295723fb47",
+      "require_name": "mpu6050"
+    },
+    {
+      "type": "path",
+      "source": "examples/picoruby/mrbgems/bmi270",
+      "sha256": "179529db559b3f519e7318c05121697262c0714b0e237e57b08fa162dd47b88f",
+      "require_name": "bmi270"
+    },
+    {
+      "type": "path",
       "source": "examples/picoruby/mrbgems/max30102",
-      "sha256": "24678422932f9d8033a765d7e8fdb137c9241706a5b3ce45478617240a705944",
+      "sha256": "38cfadd354209ab88338cc4dd7c73a3fedf30667baa2105cf03a04fca8611864",
       "require_name": "max30102"
     },
     {
       "type": "path",
+      "source": "examples/picoruby/mrbgems/hcsr04_temp",
+      "sha256": "6457731e4680eaa5196144428e57ac017cb000e251747fcb2176cf6b95b0a597",
+      "require_name": "hcsr04_temp"
+    },
+    {
+      "type": "path",
       "source": "examples/picoruby/mrbgems/ws2812_spi",
-      "sha256": "b83692a15708928160e4598f774c57e243b041ccba56102801c4d3878c9917d6",
+      "sha256": "c5345792eb4ded358a08d8f2df63f651466c4be00cc46ac536c1567b44ef0f57",
       "require_name": "ws2812_spi"
     },
     {
       "type": "path",
-      "source": "examples/picoruby/projects/daisenkofun/mrbgems/daisenkofun-illumination",
-      "sha256": "ccb0855c38b8dfd5484dd38854bdae2cedcae6af90e5c8006c379351b128e3b7",
-      "auto_require": false
-    },
-    {
-      "type": "path",
-      "source": "examples/picoruby/projects/daisenkofun/mrbgems/daisenkofun-oximeter",
-      "sha256": "f951e670b69b43313b923f1cae40bd46e65a6a409ff6dc548e37faf770e114f4",
-      "auto_require": false
-    },
-    {
-      "type": "path",
-      "source": "examples/picoruby/projects/daisenkofun/mrbgems/daisenkofun-musical",
-      "sha256": "124aa1581f7153656b35f7f122d3a89f439d8eda3fa45e7699b209295c09433e",
-      "auto_require": false
-    },
-    {
-      "type": "path",
-      "source": "examples/picoruby/projects/daisenkofun/mrbgems/daisenkofun-runtime",
-      "sha256": "009ddd847181ad870b5f97712efb241ef92b6c30d2dbae99121ef34943a3003b",
-      "auto_require": false
-    },
-    {
-      "type": "path",
-      "source": "examples/picoruby/projects/daisenkofun/mrbgems/daisenkofun-application",
-      "sha256": "8cc5c5b6ae4aca6afe1a46de4d47044f584cba3ae89421e68eb78a5f09f40ff5",
-      "auto_require": false
+      "source": "examples/picoruby/mrbgems/my_gems",
+      "sha256": "fab8651736af0b8dcd08c04cc594c3d4f87afb268b14b314f5d11d7e9d64c3a1",
+      "require_name": "my_gems"
     }
   ]
 }

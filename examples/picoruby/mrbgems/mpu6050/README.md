@@ -18,7 +18,7 @@ Lock and build the custom firmware after changing the gem:
 
 ```sh
 rpremote mrbgems lock
-rpremote build --language picoruby --language-version 4.0.3 --board pico2
+rpremote build
 ```
 
 ## Usage

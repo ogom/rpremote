@@ -4,6 +4,13 @@ Notable changes to the examples, local mrbgems, firmware support files, and repo
 
 ## Unreleased
 
+## 0.6.0 - 2026-09-20
+
+- Add the reusable `picoruby-bootsel` mrbgem, providing `Machine.enter_bootsel` for RP2040 and RP2350 firmware without patching PicoRuby source.
+- Remove the PicoRuby 3.4.5 and 4.0.3 BOOTSEL patches, and document the mrbgem-based `rpremote bootsel` and `rpremote exec` workflows in English and Japanese.
+- Update repository examples and configuration guidance to use the `latest` PicoRuby source by default while retaining explicit version selection through configuration or `--language-version`.
+- Add centralized executable specifications and expanded bilingual development documentation for the Daisen Kofun, Goryokaku, and oximeter projects.
+
 ## 0.5.0 - 2026-09-12
 
 - Add the Goryokaku PicoRuby project with illumination, musical, and combined modes, Y-UP shake/strike detection, synchronized PWM and WS2812 performance cues, IMU-and-touch mode selection, migrated local mrbgems, dedicated illumination patterns, and bilingual structure and LED-layout documentation.

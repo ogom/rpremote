@@ -4,6 +4,13 @@ Notable changes to the `rpremote` RubyGem will be documented in this file. Repos
 
 ## Unreleased
 
+## 0.6.0 - 2026-09-20
+
+- Change the default PicoRuby version to `latest`, backed by the current `master` branch, while retaining `--language-version` for selecting a release tag.
+- Replace the patched R2P2 `bootsel` executable with a temporary PicoModem script that calls `Machine.enter_bootsel` from the embedded `picoruby-bootsel` mrbgem.
+- Support both the legacy `build/host/bin/mrbc` layout and the PicoRuby 4.0.4 `build/mrbc/default/bin/mrbc` layout when building custom firmware.
+- Expand the human-readable executable specifications and validate bilingual documentation structure, links, command coverage, and safety warnings.
+
 ## 0.5.0 - 2026-09-12
 
 - Make `deploy PATH` flash the existing UF2 by default, and add `deploy PATH --build` for the previous build-and-deploy workflow.

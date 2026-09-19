@@ -13,7 +13,7 @@ gem path: "examples/picoruby/mrbgems/max30102"
 
 ```sh
 rpremote mrbgems lock
-rpremote build --language picoruby --language-version 4.0.3 --board pico2
+rpremote build
 ```
 
 ## Usage

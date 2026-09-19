@@ -9,8 +9,8 @@
 ```sh
 rpremote mrbgems check
 rpremote mrbgems lock
-rpremote build --language picoruby --language-version 4.0.3 --board pico2
-rpremote flash --mount /Volumes/RP2350
+rpremote build
+rpremote flash
 ```
 
 初回のインストール時と、R2P2が利用できない場合の復旧時は、物理BOOTSELボタンが必要です。
@@ -30,7 +30,7 @@ BOOTSEL ready: /Volumes/RP2350
 続けて、対象のUF2を書き込んでください。
 
 ```sh
-rpremote flash --firmware firmware/picoruby-4.0.3-pico2.uf2 --mount /Volumes/RP2350
+rpremote flash --firmware firmware/picoruby-latest-pico2.uf2
 ```
 
 PicoRubyソースのパッチや、R2P2に組み込みの`/bin/bootsel`コマンドは使用しません。

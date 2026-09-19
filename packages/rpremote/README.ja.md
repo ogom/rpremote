@@ -26,7 +26,7 @@ gem install rpremote
 ```sh
 rpremote setup
 rpremote build
-rpremote flash --mount /Volumes/RP2350
+rpremote flash
 rpremote run main.rb
 ```
 
@@ -39,7 +39,7 @@ rpremote deploy path/to/project
 rpremote deploy path/to/project --build
 ```
 
-既定では`firmware/picoruby-4.0.3/`にソースを準備し、`firmware/picoruby-4.0.3-pico2.uf2`を生成します。対象ボードを明示する必要がある場合は、`rpremote ports`でR2P2のCDC 0ポートを確認してください。
+既定では`firmware/picoruby-latest/`にソースを準備し、`firmware/picoruby-latest-pico2.uf2`を生成します。対象ボードを明示する必要がある場合は、`rpremote ports`でR2P2のCDC 0ポートを確認してください。
 
 ## mrbgemを追加する
 
@@ -66,9 +66,9 @@ rpremote build
 ## 対象を選択する
 
 ```sh
-rpremote setup --language picoruby --language-version 3.4.2
-rpremote build --language picoruby --language-version 3.4.2 --board pico2
-rpremote flash --language picoruby --language-version 3.4.2 --board pico2 --mount /Volumes/RP2350
+rpremote setup
+rpremote build
+rpremote flash
 ```
 
 コマンドラインオプションは`config/setting.json`より優先されます。現在実装されているのはPicoRubyです。将来のMicroPythonと追加Picoボード対応に備え、`language`と`board`はインターフェースに残しています。

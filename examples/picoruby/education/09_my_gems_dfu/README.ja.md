@@ -20,8 +20,8 @@ mrbgemとアプリを分けることで、共通処理はファームウェア�
 ```sh
 rpremote mrbgems check
 rpremote mrbgems lock
-rpremote build --language picoruby --language-version 4.0.3 --board pico2
-rpremote flash --mount /Volumes/RP2350
+rpremote build
+rpremote flash
 ```
 
 ## 2. v1をDFUで配備する

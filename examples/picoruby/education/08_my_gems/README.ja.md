@@ -17,8 +17,8 @@ gem path: "examples/picoruby/mrbgems/my_gems"
 ```sh
 rpremote mrbgems check
 rpremote mrbgems lock
-rpremote build --language picoruby --language-version 4.0.3 --board pico2
-rpremote flash --mount /Volumes/RP2350
+rpremote build
+rpremote flash
 ```
 
 `Mrbgems.lock`にはローカルgem内容のSHA-256が記録されます。ローカルgemを変更したら、`rpremote mrbgems lock`をもう一度実行してください。

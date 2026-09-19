@@ -118,10 +118,10 @@ rpremote reset
 
 ```sh
 # PicoRuby 3.4.5のR2P2に合わせてRITE0300を生成する
-rpremote dfu compile examples/picoruby/education/07_dfu/app_v1.rb --language-version 3.4.5 --output build/dfu/app.mrb
+rpremote dfu compile examples/picoruby/education/07_dfu/app_v1.rb --output build/dfu/app.mrb
 rpremote dfu app build/dfu/app.mrb
 # PicoRuby 4.0.3の場合はRITE0400を生成する
-rpremote dfu compile examples/picoruby/education/07_dfu/app_v1.rb --language-version 4.0.3
+rpremote dfu compile examples/picoruby/education/07_dfu/app_v1.rb
 ```
 
 `--output`を省略すると、入力ファイルと同じディレクトリに`.mrb`を生成します。`--cache`でPicoRubyソースを置いたディレクトリを指定できます。

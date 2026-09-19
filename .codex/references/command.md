@@ -23,10 +23,10 @@ rpremote build clean
 ```
 
 ```sh
-rpremote setup --language-version 4.0.3
+rpremote setup
 rpremote mrbgems check
 rpremote mrbgems lock
-rpremote build --language-version 4.0.3 --board pico2 --firmware firmware/r2p2-picoruby-4.0.3-pico2.uf2
+rpremote build
 ```
 
 The project-root `Mrbgems` is auto-detected. `--firmware` names the completed UF2. `build --output` is not supported. `build clean` removes only generated `build/` intermediates.
@@ -38,11 +38,11 @@ rpremote bootsel [--reset-flash-memory] [--mount DIR] [--port PORT] [--baud RATE
 rpremote flash [--firmware FILE] [--language picoruby] [--language-version VERSION] [--board pico2|pico2_w] [--cache DIR] [--mount DIR] [--port PORT] [--timeout SEC]
 ```
 
-For the first R2P2 installation, hold the physical BOOTSEL button while connecting the Pico, then run `flash`. With a working PicoRuby 4.x R2P2 installation, `bootsel` requests USB BOOTSEL mode through CDC 0; it waits for the RP2350 volume before `flash` copies the UF2.
+For the first R2P2 installation, hold the physical BOOTSEL button while connecting the Pico, then run `flash`. After installing firmware that embeds `picoruby-bootsel`, `bootsel` uploads a temporary Ruby script through CDC 0 and calls `Machine.enter_bootsel`; it waits for the RP2350 volume before `flash` copies the UF2.
 
 ```sh
 rpremote bootsel
-rpremote flash --firmware firmware/r2p2-picoruby-4.0.3-pico2.uf2 --mount /Volumes/RP2350
+rpremote flash
 ```
 
 `bootsel --reset-flash-memory` copies `nuke_universal.uf2` to the BOOTSEL volume and erases the Pico's external flash. It removes stored data and firmware. Wait for BOOTSEL again, then run `rpremote flash` to reinstall R2P2.

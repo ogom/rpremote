@@ -17,8 +17,8 @@ Validate and lock dependencies, then build and flash custom R2P2 firmware.
 ```sh
 rpremote mrbgems check
 rpremote mrbgems lock
-rpremote build --language picoruby --language-version 4.0.3 --board pico2
-rpremote flash --mount /Volumes/RP2350
+rpremote build
+rpremote flash
 ```
 
 `Mrbgems.lock` records a SHA-256 hash of the local gem contents. Run `rpremote mrbgems lock` again after changing the local gem.

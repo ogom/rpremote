@@ -18,7 +18,7 @@ gemを変更した後は、lockを更新してカスタムファームウェア�
 
 ```sh
 rpremote mrbgems lock
-rpremote build --language picoruby --language-version 4.0.3 --board pico2
+rpremote build
 ```
 
 ## 使い方
