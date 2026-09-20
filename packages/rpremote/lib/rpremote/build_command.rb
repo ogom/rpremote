@@ -19,7 +19,7 @@ module Rpremote
         board: Target::DEFAULT_BOARD,
         cache_dir: defaults.fetch(:cache, Target::DEFAULT_CACHE_DIR),
         firmware: defaults[:firmware],
-        mrbgems: nil
+        mrbgems_lock: defaults[:mrbgems_lock]
       }.merge(defaults.except(:cache))
       OptionParser.new do |parser|
         parser.on("--language LANGUAGE") { |value| options[:language] = value }
@@ -27,8 +27,8 @@ module Rpremote
         parser.on("--board BOARD") { |value| options[:board] = value }
         parser.on("--firmware FILE") { |value| options[:firmware] = value }
         parser.on("--cache DIR") { |value| options[:cache_dir] = value }
-        parser.on("--mrbgems FILE") { |value| options[:mrbgems] = value }
-        parser.on("--no-mrbgems") { options[:mrbgems] = false }
+        parser.on("--lockfile FILE") { |value| options[:mrbgems_lock] = value }
+        parser.on("--no-mrbgems") { options[:mrbgems_lock] = false }
       end.parse!(args)
       raise ArgumentError, "build does not accept arguments" unless args.empty?
 

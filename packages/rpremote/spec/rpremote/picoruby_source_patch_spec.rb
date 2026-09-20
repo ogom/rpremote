@@ -80,4 +80,57 @@ RSpec.describe "Applying rpremote compatibility patches to PicoRuby" do
       expect(File.read(pwm)).to eq(patched)
     end
   end
+
+  it "keeps the PWM clock running only while a PWM slice is active on PicoRuby 4.0.4" do
+    Dir.mktmpdir do |source|
+      pwm = File.join(source, described_class::PWM_PATH)
+      FileUtils.mkdir_p(File.dirname(pwm))
+      File.write(pwm, <<~C)
+        #include "pico/stdlib.h"
+        #include "hardware/clocks.h"
+        #include "hardware/pwm.h"
+
+        #include "../../include/pwm.h"
+
+        void
+        PWM_init(uint32_t pin)
+        {
+          gpio_set_function(pin, GPIO_FUNC_PWM);
+        }
+
+        void
+        PWM_set_frequency_and_duty(uint32_t pin, picorb_float_t frequency, picorb_float_t duty_cycle)
+        {
+          uint slice_num = pwm_gpio_to_slice_num(pin);
+          uint channel = pwm_gpio_to_channel(pin);
+          float sys_clk = (float)clock_get_hz(clk_sys);
+          float div = sys_clk / ((float)frequency * 65536.0f);
+          uint16_t wrap = (uint16_t)(sys_clk / (div * (float)frequency));
+          pwm_set_clkdiv(slice_num, div);
+          pwm_set_wrap(slice_num, wrap);
+          uint16_t duty = (uint16_t)((float)wrap * (float)duty_cycle / 100.0f);
+          pwm_set_chan_level(slice_num, channel, duty);
+        }
+
+        void
+        PWM_set_enabled(uint32_t pin, bool enabled)
+        {
+          uint slice_num = pwm_gpio_to_slice_num(pin);
+          pwm_set_enabled(slice_num, enabled);
+        }
+      C
+
+      patcher = described_class.new(version: "4.0.4")
+      expect(patcher.apply(source)).to be_nil
+
+      patched = File.read(pwm)
+      expect(patched).to include("CLOCKS_SLEEP_EN0_CLK_SYS_PWM_BITS")
+      expect(patched).to include("!enabled && pwm_hw->en == 0")
+      expect(patched.index("hw_set_bits")).to be < patched.index("pwm_set_enabled")
+      expect(patched.index("pwm_set_enabled")).to be < patched.index("hw_clear_bits")
+
+      expect(patcher.apply(source)).to be_nil
+      expect(File.read(pwm)).to eq(patched)
+    end
+  end
 end

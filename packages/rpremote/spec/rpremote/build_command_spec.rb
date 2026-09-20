@@ -43,6 +43,34 @@ RSpec.describe "Selecting the custom firmware build destination" do
     )
   end
 
+  it "selects an explicit Mrbgems lock file" do
+    builder = instance_double(Rpremote::Builder, build: nil)
+
+    described_class.run(
+      ["--lockfile", "config/production.lock"], defaults: {}, builder: builder
+    )
+
+    expect(builder).to have_received(:build).with(
+      hash_including(mrbgems_lock: "config/production.lock")
+    )
+  end
+
+  it "rejects build-time group selection" do
+    builder = instance_double(Rpremote::Builder)
+
+    expect do
+      described_class.run(["--groups", "production"], defaults: {}, builder: builder)
+    end.to raise_error(OptionParser::InvalidOption, /--groups/)
+  end
+
+  it "rejects the removed build --mrbgems option" do
+    builder = instance_double(Rpremote::Builder)
+
+    expect do
+      described_class.run(["--mrbgems", "Mrbgems"], defaults: {}, builder: builder)
+    end.to raise_error(OptionParser::InvalidOption, /--mrbgems/)
+  end
+
   it "rejects the removed build --output option" do
     builder = instance_double(Rpremote::Builder)
 

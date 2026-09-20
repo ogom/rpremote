@@ -19,7 +19,7 @@ RSpec.describe "Building custom PicoRuby firmware" do
       source = File.join(root, "firmware", "picoruby-latest")
       FileUtils.mkdir_p(source)
       described_class.new(root: root, runner: runner).build(
-        mrbgems: false, output: output, error: error
+        mrbgems_lock: false, output: output, error: error
       )
 
       arguments, keywords = calls.fetch(0)
@@ -46,7 +46,7 @@ RSpec.describe "Building custom PicoRuby firmware" do
       source = File.join(root, "firmware", "picoruby-3.4.2")
       FileUtils.mkdir_p(source)
       described_class.new(root: root, runner: runner).build(
-        language_version: "3.4.2", mrbgems: false
+        language_version: "3.4.2", mrbgems_lock: false
       )
 
       arguments, = calls.fetch(0)
@@ -72,7 +72,7 @@ RSpec.describe "Building custom PicoRuby firmware" do
     Dir.mktmpdir do |root|
       source = File.join(root, "firmware", "picoruby-latest")
       FileUtils.mkdir_p(source)
-      described_class.new(root: root, runner: runner, source_patcher: source_patcher).build(mrbgems: false)
+      described_class.new(root: root, runner: runner, source_patcher: source_patcher).build(mrbgems_lock: false)
 
       expect(events).to eq([[:patch, source, "latest"], [:build]])
     end
@@ -109,9 +109,8 @@ RSpec.describe "Building custom PicoRuby firmware" do
     end
     manager = instance_double(
       Rpremote::Mrbgems,
-      path: "/project/Mrbgems",
       lock_path: "/project/Mrbgems.lock",
-      vm: :mrubyc,
+      locked_vm: :mrubyc,
       generate_overlay: Rpremote::Mrbgems::Overlay.new(
         path: "/project/build/mrbgems/config.rb", fingerprint: "abc123def456"
       )
@@ -121,7 +120,7 @@ RSpec.describe "Building custom PicoRuby firmware" do
     Dir.mktmpdir do |directory|
       source = File.join(directory, "firmware", "picoruby-latest")
       FileUtils.mkdir_p(File.join(source, "build_config"))
-      File.write(File.join(directory, "Mrbgems"), "")
+      File.write(File.join(directory, "Mrbgems.lock"), "")
       File.write(
         File.join(source, "build_config", "r2p2-femtoruby-pico2.rb"),
         ""
@@ -136,6 +135,127 @@ RSpec.describe "Building custom PicoRuby firmware" do
       "RPREMOTE_MRBGEMS_FINGERPRINT" => "abc123def456",
       "RPREMOTE_CONFIG_NAME" => "r2p2-femtoruby-pico2"
     )
-    expect(output.string).to eq("using Mrbgems: /project/Mrbgems\nusing Mrbgems.lock: /project/Mrbgems.lock\n")
+    expect(output.string).to eq("using Mrbgems.lock: /project/Mrbgems.lock\n")
+  end
+
+  it "uses an explicitly selected Mrbgems.lock" do
+    runner = ->(*, **) { true }
+    output = StringIO.new
+    manager = instance_double(
+      Rpremote::Mrbgems,
+      lock_path: "/project/Mrbgems.lock",
+      locked_vm: :mrubyc,
+      generate_overlay: Rpremote::Mrbgems::Overlay.new(path: "/project/config.rb", fingerprint: "abc123def456")
+    )
+    mrbgems_class = class_double(Rpremote::Mrbgems, new: manager)
+
+    Dir.mktmpdir do |directory|
+      source = File.join(directory, "firmware", "picoruby-latest")
+      FileUtils.mkdir_p(File.join(source, "build_config"))
+      FileUtils.mkdir_p(File.join(directory, "config"))
+      File.write(File.join(directory, "config", "production.lock"), "")
+      File.write(File.join(source, "build_config", "r2p2-femtoruby-pico2.rb"), "")
+
+      described_class.new(root: directory, runner: runner, mrbgems_class: mrbgems_class).build(
+        mrbgems_lock: "config/production.lock", output: output
+      )
+    end
+
+    expect(mrbgems_class).to have_received(:new).with(
+      lock_path: end_with("config/production.lock"), cwd: kind_of(String)
+    )
+    expect(output.string).to include("using Mrbgems.lock: /project/Mrbgems.lock\n")
+  end
+
+  it "requires an explicit lock when Mrbgems exists" do
+    Dir.mktmpdir do |directory|
+      source = File.join(directory, "firmware", "picoruby-latest")
+      FileUtils.mkdir_p(source)
+      File.write(File.join(directory, "Mrbgems"), "")
+
+      expect { described_class.new(root: directory, runner: ->(*, **) { true }).build }
+        .to raise_error(Rpremote::Builder::Error, /rpremote mrbgems lock/)
+    end
+  end
+
+  it "builds normally when neither Mrbgems nor its lock exists" do
+    calls = 0
+    runner = lambda do |*, **|
+      calls += 1
+      true
+    end
+
+    Dir.mktmpdir do |root|
+      FileUtils.mkdir_p(File.join(root, "firmware", "picoruby-latest"))
+
+      described_class.new(root: root, runner: runner, source_patcher: ->(*) {}).build
+    end
+
+    expect(calls).to eq(1)
+  end
+
+  it "ignores an existing lock when mrbgems are disabled" do
+    environments = []
+    runner = lambda do |environment, *, **|
+      environments << environment
+      true
+    end
+
+    Dir.mktmpdir do |root|
+      FileUtils.mkdir_p(File.join(root, "firmware", "picoruby-latest"))
+      File.write(File.join(root, "Mrbgems.lock"), "not read")
+
+      described_class.new(root: root, runner: runner, source_patcher: ->(*) {}).build(mrbgems_lock: false)
+    end
+
+    expect(environments.fetch(0)).not_to have_key("RPREMOTE_MRUBY_CONFIG")
+  end
+
+  it "uses an actual lock in entry order without evaluating Mrbgems or changing the lock" do
+    environments = []
+    runner = lambda do |environment, *, **|
+      environments << environment
+      true
+    end
+
+    Dir.mktmpdir do |root|
+      source = File.join(root, "firmware", "picoruby-latest")
+      FileUtils.mkdir_p(File.join(source, "build_config"))
+      File.write(File.join(source, "build_config", "r2p2-picoruby-pico2.rb"), "")
+      File.write(File.join(root, "Mrbgems"), "raise 'must not be evaluated'\n")
+      lock_path = File.join(root, "Mrbgems.lock")
+      File.write(lock_path, JSON.generate(
+                              "version" => 2, "with" => [], "without" => [],
+                              "gems" => [
+                                { "type" => "github", "source" => "example/first", "branch" => "main",
+                                  "commit" => "a" * 40 },
+                                { "type" => "github", "source" => "example/second", "branch" => "stable",
+                                  "commit" => "b" * 40 }
+                              ]
+                            ))
+      original = File.binread(lock_path)
+
+      described_class.new(root: root, runner: runner, source_patcher: ->(*) {}).build
+
+      overlay = File.read(environments.fetch(0).fetch("RPREMOTE_MRUBY_CONFIG"))
+      expect(overlay.index("example/first")).to be < overlay.index("example/second")
+      expect(overlay).to include("checksum_hash: #{("a" * 40).inspect}")
+      expect(overlay).to include("checksum_hash: #{("b" * 40).inspect}")
+      expect(File.binread(lock_path)).to eq(original)
+    end
+  end
+
+  it "does not start a build when the lock is invalid" do
+    runner = ->(*, **) { raise "must not run" }
+
+    Dir.mktmpdir do |root|
+      source = File.join(root, "firmware", "picoruby-latest")
+      FileUtils.mkdir_p(File.join(source, "build_config"))
+      File.write(File.join(root, "Mrbgems.lock"), JSON.generate("version" => 2, "with" => [], "gems" => [nil]))
+
+      expect do
+        described_class.new(root: root, runner: runner, source_patcher: ->(*) {}).build
+      end.to raise_error(Rpremote::Mrbgems::LockError)
+    end
   end
 end

@@ -188,6 +188,8 @@ vm :mrubyc
 gem path: "examples/picoruby/mrbgems/device"
 ```
 
+Variant-specific dependencies may use Bundler-style `group` blocks or `gem ..., group: NAME`. Run `rpremote mrbgems lock --with NAME[,NAME] --without NAME[,NAME]` to lock common gems and selected, non-excluded groups; exclusions take precedence, and firmware builds and subsequent `run`, `exec`, or `deploy` commands use exactly that lock.
+
 Use the VM required by the gem and its dependencies. Do not edit extracted PicoRuby sources or official build configurations.
 
 After changing a local mrbgem, refresh its content hash and rebuild the firmware:

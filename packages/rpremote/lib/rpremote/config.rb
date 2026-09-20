@@ -16,17 +16,17 @@ module Rpremote
       baud: Integer,
       timeout: Numeric,
       language: String,
-      mrbgems: [String, FalseClass].freeze
+      mrbgems_lock: [String, FalseClass].freeze
     }.freeze
     COMMAND_OPTIONS = {
       "setup" => %i[cache language language_version],
-      "build" => %i[cache language language_version board firmware mrbgems],
+      "build" => %i[cache language language_version board firmware mrbgems_lock],
       "bootsel" => %i[mount port baud timeout],
-      "deploy" => %i[cache language language_version board firmware mrbgems mount port baud timeout],
+      "deploy" => %i[cache language language_version board firmware mrbgems_lock mount port baud timeout],
       "dfu" => %i[cache language language_version port baud timeout],
       "flash" => %i[cache language language_version board firmware mount port timeout],
-      "run" => %i[port baud timeout language],
-      "exec" => %i[port baud timeout language],
+      "run" => %i[port baud timeout language mrbgems_lock],
+      "exec" => %i[port baud timeout language mrbgems_lock],
       "reset" => %i[port baud timeout],
       "monitor" => %i[port baud timeout],
       "repl" => %i[port baud timeout],
@@ -106,6 +106,7 @@ module Rpremote
         expected = OPTION_TYPES[key]
         raise Error, "unknown config option: #{key}" unless expected
         raise Error, "config option #{key} must be a #{type_name(expected)}" unless valid_value?(value, expected)
+
         next unless %i[baud timeout].include?(key)
         next if value.positive?
 

@@ -1,6 +1,6 @@
 # Third-Party Notices
 
-`rpremote` does not bundle R2P2 firmware. The `setup` command downloads a selected PicoRuby/R2P2 4.0.3 or 3.4.2 release from the PicoRuby project and verifies its published SHA-256 digest.
+`rpremote` does not bundle R2P2 firmware. The `setup` command downloads and prepares the selected PicoRuby/R2P2 source archive from the PicoRuby project.
 
 `setup` also downloads Raspberry Pi's `nuke_universal.uf2` from the official Pico SDK prebuilts release. It is used only by `rpremote bootsel --reset-flash-memory` to erase external flash memory.
 

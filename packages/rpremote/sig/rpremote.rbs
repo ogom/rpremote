@@ -208,7 +208,7 @@ module Rpremote
       ?board: String,
       ?cache_dir: String,
       ?firmware: String?,
-      ?mrbgems: String | false | nil,
+      ?mrbgems_lock: String | false | nil,
       ?output: IO,
       ?error: IO
     ) -> void
@@ -237,6 +237,7 @@ module Rpremote
       attr_reader path: String?
       attr_reader require_name: String?
       attr_reader auto_require: bool
+      attr_reader groups: Array[Symbol]
     end
 
     class Overlay < Data
@@ -247,6 +248,9 @@ module Rpremote
     attr_reader path: String
     attr_reader lock_path: String
 
+    def self.parse_groups: (String value) -> Array[Symbol]
+    def self.normalize_groups: (untyped values) -> Array[Symbol]
+
     def initialize: (
       ?path: String,
       ?lock_path: String?,
@@ -255,15 +259,18 @@ module Rpremote
     ) -> void
     def exist?: () -> bool
     def dependencies: () -> Array[Dependency]
+    def selected_dependencies: (?with: Array[String | Symbol], ?without: Array[String | Symbol]) -> Array[Dependency]
     def vm: () -> Symbol?
     def check: () -> Array[Dependency]
-    def lock: (?update: bool) -> Hash[String, untyped]
+    def lock: (?update: bool, ?with: Array[String | Symbol], ?without: Array[String | Symbol]) -> Hash[String, untyped]
     def read_lock: (?required: bool) -> Hash[String, untyped]?
+    def require_names: () -> Array[String]
+    def prepend_requires: (String source) -> String
+    def locked_vm: () -> Symbol?
     def generate_overlay: (
       base_config: String,
       target: String,
-      directory: String,
-      ?update: bool
+      directory: String
     ) -> Overlay
   end
 

@@ -11,6 +11,10 @@ A PicoRuby project can combine public and local mrbgems in `Mrbgems`:
 vm :mrubyc
 gem github: "ksbmyk/picoruby-ws2812-plus", branch: "main"
 gem path: "../mrbgems/my-device"
+
+group :test do
+  gem path: "../mrbgems/test-support"
+end
 ```
 
 The local path is relative to `Mrbgems` and must contain `mrbgem.rake`.
@@ -22,7 +26,8 @@ rpremote mrbgems lock
 rpremote build
 ```
 
-Commit `Mrbgems` and `Mrbgems.lock` together. Ordinary builds reuse the locked GitHub commit and local-content hash. Use `mrbgems update` only for an intended dependency update.
+Commit `Mrbgems` and `Mrbgems.lock` together. Ordinary builds use only the locked GitHub commit and verified local-content hash. Use `mrbgems update` only for an intended dependency update.
+Use `mrbgems lock --with NAME[,NAME] --without NAME[,NAME]` to put common and selected, non-excluded groups into the lock. Exclusions take precedence. `build`, `deploy`, `run`, and `exec` then consume that exact lock without selecting groups again.
 
 ## Device checks and troubleshooting
 

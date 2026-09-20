@@ -29,7 +29,7 @@ The file is a JSON object. Keys use snake_case; their corresponding CLI options 
   "board": "pico2",
   "firmware": "firmware/picoruby-latest-pico2.uf2",
   "mount": "/Volumes/RP2350",
-  "mrbgems": "Mrbgems"
+  "mrbgems_lock": "config/production.lock"
 }
 ```
 
@@ -45,13 +45,13 @@ All keys are validated even when the current command does not use them. Unknown 
 
 ## Show effective configuration
 
-`rpremote config show` resolves the configuration file, defaults, and command-line options without connecting to a board or changing project state. It prints the selected language, language version, board, cache, firmware path, mrbgems setting, mount, port, baud rate, and timeout.
+`rpremote config show` resolves the configuration file, defaults, and command-line options without connecting to a board or changing project state. It prints the selected language, language version, board, cache, firmware path, mrbgems lock setting, mount, port, baud rate, and timeout.
 
 ```sh
 rpremote config show --config config/pico2.json
 ```
 
-For example, `--no-mrbgems` disables automatic Mrbgems detection. `{version}` in `cache` expands to the selected language version, and the default firmware path expands from the resolved cache, language, language version, and board.
+For example, `--no-mrbgems` disables automatic `Mrbgems.lock` detection. `{version}` in `cache` expands to the selected language version, and the default firmware path expands from the resolved cache, language, language version, and board.
 
 ```text
 language=picoruby
@@ -59,7 +59,7 @@ language_version=latest
 board=pico2_w
 cache=firmware
 firmware=firmware/picoruby-latest-pico2_w.uf2
-mrbgems=false
+mrbgems_lock=false
 mount=auto
 port=auto
 baud=115200
@@ -77,7 +77,7 @@ timeout=20.0
 | `cache` | `firmware` | Stores PicoRuby sources and custom UF2 files. `{version}` expands to the language version. |
 | `board` | `pico2` | Board for firmware operations (`pico2`, `pico2_w`). |
 | `firmware` | `{cache}/{language}-{language_version}-{board}.uf2` | Build output and UF2 used by `deploy` or `flash`. |
-| `mrbgems` | Auto-detected | Mrbgems definition for `build` or `deploy`; set to `false` to disable it. |
+| `mrbgems_lock` | Auto-detected | `Mrbgems.lock` used by `build`, `deploy`, `run`, and `exec`; set to `false` to disable it. |
 | `mount` | Auto-detected | RP2350 BOOTSEL volume used by `bootsel`, `deploy`, or `flash`. |
 | `port` | Automatically selected CDC 0 | R2P2 serial port. |
 | `baud` | `115200` | Serial communication speed. |
@@ -98,19 +98,19 @@ Use this table when comparing configuration and execution choices. Current synta
 | Command | Main available options |
 | ------- | ---------------------- |
 | `setup` | `--language`, `--language-version`, `--cache`, `--force` |
-| `build` | `--language`, `--language-version`, `--board`, `--cache`, `--firmware`, `--mrbgems`, `--no-mrbgems` |
+| `build` | `--language`, `--language-version`, `--board`, `--cache`, `--firmware`, `--lockfile`, `--no-mrbgems` |
 | `build clean` | None; removes only the project's `build/` directory |
 | `bootsel` | `--reset-flash-memory`, `--mount`, `--port`, `--baud`, `--timeout` |
-| `deploy PATH` | `--build`, `--language`, `--language-version`, `--board`, `--cache`, `--firmware`, `--mrbgems`, `--no-mrbgems`, `--mount`, `--port`, `--baud`, `--timeout` |
+| `deploy PATH` | `--build`, `--language`, `--language-version`, `--board`, `--cache`, `--firmware`, `--lockfile`, `--no-mrbgems`, `--mount`, `--port`, `--baud`, `--timeout` |
 | `dfu app FILE` | `--type ruby\|rite`, `--port`, `--baud`, `--timeout` |
 | `dfu compile FILE` | `--output`, `--language`, `--language-version`, `--cache` |
 | `dfu status` / `dfu remove` | `--port`, `--baud`, `--timeout` |
-| `mrbgems check/list/lock/update` | `--file`, `--lockfile` |
+| `mrbgems check/list/lock/update` | `--file`, `--lockfile`; `lock` and `update` also accept `--with`, `--without` |
 | `flash` | `--language`, `--language-version`, `--board`, `--cache`, `--firmware`, `--mount`, `--port`, `--timeout` |
-| `config show` | `--language`, `--language-version`, `--board`, `--cache`, `--firmware`, `--mrbgems`, `--no-mrbgems`, `--mount`, `--port`, `--baud`, `--timeout` |
+| `config show` | `--language`, `--language-version`, `--board`, `--cache`, `--firmware`, `--lockfile`, `--no-mrbgems`, `--mount`, `--port`, `--baud`, `--timeout` |
 | `ports` | None |
-| `run FILE` | `--port`, `--baud`, `--timeout`, `--reset-on-timeout`, `--language` |
-| `exec CODE` | `--port`, `--baud`, `--timeout`, `--language` |
+| `run FILE` | `--port`, `--baud`, `--timeout`, `--reset-on-timeout`, `--language`, `--lockfile`, `--no-mrbgems` |
+| `exec CODE` | `--port`, `--baud`, `--timeout`, `--language`, `--lockfile`, `--no-mrbgems` |
 | `monitor` / `repl` / `reset` | `--port`, `--baud`, `--timeout` |
 | `fs cp` | `--recursive`, `--port`, `--baud`, `--timeout` |
 | `fs push/cat/ls/rm/mkdir` | `--port`, `--baud`, `--timeout` |

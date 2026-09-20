@@ -4,6 +4,12 @@ Notable changes to the examples, local mrbgems, firmware support files, and repo
 
 ## Unreleased
 
+## 0.7.0 - 2026-10-04
+
+- Adopt group-selected version 2 `Mrbgems.lock` files for reproducible repository firmware profiles, including explicit Daisen Kofun and Goryokaku groups and test-group exclusion.
+- Add the PicoRuby 4.0.4 PWM sleep-clock compatibility patch and regression coverage for continuous PWM output during scheduler sleep.
+- Update the bilingual Mrbgems, firmware, and configuration guides for lock-first builds and the `--with`/`--without` workflow.
+
 ## 0.6.0 - 2026-09-20
 
 - Add the reusable `picoruby-bootsel` mrbgem, providing `Machine.enter_bootsel` for RP2040 and RP2350 firmware without patching PicoRuby source.

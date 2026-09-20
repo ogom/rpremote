@@ -71,12 +71,12 @@ module Rpremote
     end
 
     def add_mrbgems_environment!(environment, options, source_dir, output)
-      definition = mrbgems_definition(options[:mrbgems])
-      return unless definition
+      lock_file = mrbgems_lock(options[:mrbgems_lock])
+      return unless lock_file
 
-      manager = mrbgems_class.new(path: definition, cwd: root)
+      manager = mrbgems_class.new(lock_path: lock_file, cwd: root)
       config_language = mrbgems_config_language(
-        manager.vm, options.fetch(:language), options.fetch(:language_version)
+        manager.locked_vm, options.fetch(:language), options.fetch(:language_version)
       )
       config_name = "r2p2-#{config_language}-#{options.fetch(:board)}"
       base_config = File.join(source_dir, "build_config", "#{config_name}.rb")
@@ -90,7 +90,6 @@ module Rpremote
       environment["RPREMOTE_CONFIG_NAME"] = config_name
       environment["RPREMOTE_MRUBY_CONFIG"] = overlay.path
       environment["RPREMOTE_MRBGEMS_FINGERPRINT"] = overlay.fingerprint
-      output.puts("using Mrbgems: #{manager.path}")
       output.puts("using Mrbgems.lock: #{manager.lock_path}")
     end
 
@@ -103,12 +102,19 @@ module Rpremote
       modern ? "picoruby" : "microruby"
     end
 
-    def mrbgems_definition(option)
+    def mrbgems_lock(option)
       return if option == false
 
-      candidate = File.expand_path(option || Mrbgems::DEFAULT_PATH, root)
+      candidate = File.expand_path(option || Mrbgems::DEFAULT_LOCK_PATH, root)
       return candidate if File.file?(candidate)
-      raise Error, "mrbgems definition does not exist: #{candidate}" if option
+      raise Error, "mrbgems lock file does not exist: #{candidate}" if option
+
+      definition = File.join(root, Mrbgems::DEFAULT_PATH)
+      if File.file?(definition)
+        raise Error,
+              "Mrbgems.lock does not exist: #{candidate}; " \
+              "run `rpremote mrbgems lock` before building"
+      end
 
       nil
     end

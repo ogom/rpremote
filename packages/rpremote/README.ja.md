@@ -59,7 +59,9 @@ rpremote mrbgems lock
 rpremote build
 ```
 
-`Mrbgems.lock`はGitHubのコミットとローカルgemの内容ハッシュを固定します。`build`は既存のlockを再利用し、`rpremote mrbgems update`だけが新しいコミットを解決します。
+`Mrbgems.lock`は`build`で使うmrbgemを確定します。ビルドは`Mrbgems`を評価せず、GitHub branchも解決せずにlockを読みます。新しいコミットを解決するのは`rpremote mrbgems update`です。
+
+構成ごとのgemは`group :development do ... end`または`gem ..., group: :development`で整理できます。`rpremote mrbgems lock --with production --without test`はグループ外の共通gemとproduction gemをlockへ記録します。除外指定が優先され、`build`、`deploy`、`run`、`exec`はそのlockだけを使います。
 
 ファームウェアへ組み込む一方で、すべての`run`、`exec`、`deploy`に先行ロードしないgemには`auto_require: false`を指定できます。アプリケーション側から必要なgemを明示的に`require`してください。
 

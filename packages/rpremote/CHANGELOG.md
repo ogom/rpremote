@@ -4,6 +4,12 @@ Notable changes to the `rpremote` RubyGem will be documented in this file. Repos
 
 ## Unreleased
 
+## 0.7.0 - 2026-10-04
+
+- Add Bundler-style `group` blocks and `gem ..., group:` to `Mrbgems`; `mrbgems lock|update --with/--without` now selects the locked firmware contents, with exclusions taking precedence, and build/runtime commands consume `Mrbgems.lock` without selecting groups again.
+- Make `Mrbgems.lock` version 2 a self-contained build input, add path checksum verification, and replace build/runtime `--mrbgems` and `--groups` options with `--lockfile`.
+- Keep active RP2040/RP2350 PWM slices clocked during scheduler sleep on PicoRuby 4.0.4, and restore clock gating after the final slice stops.
+
 ## 0.6.0 - 2026-09-20
 
 - Change the default PicoRuby version to `latest`, backed by the current `master` branch, while retaining `--language-version` for selecting a release tag.

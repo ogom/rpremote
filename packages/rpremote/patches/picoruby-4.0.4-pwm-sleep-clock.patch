@@ -1,0 +1,27 @@
+diff --git a/mrbgems/picoruby-pwm/ports/rp2040/pwm.c b/mrbgems/picoruby-pwm/ports/rp2040/pwm.c
+--- a/mrbgems/picoruby-pwm/ports/rp2040/pwm.c
++++ b/mrbgems/picoruby-pwm/ports/rp2040/pwm.c
+@@ -1,3 +1,4 @@
+ #include "pico/stdlib.h"
+ #include "hardware/clocks.h"
+ #include "hardware/pwm.h"
++#include "hardware/structs/clocks.h"
+@@ -61,4 +62,18 @@
+ {
+   uint slice_num = pwm_gpio_to_slice_num(pin);
++  /* The scheduler uses WFI when no task is runnable, and the HAL normally
++   * gates clk_sys_pwm while a core sleeps. Ungate it before starting a slice
++   * so autonomous PWM output continues between scheduler ticks. */
++  if (enabled) {
++    hw_set_bits(&clocks_hw->sleep_en0,
++                CLOCKS_SLEEP_EN0_CLK_SYS_PWM_BITS);
++  }
+   pwm_set_enabled(slice_num, enabled);
++  /* Preserve the clock for every active slice. Once the final slice stops,
++   * restore the HAL's low-power policy instead of keeping PWM clocked merely
++   * because a PWM object was initialized earlier. */
++  if (!enabled && pwm_hw->en == 0) {
++    hw_clear_bits(&clocks_hw->sleep_en0,
++                  CLOCKS_SLEEP_EN0_CLK_SYS_PWM_BITS);
++  }
+ }
