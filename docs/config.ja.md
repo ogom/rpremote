@@ -29,7 +29,7 @@ rpremote build --config config/pico2.json
   "board": "pico2",
   "firmware": "firmware/picoruby-latest-pico2.uf2",
   "mount": "/Volumes/RP2350",
-  "mrbgems": "Mrbgems"
+  "mrbgems_lock": "config/production.lock"
 }
 ```
 
@@ -45,13 +45,13 @@ rpremote build --config config/pico2.json
 
 ## 実効設定を表示する
 
-`rpremote config show`は、ボードへ接続したりプロジェクトの状態を変更したりせずに、設定ファイル、既定値、コマンドラインオプションを解決します。選択された言語、言語バージョン、ボード、キャッシュ、ファームウェアパス、mrbgem設定、マウント先、ポート、ボーレート、タイムアウトを表示します。
+`rpremote config show`は、ボードへ接続したりプロジェクトの状態を変更したりせずに、設定ファイル、既定値、コマンドラインオプションを解決します。選択された言語、言語バージョン、ボード、キャッシュ、ファームウェアパス、mrbgem lock設定、マウント先、ポート、ボーレート、タイムアウトを表示します。
 
 ```sh
 rpremote config show --config config/pico2.json
 ```
 
-たとえば、`--no-mrbgems`はMrbgemsの自動検出を無効にします。`cache`内の`{version}`は選択した言語バージョンへ展開され、既定のファームウェアパスは解決後のキャッシュ、言語、言語バージョン、ボードから展開されます。
+たとえば、`--no-mrbgems`は`Mrbgems.lock`の自動検出を無効にします。`cache`内の`{version}`は選択した言語バージョンへ展開され、既定のファームウェアパスは解決後のキャッシュ、言語、言語バージョン、ボードから展開されます。
 
 ```text
 language=picoruby
@@ -59,7 +59,7 @@ language_version=latest
 board=pico2_w
 cache=firmware
 firmware=firmware/picoruby-latest-pico2_w.uf2
-mrbgems=false
+mrbgems_lock=false
 mount=auto
 port=auto
 baud=115200
@@ -77,7 +77,7 @@ timeout=20.0
 | `cache` | `firmware` | PicoRubyソースとカスタムUF2の保存先。`{version}`を言語版へ展開 |
 | `board` | `pico2` | ファームウェア操作の対象ボード（`pico2`、`pico2_w`） |
 | `firmware` | `{cache}/{language}-{language_version}-{board}.uf2` | `build`の出力先と`deploy`、`flash`で書き込むUF2 |
-| `mrbgems` | 自動検出 | `build`、`deploy`で使うMrbgems定義ファイル。`false`で無効化 |
+| `mrbgems_lock` | 自動検出 | `build`、`deploy`、`run`、`exec`で使う`Mrbgems.lock`。`false`で無効化 |
 | `mount` | 自動検出 | `bootsel`、`deploy`、`flash`時のRP2350 BOOTSELボリューム |
 | `port` | CDC 0を自動選択 | R2P2シリアルポート |
 | `baud` | `115200` | シリアル通信速度 |
@@ -98,19 +98,19 @@ timeout=20.0
 | コマンド | 使用できる主なオプション |
 | -------- | ------------------------ |
 | `setup` | `--language`、`--language-version`、`--cache`、`--force` |
-| `build` | `--language`、`--language-version`、`--board`、`--cache`、`--firmware`、`--mrbgems`、`--no-mrbgems` |
+| `build` | `--language`、`--language-version`、`--board`、`--cache`、`--firmware`、`--lockfile`、`--no-mrbgems` |
 | `build clean` | なし。プロジェクトの`build/`だけを削除する |
 | `bootsel` | `--reset-flash-memory`、`--mount`、`--port`、`--baud`、`--timeout` |
-| `deploy PATH` | `--build`、`--language`、`--language-version`、`--board`、`--cache`、`--firmware`、`--mrbgems`、`--no-mrbgems`、`--mount`、`--port`、`--baud`、`--timeout` |
+| `deploy PATH` | `--build`、`--language`、`--language-version`、`--board`、`--cache`、`--firmware`、`--lockfile`、`--no-mrbgems`、`--mount`、`--port`、`--baud`、`--timeout` |
 | `dfu app FILE` | `--type ruby\|rite`、`--port`、`--baud`、`--timeout` |
 | `dfu compile FILE` | `--output`、`--language`、`--language-version`、`--cache` |
 | `dfu status` / `dfu remove` | `--port`、`--baud`、`--timeout` |
-| `mrbgems check/list/lock/update` | `--file`、`--lockfile` |
+| `mrbgems check/list/lock/update` | `--file`、`--lockfile`。`lock`と`update`は`--with`、`--without`にも対応 |
 | `flash` | `--language`、`--language-version`、`--board`、`--cache`、`--firmware`、`--mount`、`--port`、`--timeout` |
-| `config show` | `--language`、`--language-version`、`--board`、`--cache`、`--firmware`、`--mrbgems`、`--no-mrbgems`、`--mount`、`--port`、`--baud`、`--timeout` |
+| `config show` | `--language`、`--language-version`、`--board`、`--cache`、`--firmware`、`--lockfile`、`--no-mrbgems`、`--mount`、`--port`、`--baud`、`--timeout` |
 | `ports` | なし |
-| `run FILE` | `--port`、`--baud`、`--timeout`、`--reset-on-timeout`、`--language` |
-| `exec CODE` | `--port`、`--baud`、`--timeout`、`--language` |
+| `run FILE` | `--port`、`--baud`、`--timeout`、`--reset-on-timeout`、`--language`、`--lockfile`、`--no-mrbgems` |
+| `exec CODE` | `--port`、`--baud`、`--timeout`、`--language`、`--lockfile`、`--no-mrbgems` |
 | `monitor` / `repl` / `reset` | `--port`、`--baud`、`--timeout` |
 | `fs cp` | `--recursive`、`--port`、`--baud`、`--timeout` |
 | `fs push/cat/ls/rm/mkdir` | `--port`、`--baud`、`--timeout` |

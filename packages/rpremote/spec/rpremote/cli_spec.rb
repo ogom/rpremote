@@ -60,7 +60,7 @@ RSpec.describe "Using the rpremote command-line interface" do
           "language_version": "3.4.2",
           "board": "pico2_w",
           "cache": "artifacts/{version}",
-          "mrbgems": false,
+          "mrbgems_lock": false,
           "port": "/dev/cu.config",
           "baud": 9600,
           "timeout": 12
@@ -79,7 +79,7 @@ RSpec.describe "Using the rpremote command-line interface" do
         board=pico2
         cache=artifacts/3.4.2
         firmware=artifacts/3.4.2/picoruby-3.4.2-pico2.uf2
-        mrbgems=false
+        mrbgems_lock=false
         mount=auto
         port=/dev/cu.config
         baud=9600
@@ -238,7 +238,8 @@ RSpec.describe "Using the rpremote command-line interface" do
       dependencies = [
         Rpremote::Mrbgems::Dependency.new(
           type: :github, source: "ksbmyk/picoruby-ws2812-plus",
-          branch: "main", commit: nil, path: nil, require_name: nil, auto_require: true
+          branch: "main", commit: nil, path: nil, require_name: nil, auto_require: true,
+          groups: []
         )
       ]
       manager = instance_double(
@@ -255,7 +256,8 @@ RSpec.describe "Using the rpremote command-line interface" do
 
     it "updates Mrbgems.lock" do
       result = {
-        "version" => 1,
+        "version" => 2,
+        "with" => [],
         "gems" => [{ "type" => "github", "source" => "owner/gem",
                      "branch" => "main", "commit" => "a" * 40 }]
       }
@@ -263,14 +265,43 @@ RSpec.describe "Using the rpremote command-line interface" do
         Rpremote::Mrbgems, lock: result, lock_path: "/project/Mrbgems.lock"
       )
       mrbgems = class_double(Rpremote::Mrbgems, new: manager)
+      allow(mrbgems).to receive(:parse_groups).with("production,test").and_return(%i[production test])
+      allow(mrbgems).to receive(:parse_groups).with("test").and_return([:test])
 
       stub_const("Rpremote::Mrbgems", mrbgems)
-      status = described_class.start(%w[mrbgems update], stdout: stdout, stderr: stderr)
+      status = described_class.start(
+        %w[mrbgems update --with production,test --without test], stdout: stdout, stderr: stderr
+      )
 
       expect(status).to eq(0)
-      expect(manager).to have_received(:lock).with(update: true)
+      expect(manager).to have_received(:lock).with(
+        update: true, with: %i[production test], without: [:test]
+      )
       expect(stdout.string).to eq("locked 1 mrbgems: /project/Mrbgems.lock\n")
     end
+
+    it "rejects group selection for check and list" do
+      expect(described_class.start(%w[mrbgems check --with production], stdout: stdout, stderr: stderr)).to eq(1)
+      expect(stderr.string).to include("--with is only available for mrbgems lock and update")
+
+      stdout.truncate(0)
+      stderr.truncate(0)
+      stderr.rewind
+      expect(described_class.start(%w[mrbgems list --without test], stdout: stdout, stderr: stderr)).to eq(1)
+      expect(stderr.string).to include("--without is only available for mrbgems lock and update")
+    end
+  end
+
+  it "rejects removed runtime mrbgems selection options" do
+    source = File.expand_path("../fixtures/run.rb", __dir__)
+
+    expect(described_class.start(["run", source, "--groups", "production"], stdout: stdout, stderr: stderr)).to eq(1)
+    expect(stderr.string).to include("invalid option: --groups")
+
+    stderr.truncate(0)
+    stderr.rewind
+    expect(described_class.start(["exec", "puts :ok", "--mrbgems", "Mrbgems"], stdout: stdout, stderr: stderr)).to eq(1)
+    expect(stderr.string).to include("invalid option: --mrbgems")
   end
 
   describe "Applying configuration to a command" do
@@ -493,7 +524,8 @@ RSpec.describe "Using the rpremote command-line interface" do
         source = File.join(directory, "main.rb")
         File.write(source, "WS2812PP.new(pin: 14, num: 10).one(1)\n")
         lock = JSON.generate(
-          "version" => 1,
+          "version" => 2,
+          "with" => [],
           "gems" => [{ "type" => "path", "source" => "ws2812_pp", "sha256" => "a" * 64,
                        "require_name" => "ws2812_pp" }]
         )
@@ -512,11 +544,49 @@ RSpec.describe "Using the rpremote command-line interface" do
             stdout: stdout, stderr: stderr, device: device, serial: serial
           )
 
-          expect(status).to eq(0)
+          expect(status).to eq(0), stderr.string
         end
 
         expect(runner_instance).to have_received(:run).with(
           "require \"ws2812_pp\"\nWS2812PP.new(pin: 14, num: 10).one(1)\n",
+          output: stdout,
+          diagnostics: stderr
+        )
+      end
+    end
+
+    it "automatically requires exactly the mrbgems recorded in the lock" do
+      Dir.mktmpdir("rpremote-cli-groups") do |directory|
+        source = File.join(directory, "main.rb")
+        File.write(source, "puts :ready\n")
+        lock = JSON.generate(
+          "version" => 2,
+          "with" => ["production"],
+          "gems" => [
+            { "type" => "path", "source" => "common", "sha256" => "a" * 64,
+              "require_name" => "common" },
+            { "type" => "path", "source" => "production", "sha256" => "b" * 64,
+              "require_name" => "production", "groups" => ["production"] }
+          ]
+        )
+        File.write(File.join(directory, "Mrbgems.lock"), lock)
+        port = Object.new
+        device = class_double(Rpremote::Device, main_port: "/dev/cu.usbmodem101")
+        serial = class_double(Rpremote::Serial)
+        allow(serial).to receive(:open).and_yield(port)
+        runner_instance = instance_double(Rpremote::Runner, run: "")
+        stub_const("Rpremote::Runner", class_double(Rpremote::Runner, new: runner_instance))
+
+        Dir.chdir(directory) do
+          status = described_class.start(
+            ["run", source, "--port", "/dev/cu.usbmodem101"],
+            stdout: stdout, stderr: stderr, device: device, serial: serial
+          )
+          expect(status).to eq(0), stderr.string
+        end
+
+        expect(runner_instance).to have_received(:run).with(
+          "require \"common\"\nrequire \"production\"\nputs :ready\n",
           output: stdout,
           diagnostics: stderr
         )

@@ -9,12 +9,13 @@ module Rpremote
   class Mrbgems
     DEFAULT_PATH = "Mrbgems"
     DEFAULT_LOCK_PATH = "Mrbgems.lock"
-    LOCK_VERSION = 1
+    LOCK_VERSION = 2
     GITHUB_PATTERN = %r{\A[\w.-]+/[\w.-]+\z}
     COMMIT_PATTERN = /\A[0-9a-f]{40,64}\z/i
+    GROUP_PATTERN = /\A[a-zA-Z0-9][a-zA-Z0-9_-]*\z/
     VMS = %i[mruby mrubyc].freeze
 
-    Dependency = Data.define(:type, :source, :branch, :commit, :path, :require_name, :auto_require)
+    Dependency = Data.define(:type, :source, :branch, :commit, :path, :require_name, :auto_require, :groups)
     Overlay = Data.define(:path, :fingerprint)
 
     class Error < Rpremote::Error; end
@@ -25,8 +26,28 @@ module Rpremote
 
     def initialize(path: DEFAULT_PATH, lock_path: nil, cwd: Dir.pwd, resolver: nil)
       @path = File.expand_path(path, cwd)
-      @lock_path = File.expand_path(lock_path || DEFAULT_LOCK_PATH, File.dirname(@path))
+      @lock_path = if lock_path
+                     File.expand_path(lock_path, cwd)
+                   else
+                     File.expand_path(DEFAULT_LOCK_PATH, File.dirname(@path))
+                   end
       @resolver = resolver || method(:resolve_github)
+    end
+
+    def self.parse_groups(value)
+      groups = value.to_s.split(",", -1).map(&:strip)
+      raise DefinitionError, "invalid mrbgem group: #{value.inspect}" if groups.empty?
+
+      normalize_groups(groups)
+    end
+
+    def self.normalize_groups(values)
+      Array(values).map do |name|
+        value = name.to_s
+        raise DefinitionError, "invalid mrbgem group: #{name.inspect}" unless GROUP_PATTERN.match?(value)
+
+        value.to_sym
+      end.uniq.freeze
     end
 
     def exist?
@@ -35,6 +56,18 @@ module Rpremote
 
     def dependencies
       @dependencies ||= load_definition
+    end
+
+    def selected_dependencies(with: [], without: [])
+      selected_groups = self.class.normalize_groups(with)
+      excluded_groups = self.class.normalize_groups(without)
+      dependencies
+      available = @definition.groups
+      validate_selected_groups!(selected_groups + excluded_groups, available)
+      dependencies.select do |dependency|
+        dependency.groups.empty? ||
+          (dependency.groups.intersect?(selected_groups) && !dependency.groups.intersect?(excluded_groups))
+      end
     end
 
     def vm
@@ -47,50 +80,36 @@ module Rpremote
       dependencies
     end
 
-    def lock(update: false)
-      check
-      previous = update ? nil : read_lock(required: false)
-      entries = dependencies.map { |dependency| lock_entry(dependency, previous) }
-      contents = { "version" => LOCK_VERSION, "vm" => vm&.to_s, "gems" => entries }.compact
+    def lock(update: false, with: [], without: [])
+      selected_groups = self.class.normalize_groups(with)
+      excluded_groups = self.class.normalize_groups(without)
+      previous = update ? nil : read_previous_lock
+      selected = selected_dependencies(with: selected_groups, without: excluded_groups)
+      selected.each { |dependency| validate_local!(dependency) if dependency.type == :path }
+      entries = selected.map do |dependency|
+        lock_entry(dependency, previous)
+      end
+      contents = {
+        "version" => LOCK_VERSION,
+        "vm" => vm&.to_s,
+        "with" => selected_groups.map(&:to_s),
+        "without" => excluded_groups.map(&:to_s),
+        "gems" => entries
+      }.compact
+      validate_lock!(contents)
       write_json(lock_path, contents)
       contents
     end
 
-    def read_lock(required: true)
-      contents = JSON.parse(File.read(lock_path))
-      validate_lock!(contents)
-      contents
-    rescue Errno::ENOENT
-      raise LockError, "mrbgems lock file does not exist: #{lock_path}" if required
-
-      nil
-    rescue JSON::ParserError => e
-      raise LockError, "invalid mrbgems lock file #{lock_path}: #{e.message}"
-    end
-
-    def require_names
-      lock_data = read_lock(required: false)
-      return [] unless lock_data
-
-      lock_data.fetch("gems").filter_map do |gem|
-        gem["require_name"] if gem.fetch("auto_require", true)
-      end.uniq
-    end
-
-    def prepend_requires(source)
-      names = require_names
-      return source if names.empty?
-
-      names.map { |name| "require #{name.inspect}\n" }.join.b + source.b
-    end
-
-    def generate_overlay(base_config:, target:, directory:, update: false)
-      lock_data = lock(update: update)
+    def generate_overlay(base_config:, target:, directory:)
+      lock_data = read_lock
+      entries = lock_data.fetch("gems")
+      validate_locked_paths!(entries)
       fingerprint = build_fingerprint(base_config, lock_data)
       output_dir = File.join(File.expand_path(directory), fingerprint)
       output_path = File.join(output_dir, "build_config.rb")
       FileUtils.mkdir_p(output_dir)
-      write_file(output_path, overlay_source(base_config, target, lock_data.fetch("gems")))
+      write_file(output_path, overlay_source(base_config, target, entries))
       Overlay.new(path: output_path, fingerprint: fingerprint)
     end
 
@@ -128,7 +147,7 @@ module Rpremote
                   "branch" => dependency.branch, "commit" => validate_commit!(commit),
                   "require_name" => dependency.require_name }.compact
       else
-        entry = { "type" => "path", "source" => dependency.source,
+        entry = { "type" => "path", "source" => locked_path(dependency.path),
                   "sha256" => digest_directory(dependency.path),
                   "require_name" => dependency.require_name || local_require_name(dependency.path) }.compact
       end
@@ -136,6 +155,7 @@ module Rpremote
         entry.delete("require_name")
         entry["auto_require"] = false
       end
+      entry["groups"] = dependency.groups.map(&:to_s) unless dependency.groups.empty?
       entry
     end
 
@@ -147,6 +167,26 @@ module Rpremote
           gem["branch"] == dependency.branch
       end
       entry&.fetch("commit", nil)
+    end
+
+    def read_previous_lock
+      contents = JSON.parse(File.read(lock_path))
+      raise LockError, "invalid mrbgems lock file: #{lock_path}" unless contents.is_a?(Hash)
+
+      version = contents["version"]
+      supported = [1, LOCK_VERSION].include?(version) && contents["gems"].is_a?(Array)
+      raise LockError, "unsupported mrbgems lock format: #{lock_path}" unless supported
+
+      if version == LOCK_VERSION
+        validate_lock!(contents)
+      elsif contents["gems"].any? { |entry| !entry.is_a?(Hash) }
+        raise LockError, "invalid mrbgems lock file: #{lock_path}"
+      end
+      contents
+    rescue Errno::ENOENT
+      nil
+    rescue JSON::ParserError => e
+      raise LockError, "invalid mrbgems lock file #{lock_path}: #{e.message}"
     end
 
     def validate_commit!(commit)
@@ -190,41 +230,6 @@ module Rpremote
       relative.split(File::SEPARATOR).intersect?(%w[.git build tmp])
     end
 
-    def validate_lock!(contents)
-      unless contents.is_a?(Hash) && contents["version"] == LOCK_VERSION && contents["gems"].is_a?(Array)
-        raise LockError, "unsupported mrbgems lock format: #{lock_path}"
-      end
-      unless contents["vm"].nil? || VMS.map(&:to_s).include?(contents["vm"])
-        raise LockError, "invalid mrbgems VM in lock file: #{contents["vm"].inspect}"
-      end
-
-      contents["gems"].each do |entry|
-        type = entry["type"]
-        valid = type == "github" ? valid_github_lock?(entry) : valid_path_lock?(entry)
-        raise LockError, "invalid mrbgems lock entry: #{entry.inspect}" unless valid
-      end
-    end
-
-    def valid_github_lock?(entry)
-      GITHUB_PATTERN.match?(entry["source"].to_s) && !entry["branch"].to_s.empty? &&
-        COMMIT_PATTERN.match?(entry["commit"].to_s) && valid_require_name?(entry["require_name"]) &&
-        valid_auto_require?(entry)
-    end
-
-    def valid_path_lock?(entry)
-      entry["type"] == "path" && !entry["source"].to_s.empty? &&
-        /\A[0-9a-f]{64}\z/.match?(entry["sha256"].to_s) && valid_require_name?(entry["require_name"]) &&
-        valid_auto_require?(entry)
-    end
-
-    def valid_require_name?(name)
-      name.nil? || (name.is_a?(String) && !name.empty? && !name.match?(/[\x00-\x1f\x7f]/))
-    end
-
-    def valid_auto_require?(entry)
-      !entry.key?("auto_require") || entry["auto_require"] == true || entry["auto_require"] == false
-    end
-
     def local_require_name(directory)
       source = File.read(File.join(directory, "mrbgem.rake"))
       match = source.match(/^\s*spec\.require_name\s*=\s*["']([^"']+)["']\s*$/)
@@ -233,7 +238,7 @@ module Rpremote
 
     def build_fingerprint(base_config, lock_data)
       Digest::SHA256.hexdigest(
-        [File.binread(path), File.binread(base_config), JSON.generate(lock_data)].join("\0")
+        [File.binread(base_config), JSON.generate(lock_data)].join("\0")
       ).slice(0, 12)
     end
 
@@ -245,93 +250,28 @@ module Rpremote
         "load #{File.expand_path(base_config).inspect}",
         "conf = MRuby.targets.fetch(#{target.inspect})"
       ]
-      dependencies.zip(locked_entries).each do |dependency, locked|
-        lines << if dependency.type == :github
-                   "conf.gem github: #{dependency.source.inspect}, " \
-                     "branch: #{dependency.branch.inspect}, checksum_hash: #{locked.fetch("commit").inspect}"
+      locked_entries.each do |locked|
+        lines << if locked.fetch("type") == "github"
+                   "conf.gem github: #{locked.fetch("source").inspect}, " \
+                     "branch: #{locked.fetch("branch").inspect}, checksum_hash: #{locked.fetch("commit").inspect}"
                  else
-                   "conf.gem #{dependency.path.inspect}"
+                   "conf.gem #{resolved_locked_path(locked).inspect}"
                  end
       end
       "#{lines.join("\n")}\n"
     end
 
-    def write_json(filename, contents)
-      write_file(filename, "#{JSON.pretty_generate(contents)}\n")
+    def locked_path(directory)
+      Pathname.new(directory).relative_path_from(Pathname.new(File.dirname(lock_path))).to_s
     end
 
-    def write_file(filename, contents)
-      return if File.file?(filename) && File.binread(filename) == contents
-
-      FileUtils.mkdir_p(File.dirname(filename))
-      temporary = "#{filename}.tmp-#{Process.pid}"
-      File.binwrite(temporary, contents)
-      File.rename(temporary, filename)
-    ensure
-      FileUtils.rm_f(temporary) if temporary
-    end
-
-    class Definition
-      attr_reader :dependencies, :vm_name
-
-      def initialize(filename)
-        @directory = File.dirname(filename)
-        @dependencies = []
-      end
-
-      def vm(name)
-        value = name.to_sym
-        raise DefinitionError, "unsupported mrbgems VM: #{name.inspect}" unless VMS.include?(value)
-        raise DefinitionError, "mrbgems VM specified more than once" if vm_name
-
-        @vm_name = value
-      end
-
-      def gem(github: nil, path: nil, branch: "main", commit: nil, require: nil, auto_require: true)
-        sources = [github, path].compact
-        raise DefinitionError, "gem requires exactly one of github or path" unless sources.length == 1
-        unless require.nil? || (require.is_a?(String) && !require.empty? && !require.match?(/[\x00-\x1f\x7f]/))
-          raise DefinitionError, "invalid mrbgem require name: #{require.inspect}"
-        end
-
-        valid_auto_require = [true, false].include?(auto_require)
-        raise DefinitionError, "mrbgem auto_require must be true or false: #{auto_require.inspect}" unless valid_auto_require
-
-        dependency = if github
-                       github_dependency(github, branch, commit, require, auto_require)
-                     else
-                       path_dependency(path, branch, commit, require, auto_require)
-                     end
-        key = [dependency.type, dependency.source]
-        raise DefinitionError, "duplicate mrbgem: #{dependency.source}" if dependencies.any? do |item|
-          [item.type, item.source] == key
-        end
-
-        dependencies << dependency
-      end
-
-      private
-
-      attr_reader :directory
-
-      def github_dependency(source, branch, commit, require_name, auto_require)
-        raise DefinitionError, "invalid GitHub mrbgem: #{source.inspect}" unless GITHUB_PATTERN.match?(source.to_s)
-        raise DefinitionError, "GitHub mrbgem branch must not be empty" if branch.to_s.empty?
-        raise DefinitionError, "invalid Git commit: #{commit.inspect}" if commit && !COMMIT_PATTERN.match?(commit.to_s)
-
-        Dependency.new(type: :github, source: source, branch: branch,
-                       commit: commit&.downcase, path: nil, require_name: require_name,
-                       auto_require: auto_require)
-      end
-
-      def path_dependency(source, branch, commit, require_name, auto_require)
-        raise DefinitionError, "local mrbgem path must not be empty" if source.to_s.empty?
-        raise DefinitionError, "local mrbgem does not accept branch or commit" if branch != "main" || commit
-
-        Dependency.new(type: :path, source: source, branch: nil, commit: nil,
-                       path: File.expand_path(source, directory), require_name: require_name,
-                       auto_require: auto_require)
-      end
+    def validate_selected_groups!(selected, available)
+      unknown = selected - available
+      raise DefinitionError, "unknown mrbgem group: #{unknown.join(", ")}" unless unknown.empty?
     end
   end
 end
+
+require_relative "mrbgems/file_writer"
+require_relative "mrbgems/lockfile"
+require_relative "mrbgems/definition"

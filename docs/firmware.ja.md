@@ -22,7 +22,7 @@ Rubyプログラムの例外時にR2P2が専用ステータスを出力するた
 `rpremote setup`はソース準備後に、`rpremote build`はビルド前にパッチを適用します。
 すでに適用済みなら変更しないため、gemを更新した後に既存キャッシュをビルドしても現在のパッチが適用されます。
 
-同梱パッチの対象はPicoRuby 4.0.3と3.4.5です。PicoRuby 3.4.2には互換性のある3.4.5用パッチを使います。
+同梱パッチの対象はPicoRuby 4.0.4、4.0.3、3.4.5です。PicoRuby 3.4.2には互換性のある3.4.5用パッチを使います。
 これはソースパッチの対象を示すものであり、すべてのR2P2版がすべてのボードで正常に起動することを保証するものではありません。
 
 パッチ適用に失敗した場合、キャッシュ済みソースが想定したPicoRubyリリースと異なります。
@@ -51,7 +51,7 @@ rpremote mrbgems list
 rpremote build --firmware firmware/r2p2-picoruby-latest-pico2.uf2
 ```
 
-`rpremote build`は`Mrbgems`を自動検出し、PicoRuby公式設定へgemを追加した一時ビルド設定を生成します。
+`rpremote build`は`Mrbgems.lock`を自動検出し、lock済みgemから一時ビルド設定を生成します。`Mrbgems`の評価やlockの更新は行いません。
 公式ソースを手作業で編集する必要はありません。R2P2例外ステータス用の`PicoRubySourcePatch`だけはrpremoteが管理して適用します。
 
 完成したUF2は`firmware/r2p2-picoruby-latest-pico2.uf2`に保存されます。中間ファイルは`build/`に作成されます。`--firmware`を省略した場合は、`firmware/picoruby-latest-pico2.uf2`が既定の出力先です。

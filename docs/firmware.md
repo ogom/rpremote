@@ -23,7 +23,7 @@ This lets `rpremote run` and `rpremote exec` exit nonzero without guessing from 
 `rpremote setup` applies the patch after preparing the source, and `rpremote build` applies it again before building.
 The operation is idempotent, so updating the gem and rebuilding an existing source cache also applies the current patch.
 
-Bundled patches target PicoRuby 4.0.3 and 3.4.5; PicoRuby 3.4.2 uses the compatible 3.4.5 patch.
+Bundled patches target PicoRuby 4.0.4, 4.0.3, and 3.4.5; PicoRuby 3.4.2 uses the compatible 3.4.5 patch.
 These are source-patch targets, not a guarantee that every R2P2 version starts successfully on every board.
 
 If patch application fails, the cached source differs from the expected PicoRuby release.
@@ -52,7 +52,7 @@ The pinned commit is recorded in `Mrbgems.lock`. Run `rpremote mrbgems update` o
 rpremote build --firmware firmware/r2p2-picoruby-latest-pico2.uf2
 ```
 
-`rpremote build` auto-detects `Mrbgems` and generates a temporary build configuration that adds the gem to the official PicoRuby configuration.
+`rpremote build` auto-detects `Mrbgems.lock` and generates a temporary build configuration from its locked gems. It does not evaluate `Mrbgems` or update the lock.
 There is no need to edit the official source manually; `PicoRubySourcePatch` is the managed exception for R2P2 exception-status support.
 
 The completed UF2 is saved to `firmware/r2p2-picoruby-latest-pico2.uf2` and intermediate files are created under `build/`. If `--firmware` is omitted, `firmware/picoruby-latest-pico2.uf2` is the default output path.

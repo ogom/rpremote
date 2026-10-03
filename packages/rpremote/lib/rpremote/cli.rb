@@ -3,6 +3,7 @@
 require "optparse"
 require_relative "build_command"
 require_relative "bootsel_command"
+require_relative "cli/filesystem_commands"
 require_relative "config_show"
 require_relative "dfu_command"
 require_relative "deploy_command"
@@ -12,9 +13,10 @@ require_relative "mrbgems_command"
 require_relative "recursive_copy"
 require_relative "setup_command"
 
-# rubocop:disable Metrics/ClassLength
 module Rpremote
   class CLI
+    include FilesystemCommands
+
     def self.start(argv = ARGV, config: Config, **options)
       new(**options).run(argv, config: config)
     rescue OptionParser::ParseError, ArgumentError, SystemCallError, Rpremote::Error => e
@@ -136,44 +138,24 @@ module Rpremote
       ConfigShow.run(args, defaults: config_options, output: stdout)
     end
 
-    def fs(args)
-      subcommand = args.shift
-      recursive = subcommand == "cp" && (args.delete("--recursive") || args.delete("-r"))
-      options = parse_connection_options(args)
-      case subcommand
-      when "cp"
-        copy(args, options, recursive: recursive)
-      when "push"
-        copy(args, options, recursive: true, command: "push")
-      when "cat"
-        cat(args, options)
-      when "ls", "rm", "mkdir"
-        filesystem_shell_command(subcommand, args, options)
-      else
-        raise ArgumentError, "unknown fs command: #{subcommand || "(none)"}"
-      end
-    rescue Shell::TimeoutError => e
-      raise Shell::TimeoutError, "filesystem connection failed: #{e.message}"
-    end
-
     def run_file(args)
       reset_on_timeout = !args.delete("--reset-on-timeout").nil?
-      options = parse_connection_options(args)
+      options = parse_connection_options(args, mrbgems_lock: true)
       raise ArgumentError, "usage: rpremote run FILE [options]" unless args.length == 1
 
       source = args.first
       source = File.join(source, "main.rb") if File.directory?(source)
-      data = prepend_mrbgem_requires(File.binread(source))
+      data = prepend_mrbgem_requires(File.binread(source), options[:mrbgems_lock])
       execute_temporary(data, options, output: stdout, reset_on_timeout: reset_on_timeout)
     rescue Errno::ENOENT => e
       raise ArgumentError, e.message
     end
 
     def execute_code(args)
-      options = parse_connection_options(args)
+      options = parse_connection_options(args, mrbgems_lock: true)
       raise ArgumentError, "usage: rpremote exec CODE [options]" unless args.length == 1
 
-      execute_temporary(prepend_mrbgem_requires(args.first), options, output: stdout)
+      execute_temporary(prepend_mrbgem_requires(args.first, options[:mrbgems_lock]), options, output: stdout)
     end
 
     def execute_temporary(data, options, output: nil, reset_on_timeout: false)
@@ -197,8 +179,13 @@ module Rpremote
             "#{timeout_error.message}; automatic reset failed: #{e.message}"
     end
 
-    def prepend_mrbgem_requires(data)
-      Mrbgems.new(cwd: Dir.pwd).prepend_requires(data)
+    def prepend_mrbgem_requires(data, lock_file)
+      return data if lock_file == false
+
+      path = lock_file || Mrbgems::DEFAULT_LOCK_PATH
+      raise ArgumentError, "mrbgems lock file does not exist: #{path}" if lock_file && !File.file?(path)
+
+      Mrbgems.new(cwd: Dir.pwd, lock_path: path).prepend_requires(data)
     end
 
     def interactive(args, repl: false)
@@ -227,18 +214,23 @@ module Rpremote
       stdout.puts("reset R2P2: #{port_path}")
     end
 
-    def parse_connection_options(args, default_timeout: PicoModem::DEFAULT_TIMEOUT)
+    def parse_connection_options(args, default_timeout: PicoModem::DEFAULT_TIMEOUT, mrbgems_lock: false)
       options = {
         port: config_options[:port],
         baud: config_options.fetch(:baud, Serial::BAUD_RATE),
         timeout: config_options.fetch(:timeout, default_timeout),
         language: config_options.fetch(:language, Target::DEFAULT_LANGUAGE)
       }
+      options[:mrbgems_lock] = config_options[:mrbgems_lock] if mrbgems_lock
       parser = OptionParser.new do |opts|
         opts.on("--port PORT") { |value| options[:port] = value }
         opts.on("--baud RATE", Integer) { |value| options[:baud] = value }
         opts.on("--timeout SECONDS", Float) { |value| options[:timeout] = value }
         opts.on("--language LANGUAGE") { |value| options[:language] = value }
+        if mrbgems_lock
+          opts.on("--lockfile FILE") { |value| options[:mrbgems_lock] = value }
+          opts.on("--no-mrbgems") { options[:mrbgems_lock] = false }
+        end
       end
       parser.parse!(args)
       raise ArgumentError, "--baud must be positive" unless options[:baud].positive?
@@ -246,82 +238,5 @@ module Rpremote
 
       options
     end
-
-    def copy(args, options, recursive: false, command: "cp")
-      usage = command == "push" ? "rpremote fs push LOCAL_DIR :/REMOTE_DIR" : "rpremote fs cp SOURCE DESTINATION"
-      raise ArgumentError, "usage: #{usage} [options]" unless args.length == 2
-
-      source, destination = args
-      source_remote = RemotePath.remote?(source)
-      destination_remote = RemotePath.remote?(destination)
-      raise ArgumentError, "exactly one cp path must be remote (prefix remote paths with :)" if source_remote == destination_remote
-      return RecursiveCopy.new(output: stdout, serial: serial, device: device).call(source, destination, options) if recursive
-
-      ensure_filesystem_connection!(options)
-      if source_remote
-        data = with_modem(options) { |modem| modem.download(RemotePath.unwrap(source)) }
-        File.binwrite(local_destination(destination, source), data)
-        stdout.puts("downloaded #{data.bytesize} bytes: #{source} -> #{destination}")
-      else
-        data = File.binread(source)
-        with_modem(options) { |modem| modem.upload(RemotePath.unwrap(destination), data) }
-        stdout.puts("uploaded #{data.bytesize} bytes: #{source} -> #{destination}")
-      end
-    rescue Errno::ENOENT => e
-      raise ArgumentError, e.message
-    end
-
-    def cat(args, options)
-      raise ArgumentError, "usage: rpremote fs cat :/REMOTE/PATH [options]" unless args.length == 1
-      raise ArgumentError, "cat path must be remote (prefix it with :)" unless RemotePath.remote?(args.first)
-
-      stdout.write(with_modem(options) { |modem| modem.download(RemotePath.unwrap(args.first)) })
-    end
-
-    def filesystem_shell_command(command, args, options)
-      usage = "usage: rpremote fs #{command} :/REMOTE/PATH [options]"
-      raise ArgumentError, usage unless args.length == 1
-
-      path = RemotePath.validate(args.first)
-      stdout.puts("deleting remote path permanently: #{path}") if command == "rm"
-      output = with_shell(options) do |shell|
-        shell.execute("#{command} #{Shell.quote_argument(path)}")
-      end
-      ensure_filesystem_success!(command, output)
-      stdout.write(output)
-    end
-
-    def ensure_filesystem_success!(command, output)
-      failed = command == "ls" ? output.start_with?("ls:") : !output.empty?
-      raise Shell::CommandError, output.strip if failed
-    end
-
-    def ensure_filesystem_connection!(options)
-      output = with_shell(options) { |shell| shell.execute("ls '/'") }
-      ensure_filesystem_success!("ls", output)
-    end
-
-    def with_modem(options)
-      port_path = device.main_port(options[:port])
-      serial.open(port_path, baud: options[:baud]) do |port|
-        yield PicoModem.new(port, timeout: options[:timeout])
-      end
-    end
-
-    def with_shell(options)
-      port_path = device.main_port(options[:port])
-      serial.open(port_path, baud: options[:baud]) do |port|
-        shell = Shell.new(port, timeout: options[:timeout])
-        shell.synchronize!
-        yield shell
-      end
-    end
-
-    def local_destination(destination, source)
-      return destination unless File.directory?(destination)
-
-      File.join(destination, File.basename(RemotePath.unwrap(source)))
-    end
   end
 end
-# rubocop:enable Metrics/ClassLength

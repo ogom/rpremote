@@ -17,31 +17,32 @@ RSpec.describe "Resolving rpremote configuration" do
           "language_version": "3.4.2",
           "board": "pico2",
           "firmware": "firmware/custom.uf2",
-          "mrbgems": "Mrbgems",
+          "mrbgems_lock": "config/production.lock",
           "baud": 9600,
           "timeout": 12.5
         }
       JSON
 
       expect(described_class.load("run", filename: path, cwd: cwd)).to eq(
-        port: "/dev/cu.usbmodem101", baud: 9600, timeout: 12.5, language: "picoruby"
+        port: "/dev/cu.usbmodem101", baud: 9600, timeout: 12.5, language: "picoruby",
+        mrbgems_lock: "config/production.lock"
       )
       expect(described_class.load("flash", filename: path, cwd: cwd)).to include(
         mount: "/Volumes/RP2350", cache: "tmp/cache", language: "picoruby",
         language_version: "3.4.2", board: "pico2"
       )
       expect(described_class.load("build", filename: path, cwd: cwd)).to include(
-        mrbgems: "Mrbgems", firmware: "firmware/custom.uf2"
+        mrbgems_lock: "config/production.lock", firmware: "firmware/custom.uf2"
       )
       expect(described_class.load("deploy", filename: path, cwd: cwd)).to include(
-        mount: "/Volumes/RP2350", port: "/dev/cu.usbmodem101", mrbgems: "Mrbgems",
+        mount: "/Volumes/RP2350", port: "/dev/cu.usbmodem101", mrbgems_lock: "config/production.lock",
         firmware: "firmware/custom.uf2", baud: 9600, timeout: 12.5
       )
       expect(described_class.load("bootsel", filename: path, cwd: cwd)).to eq(
         mount: "/Volumes/RP2350", port: "/dev/cu.usbmodem101", baud: 9600, timeout: 12.5
       )
       expect(described_class.load("config", filename: path, cwd: cwd)).to include(
-        port: "/dev/cu.usbmodem101", mount: "/Volumes/RP2350", mrbgems: "Mrbgems"
+        port: "/dev/cu.usbmodem101", mount: "/Volumes/RP2350", mrbgems_lock: "config/production.lock"
       )
     end
   end
@@ -66,9 +67,17 @@ RSpec.describe "Resolving rpremote configuration" do
       expect { described_class.load("run", filename: path, cwd: cwd) }
         .to raise_error(described_class::Error, /unknown config option/)
 
+      File.write(path, '{"mrbgems_groups": ["production"]}')
+      expect { described_class.load("build", filename: path, cwd: cwd) }
+        .to raise_error(described_class::Error, /unknown config option: mrbgems_groups/)
+
       File.write(path, '{"timeout": 0}')
       expect { described_class.load("run", filename: path, cwd: cwd) }
         .to raise_error(described_class::Error, /must be positive/)
+
+      File.write(path, '{"mrbgems_lock": []}')
+      expect { described_class.load("build", filename: path, cwd: cwd) }
+        .to raise_error(described_class::Error, /mrbgems_lock must be/)
     end
   end
 
@@ -86,9 +95,9 @@ RSpec.describe "Resolving rpremote configuration" do
   it "allows automatic mrbgem detection to be disabled in config" do
     Dir.mktmpdir do |cwd|
       path = File.join(cwd, "settings.json")
-      File.write(path, '{"mrbgems": false}')
+      File.write(path, '{"mrbgems_lock": false}')
 
-      expect(described_class.load("build", filename: path, cwd: cwd)).to eq(mrbgems: false)
+      expect(described_class.load("build", filename: path, cwd: cwd)).to eq(mrbgems_lock: false)
     end
   end
 

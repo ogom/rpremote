@@ -43,14 +43,25 @@ RSpec.describe "Deploying a PicoRuby project" do
   end
 
   it "builds, flashes, copies the project library, and runs its entry file in order" do
+    lock_file = File.join(directory, "production.lock")
+    File.write(
+      lock_file,
+      JSON.generate(
+        "version" => 2, "with" => ["production"], "without" => [],
+        "gems" => [
+          { "type" => "path", "source" => "production", "sha256" => "a" * 64,
+            "require_name" => "production", "groups" => ["production"] }
+        ]
+      )
+    )
     connection_options = {
       language: "picoruby", language_version: "latest", board: "pico2_w",
-      cache_dir: "firmware", firmware: "firmware/custom.uf2", mrbgems: "Mrbgems.dev",
+      cache_dir: "firmware", firmware: "firmware/custom.uf2", mrbgems_lock: lock_file,
       mount: "/Volumes/RP2350", port: result.port, baud: 9_600, timeout: 4.0
     }
     expect(builder).to receive(:build).ordered.with(
       language: "picoruby", language_version: "latest", board: "pico2_w",
-      cache_dir: "firmware", firmware: "firmware/custom.uf2", mrbgems: "Mrbgems.dev",
+      cache_dir: "firmware", firmware: "firmware/custom.uf2", mrbgems_lock: lock_file,
       output: output, error: error
     ) { File.write(source, "puts 'deployed'\n") }
     expect(flasher).to receive(:new).ordered.with(timeout: 4.0).and_return(flasher_instance)
@@ -70,13 +81,14 @@ RSpec.describe "Deploying a PicoRuby project" do
     expect(runner).to receive(:new).ordered.with(port_io, timeout: 4.0).and_return(runner_instance)
     run_expectation = expect(runner_instance).to receive(:run).ordered
     run_expectation.with(
-      "puts 'deployed'\n", output: output, cleanup: false, remote_path: Rpremote::Runner::DEPLOY_REMOTE_PATH
+      "require \"production\"\nputs 'deployed'\n",
+      output: output, cleanup: false, remote_path: Rpremote::Runner::DEPLOY_REMOTE_PATH
     ).and_return("deployed\n")
 
     described_class.run(
       [
         "--build", project, "--board", "pico2_w", "--firmware", "firmware/custom.uf2",
-        "--mrbgems", "Mrbgems.dev", "--mount", "/Volumes/RP2350",
+        "--lockfile", lock_file, "--mount", "/Volumes/RP2350",
         "--port", "/dev/cu.config", "--baud", "9600", "--timeout", "4"
       ],
       defaults: {}, output: output, error: error,
@@ -121,6 +133,15 @@ RSpec.describe "Deploying a PicoRuby project" do
     expect(output.string).not_to include("deploy build:")
     expect(output.string).to include("deploy flash:")
     expect(output.string).to include("deploy run:")
+  end
+
+  it "rejects removed mrbgems selection options" do
+    expect do
+      described_class.run(["--groups", "production", project], defaults: {})
+    end.to raise_error(OptionParser::InvalidOption, /--groups/)
+    expect do
+      described_class.run(["--mrbgems", "Mrbgems", project], defaults: {})
+    end.to raise_error(OptionParser::InvalidOption, /--mrbgems/)
   end
 
   it "validates the project before building or flashing" do

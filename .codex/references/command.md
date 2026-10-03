@@ -7,18 +7,18 @@ Run commands from the project root. Use `rpremote --help` as the authority for t
 ```sh
 rpremote setup [--language picoruby] [--language-version VERSION] [--cache DIR] [--force]
 rpremote mrbgems check [--file FILE] [--lockfile FILE]
-rpremote mrbgems lock [--file FILE] [--lockfile FILE]
-rpremote mrbgems update [--file FILE] [--lockfile FILE]
+rpremote mrbgems lock [--file FILE] [--lockfile FILE] [--with GROUPS] [--without GROUPS]
+rpremote mrbgems update [--file FILE] [--lockfile FILE] [--with GROUPS] [--without GROUPS]
 ```
 
 `setup` creates `config/setting.json` without replacing an existing file, downloads the selected PicoRuby source to `{cache}/picoruby-{language_version}/`, and saves the official `nuke_universal.uf2` recovery image in `firmware/`. `--force` deliberately replaces prepared source and refreshes recovery assets.
 
-`check` validates mrbgem definitions and local paths. `lock` refreshes `Mrbgems.lock` while retaining recorded GitHub commits; `update` intentionally resolves branch dependencies again.
+`check` validates mrbgem definitions and local paths. `lock` records common gems plus `--with` groups except `--without` groups while retaining recorded GitHub commits; exclusions take precedence. `update` intentionally resolves selected branch dependencies again.
 
 ## 2. Build custom firmware
 
 ```sh
-rpremote build [--language picoruby] [--language-version VERSION] [--board pico2|pico2_w] [--firmware FILE] [--cache DIR] [--mrbgems FILE|--no-mrbgems]
+rpremote build [--language picoruby] [--language-version VERSION] [--board pico2|pico2_w] [--firmware FILE] [--cache DIR] [--lockfile FILE|--no-mrbgems]
 rpremote build clean
 ```
 
@@ -29,7 +29,7 @@ rpremote mrbgems lock
 rpremote build
 ```
 
-The project-root `Mrbgems` is auto-detected. `--firmware` names the completed UF2. `build --output` is not supported. `build clean` removes only generated `build/` intermediates.
+The project-root `Mrbgems.lock` is auto-detected and consumed without evaluating `Mrbgems`. `--firmware` names the completed UF2. `build --output` is not supported. `build clean` removes only generated `build/` intermediates.
 
 ## 3. Install or recover board firmware
 

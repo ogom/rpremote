@@ -38,7 +38,7 @@ module Rpremote
         board: defaults.fetch(:board, Target::DEFAULT_BOARD),
         cache: defaults.fetch(:cache, Target::DEFAULT_CACHE_DIR),
         firmware: defaults[:firmware],
-        mrbgems: defaults[:mrbgems],
+        mrbgems_lock: defaults[:mrbgems_lock],
         mount: defaults[:mount],
         port: defaults[:port],
         baud: defaults.fetch(:baud, Serial::BAUD_RATE),
@@ -53,8 +53,8 @@ module Rpremote
         opts.on("--board BOARD") { |value| options[:board] = value }
         opts.on("--cache DIR") { |value| options[:cache] = value }
         opts.on("--firmware FILE") { |value| options[:firmware] = value }
-        opts.on("--mrbgems FILE") { |value| options[:mrbgems] = value }
-        opts.on("--no-mrbgems") { options[:mrbgems] = false }
+        opts.on("--lockfile FILE") { |value| options[:mrbgems_lock] = value }
+        opts.on("--no-mrbgems") { options[:mrbgems_lock] = false }
         opts.on("--mount DIR") { |value| options[:mount] = value }
         opts.on("--port PORT") { |value| options[:port] = value }
         opts.on("--baud RATE", Integer) { |value| options[:baud] = value }
@@ -70,19 +70,27 @@ module Rpremote
         cache_dir: options[:cache],
         firmware: options[:firmware]
       )
+      print_target_options(target)
+      print_runtime_options(options)
+    end
+
+    def print_target_options(target)
       output.puts("language=#{target.language}")
       output.puts("language_version=#{target.language_version}")
       output.puts("board=#{target.board}")
       output.puts("cache=#{target.cache_dir}")
       output.puts("firmware=#{target.firmware_path}")
-      output.puts("mrbgems=#{mrbgems_value(options[:mrbgems])}")
+    end
+
+    def print_runtime_options(options)
+      output.puts("mrbgems_lock=#{mrbgems_lock_value(options[:mrbgems_lock])}")
       output.puts("mount=#{options[:mount] || "auto"}")
       output.puts("port=#{options[:port] || "auto"}")
       output.puts("baud=#{options[:baud]}")
       output.puts("timeout=#{options[:timeout]}")
     end
 
-    def mrbgems_value(value)
+    def mrbgems_lock_value(value)
       return "false" if value == false
 
       value || "auto"
